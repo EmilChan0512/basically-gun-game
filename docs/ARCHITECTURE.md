@@ -6,4 +6,4 @@
 
 `tools/archaeology` 管提取/索引；`archaeology/local` 存私有生成清单；`reverse_engineering_db.json` 存经过人工审核的证据。原始 SWF、导出文件、参考图永不成为 runtime imports。
 
-已知事实：当前技术选型来自开发计划，不是逆向结果。未知：原游戏所有数值和系统内部实现。后续枪械、机器人、比赛按验收顺序实现，不预建空架构。
+已知事实：当前技术选型来自开发计划；原版现已提取，角色运动为 MovieClip 坐标加速度与位图碰撞，参见 `sfh1.v121.movement.collisionModel`。原版亦含 Box2D，但不能将其物理常量直接当角色运动值。Phaser Arcade 仍是计划指定的重建架构。源码索引、已确认常量和待验证部分见 REFERENCE_FINDINGS.md；后续枪械、机器人、比赛按验收顺序实现。

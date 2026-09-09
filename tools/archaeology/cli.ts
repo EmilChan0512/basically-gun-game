@@ -5,7 +5,8 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import Ajv from 'ajv';
-import { buildInventory, report } from './indexer';
+import { buildInventory, report, filesUnder } from './indexer';
+import { inspectSwf } from './swf';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const args = process.argv.slice(2);
@@ -17,6 +18,9 @@ function option(name: string, fallback: string) {
   return args[at + 1];
 }
 async function json(file: string, data: unknown) { await writeFile(file, JSON.stringify(data, null, 2) + '\n'); }
+async function portableTool(component: string, filename: string, fallback: string) {
+  return (await filesUnder(path.join(root, 'tools/vendor', component))).find(file => path.basename(file).toLowerCase() === filename.toLowerCase()) || fallback;
+}
 function run(executable: string, argv: string[]) {
   // shell:false keeps paths and untrusted filenames out of shell command interpretation.
   if (/\.(bat|cmd)$/i.test(executable)) throw new Error('Use ffdec-cli.exe or ffdec.jar instead of a batch wrapper.');
@@ -35,14 +39,20 @@ export async function validate() {
   console.log(`Evidence database valid: ${ids.length} records; ${referenceCount} EXTRACTED/OBSERVED records. TUNED values are not recovered reference facts.`);
 }
 async function main() {
-  const local = path.join(root, 'archaeology/local');
+  const local = path.resolve(option('--output', path.join(root, 'archaeology/local')));
   const exports = path.join(root, 'archaeology/exported');
   for (const dir of [local, exports, path.join(root, 'archaeology/swf')]) await mkdir(dir, { recursive: true });
   const swf = path.resolve(option('--swf', path.join(root, 'archaeology/swf/sfh1_reference.swf')));
   if (command === 'validate') return validate();
+  if (command === 'inspect') {
+    const inspection = inspectSwf(await readFile(swf));
+    await json(path.join(local, 'swf-inspection.json'), inspection);
+    console.log(JSON.stringify({ sha256: inspection.sha256, stage: [inspection.stageWidthPx, inspection.stageHeightPx], frameRate: inspection.frameRate, scriptsExecuted: false, sprites: inspection.sprites.length, spriteFrames: inspection.totalSpriteFrames }));
+    return;
+  }
   if (command === 'reference') {
     if (!existsSync(swf)) throw new Error(`Place your reference SWF at ${swf}, or pass --swf <path>.`);
-    run(option('--ruffle', process.env.RUFFLE_PATH || 'ruffle'), [swf]);
+    run(option('--ruffle', process.env.RUFFLE_PATH || await portableTool('ruffle', 'ruffle.exe', 'ruffle')), [swf]);
     return;
   }
   if (!['pipeline', 'index'].includes(command)) throw new Error(`Unknown command: ${command}`);
@@ -50,11 +60,14 @@ async function main() {
   if (command === 'pipeline' && existsSync(swf)) {
     const bytes = await readFile(swf);
     if (!['FWS', 'CWS', 'ZWS'].includes(bytes.subarray(0, 3).toString()) || bytes.length < 8) throw new Error('Invalid SWF header');
-    const ffdec = option('--ffdec', process.env.FFDEC_PATH || 'ffdec-cli.exe');
-    const argv = ['-onerror', 'abort', '-exportTimeout', '600', '-export', 'script,image,sprite,shape,sound,binaryData,symbolClass', exports, swf];
+    const ffdec = option('--ffdec', process.env.FFDEC_PATH || await portableTool('ffdec', 'ffdec.jar', 'ffdec-cli.exe'));
+    // FFDec 26.2.1 crashes on all:1 (null Range.prefix). Explicit character IDs avoid that upstream bug.
+    const spriteSelection = args.includes('--full-sprites') ? [] : ['-select', ['0:1', ...inspectSwf(bytes).sprites.map(sprite => `${sprite.id}:1`)].join(',')];
+    const argv = ['-onerror', 'abort', '-exportTimeout', '600', ...spriteSelection, '-export', 'script,image,sprite,shape,sound,binaryData,symbolClass', exports, swf];
     try {
       const isJar = /\.jar$/i.test(ffdec);
-      run(isJar ? 'java' : ffdec, isJar ? ['-jar', ffdec, ...argv] : argv);
+      const java = option('--java', process.env.JAVA_PATH || await portableTool('java', 'java.exe', 'java'));
+      run(isJar ? java : ffdec, isJar ? ['-Djava.awt.headless=true', '-jar', ffdec, ...argv] : argv);
       extraction = 'EXPORTED';
       await json(path.join(local, 'extraction.json'), { swf, sha256: createHash('sha256').update(bytes).digest('hex'), ffdec, args: argv, timestamp: new Date().toISOString() });
     } catch (error) {
@@ -68,9 +81,11 @@ async function main() {
   const inventory = await buildInventory(path.resolve(option('--input', exports)));
   await json(path.join(local, 'inventory.json'), inventory);
   await writeFile(path.join(local, 'first-pass-report.md'), report(inventory));
-  await json(path.join(local, 'workflow-status.json'), { extraction, inventory: inventory.status, verifiedReferenceFacts: false, timestamp: new Date().toISOString() });
+  const db = JSON.parse(await readFile(path.join(root, 'archaeology/reverse_engineering_db.json'), 'utf8')) as { records: { evidenceType: string }[] };
+  const verifiedReferenceFactCount = db.records.filter(record => ['EXTRACTED', 'OBSERVED'].includes(record.evidenceType)).length;
+  await json(path.join(local, 'workflow-status.json'), { extraction, inventory: inventory.status, verifiedReferenceFacts: verifiedReferenceFactCount > 0, verifiedReferenceFactCount, timestamp: new Date().toISOString() });
   await validate();
-  console.log(`Inventory: ${inventory.scriptCount} scripts. Reports: archaeology/local/. Missing-reference fallback is runnable; historical facts remain pending.`);
+  console.log(`Inventory: ${inventory.scriptCount} scripts. Reports: ${local}. Reviewed reference facts: ${verifiedReferenceFactCount}; lexical candidates still require review.`);
   if (args.includes('--require-reference') && (!inventory.scriptCount || extraction === 'AWAITING_REFERENCE' || extraction === 'EXPORT_FAILED')) process.exitCode = 1;
 }
 main().catch(error => { console.error(String(error)); process.exitCode = 1; });

@@ -39,12 +39,13 @@ describe('ActionScript archaeology', () => {
     const dir = await mkdtemp(path.join(tmpdir(), 'strike-cli-'));
     try {
       await writeFile(path.join(dir, 'Player.as'), 'package lab { public class Player { public var health:int = 100; } }');
-      const output = execFileSync(process.execPath, ['--import', 'tsx', 'tools/archaeology/cli.ts', 'index', '--input', dir], { encoding: 'utf8' });
+      const reportDir = path.join(dir, 'reports');
+      const output = execFileSync(process.execPath, ['--import', 'tsx', 'tools/archaeology/cli.ts', 'index', '--input', dir, '--output', reportDir], { encoding: 'utf8' });
       expect(output).toContain('Inventory: 1 scripts');
-      const inventory = JSON.parse(await readFile('archaeology/local/inventory.json', 'utf8'));
+      const inventory = JSON.parse(await readFile(path.join(reportDir, 'inventory.json'), 'utf8'));
       expect(inventory.scripts[0].classes[0].name).toBe('Player');
       expect(inventory.status).toBe('INDEXED_UNREVIEWED');
-      const strict = spawnSync(process.execPath, ['--import', 'tsx', 'tools/archaeology/cli.ts', 'pipeline', '--swf', path.join(dir, 'missing.swf'), '--input', path.join(dir, 'missing'), '--require-reference'], { encoding: 'utf8' });
+      const strict = spawnSync(process.execPath, ['--import', 'tsx', 'tools/archaeology/cli.ts', 'pipeline', '--swf', path.join(dir, 'missing.swf'), '--input', path.join(dir, 'missing'), '--output', reportDir, '--require-reference'], { encoding: 'utf8' });
       expect(strict.status).toBe(1);
       expect(strict.stdout).toContain('Reference missing');
     } finally { await rm(dir, { recursive: true, force: true }); }

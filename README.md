@@ -2,7 +2,7 @@
 
 按照 `Project_Strike_Codex_Development_Plan.docx` 第 15 节，交付 **Phase 0 可执行考古工具链 + Phase 1 Movement Lab**。这是本地运行、可测量的灰盒移动实验室；射击、3v3、机器人和进度系统属于后续阶段。
 
-当前未提供原版 SWF，FFDec 和 Ruffle 也未安装。真实游戏提取/观察与历史数值核实仍待补齐。现有移动值全部标为 `TUNED`，不声称已经还原原版手感。
+已从原发行门户 Not Doppler 获取并校验 2012 原作 SFH1 v1.2.1，完成 FFDec 脚本/资源提取及首批代码事实核对。官方便携 FFDec、Temurin Java 和 Ruffle 位于 gitignored 的 `tools/vendor/`。现有实验室移动值仍标为 `TUNED`；原版运行观测和手感校准尚未完成。来源与已知事实见 [REFERENCE_FINDINGS.md](docs/REFERENCE_FINDINGS.md)。
 
 ## 在本机运行
 
@@ -33,9 +33,9 @@ npm run dev
 
 ## 原版研究
 
-运行 `npm run archaeology`。有参考 SWF 和 FFDec 时导出并索引；缺少时生成带明确状态的报告和导入指引。完整说明见 [ARCHAEOLOGY.md](docs/ARCHAEOLOGY.md)。严格检查使用 `npm run archaeology -- --require-reference`。
+本机可直接运行 `npm run archaeology -- --require-reference`。新环境依次运行 `npm run archaeology:acquire`、`npm run archaeology:setup`、`npm run archaeology`，分别获取固定哈希的参考文件、校验安装官方便携工具、提取并索引。日常导出保留每个 sprite 首帧，`--full-sprites` 可请求全动画帧。完整说明见 [ARCHAEOLOGY.md](docs/ARCHAEOLOGY.md)。
 
-生成物位于 gitignored 的 `archaeology/local/`。人工审核事实存于 [证据库](archaeology/reverse_engineering_db.json)；所有当前参数记录均为实验调试，不是提取的历史值。
+生成物位于 gitignored 的 `archaeology/exported/` 和 `archaeology/local/`。人工审核事实存于 [证据库](archaeology/reverse_engineering_db.json)，区分原版 `EXTRACTED`、单位换算 `INFERRED` 与实验配置 `TUNED`。不将反编译输出作为生产源代码。
 
 ## 验证与构建
 
@@ -57,4 +57,4 @@ npm run preview
 - `tools/measurements`：原版人工测量模板。
 - `docs`：架构、证据边界、调参和验收状态。
 
-详细状态见 [ACCEPTANCE.md](docs/ACCEPTANCE.md)，重要取舍见 [DECISIONS.md](docs/DECISIONS.md)。下一步先导入原版资料、验证/校准移动，再按计划进入 Phase 2 Gun Lab。没有创建远端仓库或上传研究资料。
+详细状态见 [ACCEPTANCE.md](docs/ACCEPTANCE.md)，重要取舍见 [DECISIONS.md](docs/DECISIONS.md)。下一步通过 Ruffle 原版观测及 P-code 核对，校准移动，再按计划进入 Phase 2 Gun Lab。没有创建远端仓库或上传研究资料。

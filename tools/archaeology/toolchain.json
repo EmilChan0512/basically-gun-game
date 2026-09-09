@@ -1,0 +1,17 @@
+{
+  "ffdec": {
+    "version": "26.2.1",
+    "url": "https://github.com/jindrapetrik/jpexs-decompiler/releases/download/version26.2.1/ffdec_26.2.1.zip",
+    "sha256": "0333b56998a55bd83f4e0deb678a811fcdc45607582b4f5dd438309c8c3ad5ce"
+  },
+  "java": {
+    "version": "Temurin JRE 21.0.12.1+1",
+    "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jre_x64_windows_hotspot_21.0.12.1_1.zip",
+    "sha256": "d35f31e712f0fcf6ac5a093edc90204fbff22f720ba3950bd09d331d5e621636"
+  },
+  "ruffle": {
+    "version": "nightly-2026-09-09",
+    "url": "https://github.com/ruffle-rs/ruffle/releases/download/nightly-2026-09-09/ruffle-nightly-2026_09_09-windows-x86_64.zip",
+    "sha256": "3bc8750119e46f2dac2d3678533a042e0945aacbbdae66557f21a094fa0faa0a"
+  }
+}

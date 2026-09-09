@@ -210,6 +210,438 @@
       },
       "notes": "Initial laboratory tuning; previous reference value unknown. Chosen to enable gray-box measurements, not extracted or observed from SFH. Confidence refers to historical fidelity. See docs/MOVEMENT.md.",
       "timestamp": "2026-09-09T12:30:37.162Z"
+    },
+    {
+      "id": "sfh1.v121.metadata.stageWidth",
+      "domain": "reference.metadata",
+      "key": "stageWidth",
+      "value": 800,
+      "unit": "px",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/swf/sfh1_reference.swf",
+        "locator": "RECT bytes [8,17), xmax-xmin=16000 twips; /20",
+        "sha256": "0b8d92dfae85917dd9bc0dc87997979bb825b3211d95d92f84040ffc9a1cc989"
+      },
+      "notes": "Decoded from validated SWF header; stage units, not necessarily final displayed size.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.metadata.stageHeight",
+      "domain": "reference.metadata",
+      "key": "stageHeight",
+      "value": 600,
+      "unit": "px",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/swf/sfh1_reference.swf",
+        "locator": "RECT bytes [8,17), ymax-ymin=12000 twips; /20",
+        "sha256": "0b8d92dfae85917dd9bc0dc87997979bb825b3211d95d92f84040ffc9a1cc989"
+      },
+      "notes": "Decoded from validated SWF header.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.metadata.frameRate",
+      "domain": "reference.metadata",
+      "key": "frameRate",
+      "value": 30,
+      "unit": "declared frames/s",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/swf/sfh1_reference.swf",
+        "locator": "bytes [17,19), 00 1e, UI16LE /256",
+        "sha256": "0b8d92dfae85917dd9bc0dc87997979bb825b3211d95d92f84040ffc9a1cc989"
+      },
+      "notes": "Declared timeline frame rate; actual wall-clock runtime frame rate has not been measured.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.metadata.swfVersion",
+      "domain": "reference.metadata",
+      "key": "swfVersion",
+      "value": 10,
+      "unit": "SWF format version",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/swf/sfh1_reference.swf",
+        "locator": "byte [3,4)",
+        "sha256": "0b8d92dfae85917dd9bc0dc87997979bb825b3211d95d92f84040ffc9a1cc989"
+      },
+      "notes": "Container version, not game version.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.metadata.gameVersionText",
+      "domain": "reference.metadata",
+      "key": "gameVersionText",
+      "value": "v1.2.1",
+      "unit": "text",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/swf/sfh1_reference.swf",
+        "locator": "ASCII bytes [6501677,6501683) and [8394875,8394881)",
+        "sha256": "0b8d92dfae85917dd9bc0dc87997979bb825b3211d95d92f84040ffc9a1cc989"
+      },
+      "notes": "Identity also supported by original Not Doppler page, Sky9 credit and 2012 XMP. Not proof of launch-day revision.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.movement.xAcc",
+      "domain": "reference.movement",
+      "key": "xAcc",
+      "value": 1.8,
+      "unit": "coordinate/update^2",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/exported/scripts/Movement.as",
+        "locator": "Movement.xAcc, line 54; uses: horizontal 336-396, jump 174-214, position/gravity 408-527",
+        "sha256": "9d12c06d5c2ab4f675abdbbc727cb85ce3a60bee20bcf5915899dbe955b4459f"
+      },
+      "notes": "Raw base constant; surface/state multipliers apply. Movement changes MovieClip coordinates per update. FFDec output has obfuscation artifacts; declaration and direct use were reviewed, full control flow was not recovered.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.movement.xAirAcc",
+      "domain": "reference.movement",
+      "key": "xAirAcc",
+      "value": 1.4,
+      "unit": "coordinate/update^2",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/exported/scripts/Movement.as",
+        "locator": "Movement.xAirAcc, line 60; uses: horizontal 336-396, jump 174-214, position/gravity 408-527",
+        "sha256": "9d12c06d5c2ab4f675abdbbc727cb85ce3a60bee20bcf5915899dbe955b4459f"
+      },
+      "notes": "Raw base constant; surface/state multipliers apply. Movement changes MovieClip coordinates per update. FFDec output has obfuscation artifacts; declaration and direct use were reviewed, full control flow was not recovered.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.movement.xMax",
+      "domain": "reference.movement",
+      "key": "xMax",
+      "value": 9.5,
+      "unit": "coordinate/update",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/exported/scripts/Movement.as",
+        "locator": "Movement.xMax, line 64; uses: horizontal 336-396, jump 174-214, position/gravity 408-527",
+        "sha256": "9d12c06d5c2ab4f675abdbbc727cb85ce3a60bee20bcf5915899dbe955b4459f"
+      },
+      "notes": "Raw base constant; surface/state multipliers apply. Movement changes MovieClip coordinates per update. FFDec output has obfuscation artifacts; declaration and direct use were reviewed, full control flow was not recovered.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.movement.xCrouchMax",
+      "domain": "reference.movement",
+      "key": "xCrouchMax",
+      "value": 4,
+      "unit": "coordinate/update",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/exported/scripts/Movement.as",
+        "locator": "Movement.xCrouchMax, line 66; uses: horizontal 336-396, jump 174-214, position/gravity 408-527",
+        "sha256": "9d12c06d5c2ab4f675abdbbc727cb85ce3a60bee20bcf5915899dbe955b4459f"
+      },
+      "notes": "Raw base constant; surface/state multipliers apply. Movement changes MovieClip coordinates per update. FFDec output has obfuscation artifacts; declaration and direct use were reviewed, full control flow was not recovered.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.movement.xBrake",
+      "domain": "reference.movement",
+      "key": "xBrake",
+      "value": 1.7,
+      "unit": "coordinate/update^2",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/exported/scripts/Movement.as",
+        "locator": "Movement.xBrake, line 56; uses: horizontal 336-396, jump 174-214, position/gravity 408-527",
+        "sha256": "9d12c06d5c2ab4f675abdbbc727cb85ce3a60bee20bcf5915899dbe955b4459f"
+      },
+      "notes": "Raw base constant; surface/state multipliers apply. Movement changes MovieClip coordinates per update. FFDec output has obfuscation artifacts; declaration and direct use were reviewed, full control flow was not recovered.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.movement.xCrouchBrake",
+      "domain": "reference.movement",
+      "key": "xCrouchBrake",
+      "value": 0.5,
+      "unit": "coordinate/update^2",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/exported/scripts/Movement.as",
+        "locator": "Movement.xCrouchBrake, line 58; uses: horizontal 336-396, jump 174-214, position/gravity 408-527",
+        "sha256": "9d12c06d5c2ab4f675abdbbc727cb85ce3a60bee20bcf5915899dbe955b4459f"
+      },
+      "notes": "Raw base constant; surface/state multipliers apply. Movement changes MovieClip coordinates per update. FFDec output has obfuscation artifacts; declaration and direct use were reviewed, full control flow was not recovered.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.movement.xAirBrake",
+      "domain": "reference.movement",
+      "key": "xAirBrake",
+      "value": 0.4,
+      "unit": "coordinate/update^2",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/exported/scripts/Movement.as",
+        "locator": "Movement.xAirBrake, line 62; uses: horizontal 336-396, jump 174-214, position/gravity 408-527",
+        "sha256": "9d12c06d5c2ab4f675abdbbc727cb85ce3a60bee20bcf5915899dbe955b4459f"
+      },
+      "notes": "Raw base constant; surface/state multipliers apply. Movement changes MovieClip coordinates per update. FFDec output has obfuscation artifacts; declaration and direct use were reviewed, full control flow was not recovered.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.movement.yGrav",
+      "domain": "reference.movement",
+      "key": "yGrav",
+      "value": 0.8,
+      "unit": "coordinate/update^2",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/exported/scripts/Movement.as",
+        "locator": "Movement.yGrav, line 70; uses: horizontal 336-396, jump 174-214, position/gravity 408-527",
+        "sha256": "9d12c06d5c2ab4f675abdbbc727cb85ce3a60bee20bcf5915899dbe955b4459f"
+      },
+      "notes": "Raw base constant; surface/state multipliers apply. Movement changes MovieClip coordinates per update. FFDec output has obfuscation artifacts; declaration and direct use were reviewed, full control flow was not recovered.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.movement.yMax",
+      "domain": "reference.movement",
+      "key": "yMax",
+      "value": 20,
+      "unit": "coordinate/update",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/exported/scripts/Movement.as",
+        "locator": "Movement.yMax, line 72; uses: horizontal 336-396, jump 174-214, position/gravity 408-527",
+        "sha256": "9d12c06d5c2ab4f675abdbbc727cb85ce3a60bee20bcf5915899dbe955b4459f"
+      },
+      "notes": "Raw base constant; surface/state multipliers apply. Movement changes MovieClip coordinates per update. FFDec output has obfuscation artifacts; declaration and direct use were reviewed, full control flow was not recovered.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.movement.yJump",
+      "domain": "reference.movement",
+      "key": "yJump",
+      "value": 13,
+      "unit": "coordinate/update impulse magnitude",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/exported/scripts/Movement.as",
+        "locator": "Movement.yJump, line 74; uses: horizontal 336-396, jump 174-214, position/gravity 408-527",
+        "sha256": "9d12c06d5c2ab4f675abdbbc727cb85ce3a60bee20bcf5915899dbe955b4459f"
+      },
+      "notes": "Raw base constant; surface/state multipliers apply. Movement changes MovieClip coordinates per update. FFDec output has obfuscation artifacts; declaration and direct use were reviewed, full control flow was not recovered.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.movement.yJumpBoost",
+      "domain": "reference.movement",
+      "key": "yJumpBoost",
+      "value": 6,
+      "unit": "coordinate",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/exported/scripts/Movement.as",
+        "locator": "Movement.yJumpBoost, line 76; uses: horizontal 336-396, jump 174-214, position/gravity 408-527",
+        "sha256": "9d12c06d5c2ab4f675abdbbc727cb85ce3a60bee20bcf5915899dbe955b4459f"
+      },
+      "notes": "Raw base constant; surface/state multipliers apply. Movement changes MovieClip coordinates per update. FFDec output has obfuscation artifacts; declaration and direct use were reviewed, full control flow was not recovered.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.movement.collisionModel",
+      "domain": "reference.movement",
+      "key": "collisionModel",
+      "value": "MovieClip coordinate movement with arena.wall.getPixel32 sampling",
+      "unit": "behavior",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.9,
+      "source": {
+        "file": "archaeology/exported/scripts/Movement.as",
+        "locator": "Movement.EnterFrame lines 408,441; hitTest/getPixel32 lines 750-764",
+        "sha256": "9d12c06d5c2ab4f675abdbbc727cb85ce3a60bee20bcf5915899dbe955b4459f"
+      },
+      "notes": "Character movement is not Box2D velocity integration; Box2D is separately present for physical objects. Full ledge branching remains uncertain.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.weapon.usp.baseDamage",
+      "domain": "reference.weapon.usp",
+      "key": "baseDamage",
+      "value": 15,
+      "unit": "base damage units",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/exported/scripts/Stats_Guns.as",
+        "locator": "Stats_Guns.Init line 141 argument8; addGun line1706",
+        "sha256": "405d448c44aae8c5264020918e71d40497fbefc80c9992de02d8a6c4e3aee97c"
+      },
+      "notes": "Base weapon definition only; actual resolved damage can include modifiers.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.weapon.usp.clipSize",
+      "domain": "reference.weapon.usp",
+      "key": "clipSize",
+      "value": 12,
+      "unit": "rounds",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.9,
+      "source": {
+        "file": "archaeology/exported/scripts/Stats_Guns.as",
+        "locator": "Init line141 argument13; addGun lines1711-1717; Guns.as184 uses secondary.clipSize",
+        "sha256": "405d448c44aae8c5264020918e71d40497fbefc80c9992de02d8a6c4e3aee97c"
+      },
+      "notes": "Argument to clipSize is traceable through local stack pseudocode; no runtime firing observation yet.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.weapon.usp.autoFire",
+      "domain": "reference.weapon.usp",
+      "key": "autoFire",
+      "value": false,
+      "unit": "boolean",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/exported/scripts/Stats_Guns.as",
+        "locator": "Init line141 argument17; addGun line1721; Guns.as549-551",
+        "sha256": "405d448c44aae8c5264020918e71d40497fbefc80c9992de02d8a6c4e3aee97c"
+      },
+      "notes": "Human firing uses a shotPressed gate when autoFire is false.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.weapon.usp.shootDelayConfig",
+      "domain": "reference.weapon.usp",
+      "key": "shootDelayConfig",
+      "value": 0.25,
+      "unit": "configuration scalar",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/exported/scripts/Stats_Guns.as",
+        "locator": "Init line141 argument18; addGun line1722; Guns.as57,383-387,599",
+        "sha256": "405d448c44aae8c5264020918e71d40497fbefc80c9992de02d8a6c4e3aee97c"
+      },
+      "notes": "Guns stores shootDelay as uint after multiplying this scalar by30, then decrements per update. Do not equate configuration scalar to measured shot interval or naively convert it to RPM.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.match.respawnTimerInitial",
+      "domain": "reference.match",
+      "key": "respawnTimerInitial",
+      "value": 150,
+      "unit": "updates",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/exported/scripts/Unit.as",
+        "locator": "Unit death path line903:30*5; Player.as144-158 decrements and displays /30",
+        "sha256": "2078802472a2d193f586e03d5a180bd212322bbf2df64f58f424eaa196482561"
+      },
+      "notes": "Nominal five seconds at declared30fps; actual wall-clock respawn timing has not been observed.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.normalized.maxRunSpeed",
+      "domain": "reference.normalized",
+      "key": "maxRunSpeed",
+      "value": 285,
+      "unit": "coordinate/s",
+      "evidenceType": "INFERRED",
+      "confidence": 0.75,
+      "source": {
+        "file": "archaeology/exported/scripts/Movement.as",
+        "locator": "Movement.xMax; metadata frameRate at sfh1.v121.metadata.frameRate",
+        "sha256": "9d12c06d5c2ab4f675abdbbc727cb85ce3a60bee20bcf5915899dbe955b4459f"
+      },
+      "notes": "9.5*30. Inferred continuous-rate equivalent assuming stable30 updates/s, base surface multipliers and unchanged coordinate scale. Does not reproduce discrete order, initial6-coordinate jump boost or ledge logic. Runtime TUNED config intentionally unchanged.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.normalized.runAcceleration",
+      "domain": "reference.normalized",
+      "key": "runAcceleration",
+      "value": 1620,
+      "unit": "coordinate/s^2",
+      "evidenceType": "INFERRED",
+      "confidence": 0.75,
+      "source": {
+        "file": "archaeology/exported/scripts/Movement.as",
+        "locator": "Movement.xAcc; metadata frameRate at sfh1.v121.metadata.frameRate",
+        "sha256": "9d12c06d5c2ab4f675abdbbc727cb85ce3a60bee20bcf5915899dbe955b4459f"
+      },
+      "notes": "1.8*30^2. Inferred continuous-rate equivalent assuming stable30 updates/s, base surface multipliers and unchanged coordinate scale. Does not reproduce discrete order, initial6-coordinate jump boost or ledge logic. Runtime TUNED config intentionally unchanged.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.normalized.airAcceleration",
+      "domain": "reference.normalized",
+      "key": "airAcceleration",
+      "value": 1260,
+      "unit": "coordinate/s^2",
+      "evidenceType": "INFERRED",
+      "confidence": 0.75,
+      "source": {
+        "file": "archaeology/exported/scripts/Movement.as",
+        "locator": "Movement.xAirAcc; metadata frameRate at sfh1.v121.metadata.frameRate",
+        "sha256": "9d12c06d5c2ab4f675abdbbc727cb85ce3a60bee20bcf5915899dbe955b4459f"
+      },
+      "notes": "1.4*30^2. Inferred continuous-rate equivalent assuming stable30 updates/s, base surface multipliers and unchanged coordinate scale. Does not reproduce discrete order, initial6-coordinate jump boost or ledge logic. Runtime TUNED config intentionally unchanged.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.normalized.gravity",
+      "domain": "reference.normalized",
+      "key": "gravity",
+      "value": 720,
+      "unit": "coordinate/s^2",
+      "evidenceType": "INFERRED",
+      "confidence": 0.75,
+      "source": {
+        "file": "archaeology/exported/scripts/Movement.as",
+        "locator": "Movement.yGrav; metadata frameRate at sfh1.v121.metadata.frameRate",
+        "sha256": "9d12c06d5c2ab4f675abdbbc727cb85ce3a60bee20bcf5915899dbe955b4459f"
+      },
+      "notes": "0.8*30^2. Inferred continuous-rate equivalent assuming stable30 updates/s, base surface multipliers and unchanged coordinate scale. Does not reproduce discrete order, initial6-coordinate jump boost or ledge logic. Runtime TUNED config intentionally unchanged.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.normalized.jumpImpulse",
+      "domain": "reference.normalized",
+      "key": "jumpImpulse",
+      "value": 390,
+      "unit": "coordinate/s",
+      "evidenceType": "INFERRED",
+      "confidence": 0.75,
+      "source": {
+        "file": "archaeology/exported/scripts/Movement.as",
+        "locator": "Movement.yJump; metadata frameRate at sfh1.v121.metadata.frameRate",
+        "sha256": "9d12c06d5c2ab4f675abdbbc727cb85ce3a60bee20bcf5915899dbe955b4459f"
+      },
+      "notes": "13*30. Inferred continuous-rate equivalent assuming stable30 updates/s, base surface multipliers and unchanged coordinate scale. Does not reproduce discrete order, initial6-coordinate jump boost or ledge logic. Runtime TUNED config intentionally unchanged.",
+      "timestamp": "2026-09-09T12:50:48.154Z"
     }
   ]
 }

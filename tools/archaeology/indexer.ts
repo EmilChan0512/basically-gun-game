@@ -32,7 +32,8 @@ export function scanScript(text: string, file: string) {
   const constants = [...code.matchAll(/\b(const|var)\s+(\w+)\s*(?::\s*[\w.<>]+)?\s*=\s*([^;\n]+)/g)]
     .map(m => ({ name: m[2], expression: m[3].trim(), declaration: m[1], line: line(m.index!), evidenceType: 'INFERRED', confidence: 0.35 }));
   const hits = Object.fromEntries(concepts.map(key => [key, [...code.matchAll(patterns[key])].map(m => ({ token: m[0], line: line(m.index!) }))]));
-  return { file, sha256: createHash('sha256').update(text).digest('hex'), packages, classes, imports, constants, concepts: hits, likelyGameplay: Object.values(hits).some(v => v.length > 0) };
+  const decompilerArtifactCount = (text.match(/§§/g) || []).length;
+  return { file, sha256: createHash('sha256').update(text).digest('hex'), packages, classes, imports, constants, concepts: hits, likelyGameplay: Object.values(hits).some(v => v.length > 0), decompilerArtifactCount, requiresBytecodeReview: decompilerArtifactCount > 0 };
 }
 export async function buildInventory(root: string) {
   const scripts = await Promise.all((await filesUnder(root)).filter(f => f.toLowerCase().endsWith('.as')).map(async f => scanScript(await readFile(f, 'utf8'), path.relative(root, f).replaceAll('\\', '/'))));
