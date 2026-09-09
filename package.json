@@ -1,0 +1,34 @@
+{
+  "name": "project-strike",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "archaeology": "tsx tools/archaeology/cli.ts pipeline",
+    "archaeology:index": "tsx tools/archaeology/cli.ts index",
+    "archaeology:validate": "tsx tools/archaeology/cli.ts validate",
+    "reference": "tsx tools/archaeology/cli.ts reference",
+    "test": "vitest run",
+    "test:gameplay": "playwright test",
+    "check": "npm run archaeology:validate && npm run hygiene && npm run test && npm run build",
+    "hygiene": "tsx tools/archaeology/hygiene.ts"
+  },
+  "dependencies": {
+    "phaser": "^3.90.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^22.18.0",
+    "ajv": "^8.17.1",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.5",
+    "vitest": "^4.1.11"
+  }
+}

@@ -1,0 +1,215 @@
+{
+  "schemaVersion": 1,
+  "records": [
+    {
+      "id": "movement.runAcceleration.initial",
+      "domain": "movement",
+      "key": "runAcceleration",
+      "value": 2200,
+      "unit": "px/s^2",
+      "evidenceType": "TUNED",
+      "confidence": 0.1,
+      "source": {
+        "file": "src/game/config/movement.ts",
+        "locator": "defaults.runAcceleration"
+      },
+      "notes": "Initial laboratory tuning; previous reference value unknown. Chosen to enable gray-box measurements, not extracted or observed from SFH. Confidence refers to historical fidelity. See docs/MOVEMENT.md.",
+      "timestamp": "2026-09-09T12:30:37.162Z"
+    },
+    {
+      "id": "movement.maxRunSpeed.initial",
+      "domain": "movement",
+      "key": "maxRunSpeed",
+      "value": 290,
+      "unit": "px/s",
+      "evidenceType": "TUNED",
+      "confidence": 0.1,
+      "source": {
+        "file": "src/game/config/movement.ts",
+        "locator": "defaults.maxRunSpeed"
+      },
+      "notes": "Initial laboratory tuning; previous reference value unknown. Chosen to enable gray-box measurements, not extracted or observed from SFH. Confidence refers to historical fidelity. See docs/MOVEMENT.md.",
+      "timestamp": "2026-09-09T12:30:37.162Z"
+    },
+    {
+      "id": "movement.groundDeceleration.initial",
+      "domain": "movement",
+      "key": "groundDeceleration",
+      "value": 2600,
+      "unit": "px/s^2",
+      "evidenceType": "TUNED",
+      "confidence": 0.1,
+      "source": {
+        "file": "src/game/config/movement.ts",
+        "locator": "defaults.groundDeceleration"
+      },
+      "notes": "Initial laboratory tuning; previous reference value unknown. Chosen to enable gray-box measurements, not extracted or observed from SFH. Confidence refers to historical fidelity. See docs/MOVEMENT.md.",
+      "timestamp": "2026-09-09T12:30:37.162Z"
+    },
+    {
+      "id": "movement.airAcceleration.initial",
+      "domain": "movement",
+      "key": "airAcceleration",
+      "value": 1000,
+      "unit": "px/s^2",
+      "evidenceType": "TUNED",
+      "confidence": 0.1,
+      "source": {
+        "file": "src/game/config/movement.ts",
+        "locator": "defaults.airAcceleration"
+      },
+      "notes": "Initial laboratory tuning; previous reference value unknown. Chosen to enable gray-box measurements, not extracted or observed from SFH. Confidence refers to historical fidelity. See docs/MOVEMENT.md.",
+      "timestamp": "2026-09-09T12:30:37.162Z"
+    },
+    {
+      "id": "movement.jumpVelocity.initial",
+      "domain": "movement",
+      "key": "jumpVelocity",
+      "value": 520,
+      "unit": "px/s",
+      "evidenceType": "TUNED",
+      "confidence": 0.1,
+      "source": {
+        "file": "src/game/config/movement.ts",
+        "locator": "defaults.jumpVelocity"
+      },
+      "notes": "Initial laboratory tuning; previous reference value unknown. Chosen to enable gray-box measurements, not extracted or observed from SFH. Confidence refers to historical fidelity. See docs/MOVEMENT.md.",
+      "timestamp": "2026-09-09T12:30:37.162Z"
+    },
+    {
+      "id": "movement.gravity.initial",
+      "domain": "movement",
+      "key": "gravity",
+      "value": 1500,
+      "unit": "px/s^2",
+      "evidenceType": "TUNED",
+      "confidence": 0.1,
+      "source": {
+        "file": "src/game/config/movement.ts",
+        "locator": "defaults.gravity"
+      },
+      "notes": "Initial laboratory tuning; previous reference value unknown. Chosen to enable gray-box measurements, not extracted or observed from SFH. Confidence refers to historical fidelity. See docs/MOVEMENT.md.",
+      "timestamp": "2026-09-09T12:30:37.162Z"
+    },
+    {
+      "id": "movement.maxFallSpeed.initial",
+      "domain": "movement",
+      "key": "maxFallSpeed",
+      "value": 800,
+      "unit": "px/s",
+      "evidenceType": "TUNED",
+      "confidence": 0.1,
+      "source": {
+        "file": "src/game/config/movement.ts",
+        "locator": "defaults.maxFallSpeed"
+      },
+      "notes": "Initial laboratory tuning; previous reference value unknown. Chosen to enable gray-box measurements, not extracted or observed from SFH. Confidence refers to historical fidelity. See docs/MOVEMENT.md.",
+      "timestamp": "2026-09-09T12:30:37.162Z"
+    },
+    {
+      "id": "movement.coyoteTimeMs.initial",
+      "domain": "movement",
+      "key": "coyoteTimeMs",
+      "value": 65,
+      "unit": "ms",
+      "evidenceType": "TUNED",
+      "confidence": 0.1,
+      "source": {
+        "file": "src/game/config/movement.ts",
+        "locator": "defaults.coyoteTimeMs"
+      },
+      "notes": "Initial laboratory tuning; previous reference value unknown. Chosen to enable gray-box measurements, not extracted or observed from SFH. Confidence refers to historical fidelity. See docs/MOVEMENT.md.",
+      "timestamp": "2026-09-09T12:30:37.162Z"
+    },
+    {
+      "id": "movement.jumpBufferMs.initial",
+      "domain": "movement",
+      "key": "jumpBufferMs",
+      "value": 75,
+      "unit": "ms",
+      "evidenceType": "TUNED",
+      "confidence": 0.1,
+      "source": {
+        "file": "src/game/config/movement.ts",
+        "locator": "defaults.jumpBufferMs"
+      },
+      "notes": "Initial laboratory tuning; previous reference value unknown. Chosen to enable gray-box measurements, not extracted or observed from SFH. Confidence refers to historical fidelity. See docs/MOVEMENT.md.",
+      "timestamp": "2026-09-09T12:30:37.162Z"
+    },
+    {
+      "id": "movement.maxStepHeight.initial",
+      "domain": "movement",
+      "key": "maxStepHeight",
+      "value": 18,
+      "unit": "px",
+      "evidenceType": "TUNED",
+      "confidence": 0.1,
+      "source": {
+        "file": "src/game/config/movement.ts",
+        "locator": "defaults.maxStepHeight"
+      },
+      "notes": "Initial laboratory tuning; previous reference value unknown. Chosen to enable gray-box measurements, not extracted or observed from SFH. Confidence refers to historical fidelity. See docs/MOVEMENT.md.",
+      "timestamp": "2026-09-09T12:30:37.162Z"
+    },
+    {
+      "id": "movement.stepProbe.initial",
+      "domain": "movement",
+      "key": "stepProbe",
+      "value": 5,
+      "unit": "px",
+      "evidenceType": "TUNED",
+      "confidence": 0.1,
+      "source": {
+        "file": "src/game/config/movement.ts",
+        "locator": "defaults.stepProbe"
+      },
+      "notes": "Initial laboratory tuning; previous reference value unknown. Chosen to enable gray-box measurements, not extracted or observed from SFH. Confidence refers to historical fidelity. See docs/MOVEMENT.md.",
+      "timestamp": "2026-09-09T12:30:37.162Z"
+    },
+    {
+      "id": "movement.dropThroughMs.initial",
+      "domain": "movement",
+      "key": "dropThroughMs",
+      "value": 200,
+      "unit": "ms",
+      "evidenceType": "TUNED",
+      "confidence": 0.1,
+      "source": {
+        "file": "src/game/config/movement.ts",
+        "locator": "defaults.dropThroughMs"
+      },
+      "notes": "Initial laboratory tuning; previous reference value unknown. Chosen to enable gray-box measurements, not extracted or observed from SFH. Confidence refers to historical fidelity. See docs/MOVEMENT.md.",
+      "timestamp": "2026-09-09T12:30:37.162Z"
+    },
+    {
+      "id": "movement.bodyWidth.initial",
+      "domain": "movement",
+      "key": "bodyWidth",
+      "value": 22,
+      "unit": "px",
+      "evidenceType": "TUNED",
+      "confidence": 0.1,
+      "source": {
+        "file": "src/game/config/movement.ts",
+        "locator": "defaults.bodyWidth"
+      },
+      "notes": "Initial laboratory tuning; previous reference value unknown. Chosen to enable gray-box measurements, not extracted or observed from SFH. Confidence refers to historical fidelity. See docs/MOVEMENT.md.",
+      "timestamp": "2026-09-09T12:30:37.162Z"
+    },
+    {
+      "id": "movement.bodyHeight.initial",
+      "domain": "movement",
+      "key": "bodyHeight",
+      "value": 38,
+      "unit": "px",
+      "evidenceType": "TUNED",
+      "confidence": 0.1,
+      "source": {
+        "file": "src/game/config/movement.ts",
+        "locator": "defaults.bodyHeight"
+      },
+      "notes": "Initial laboratory tuning; previous reference value unknown. Chosen to enable gray-box measurements, not extracted or observed from SFH. Confidence refers to historical fidelity. See docs/MOVEMENT.md.",
+      "timestamp": "2026-09-09T12:30:37.162Z"
+    }
+  ]
+}
