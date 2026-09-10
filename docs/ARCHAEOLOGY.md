@@ -1,5 +1,37 @@
 # Phase 0 本地考古流程
 
+## 2026-09-10 macOS恢复与第三批核对
+
+本次新工作区只有Git追踪内容，`archaeology/swf`、`exported`、`local`和`tools/vendor`中的既有研究产物并未随仓库迁移。以下“本机已有”描述属于上一次执行现场。已运行`npm ci`、`npm run archaeology:acquire`，再次取得同一固定哈希SWF；这不是新的版本基线。
+
+本次工具：FFDec 26.2.1（沿用`toolchain.json`的ZIP及SHA256）；Temurin JRE 21.0.12.1+1 macOS aarch64便携包；Ruffle web 0.6.0。JRE来源为官方[发布包](https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jre_aarch64_mac_hotspot_21.0.12.1_1.tar.gz)，SHA256 `dec50fc6f9fcd4fe3ae8cabf5a5fa68f6afc48841f7698e468e9aa5d54beed84`，下载与校验后解包至`tools/vendor/java`，不修改全局Java。现有`setup.ps1`清单仍是Windows版本，不应在macOS直接执行。
+
+在本次已恢复的macOS环境，可重复导出：
+
+```sh
+tools/vendor/java/jdk-21.0.12.1+1-jre/Contents/Home/bin/java \
+  -Djava.awt.headless=true -jar tools/vendor/ffdec/ffdec.jar -onerror abort \
+  -selectclass 'Guns,Stats_Guns,Player,UnitMC,Bullet,Bullet_Line_Basic,Stats_Classes,Unit,Game,Movement,MBFZ_fla.arm_gun_316' \
+  -format script:pcode -export script archaeology/local/phase3-pcode archaeology/swf/sfh1_reference.swf
+```
+
+本轮共定向导出11类，AS导出将格式改为`script:as`、输出改为`archaeology/exported`。不是全量491脚本恢复；如对当前目录重新索引，脚本数反映这次定向导出的范围，不能抄用历史全量统计。通用CLI调用JAR时在macOS显式传`--java tools/vendor/java/jdk-21.0.12.1+1-jre/Contents/Home/bin/java`，因为当前自动发现仍优先寻找`java.exe`。
+
+本机npm镜像返回Ruffle版本不存在，显式官方registry成功取得固定版本：
+
+```sh
+mkdir -p tools/vendor/ruffle-web
+npm pack @ruffle-rs/ruffle@0.6.0 --registry=https://registry.npmjs.org --pack-destination tools/vendor/ruffle-web
+tar -xzf tools/vendor/ruffle-web/ruffle-rs-ruffle-0.6.0.tgz -C tools/vendor/ruffle-web
+node tools/archaeology/reference-browser.mjs
+```
+
+新建本地Player存档，实际进入Foundry / Deathmatch / FFA / Very Easy，关闭Skills与Killstreaks，Modifier None。默认Medic等级1、85HP、M4备用78，暂停画面可复查。只做了HUD初查，没有归档录像或计时采样，不新增OBSERVED记录。运行笔记见`archaeology/local/phase3-observation-macos.md`。
+
+第二批核对内容为M4配置、射击计数与更新顺序、扳机锁、Medic等级1弹药因子。第三批直接读取`archaeology/exported/scripts/MBFZ_fla/arm_gun_316.as`、`UnitMC.as`和`Guns.as`，并以只读脚本解析固定SWF的DefineSprite 501嵌套`FrameLabel`：`pistol_reload`位于第9帧、`doneReload`位于第37帧；`rifle_reload`位于第81帧、`doneReload`位于第115帧。标签差值分别为28/34次动画推进。
+
+第三批新增2条EXTRACTED证据，当前合计57条：34 EXTRACTED、7 INFERRED、16 TUNED、0 OBSERVED。跨`ENTER_FRAME`与时间线帧脚本的同帧执行先后未从这些方法体确定，不升级为OBSERVED；范围与哈希见[行为对照表](ORIGINAL_BEHAVIOR_MATRIX.md)。
+
 ## 2026-09-10 Phase 3 研究入口
 
 本轮已导出6个相关类的P-code，并将6条经审核的弹药/换弹/切枪事实写入证据库。对照表见 [ORIGINAL_BEHAVIOR_MATRIX.md](ORIGINAL_BEHAVIOR_MATRIX.md)。可重复导出命令：

@@ -1,10 +1,10 @@
 # Project Strike
 
-2026-09-10：已开始按原版SWF执行Phase 3，完成首批弹药/换弹/切枪规则修正；本次32个单元测试、11个Chromium测试通过。详见 [原版行为对照表](docs/ORIGINAL_BEHAVIOR_MATRIX.md) 和 [复刻对照报告](docs/REPLICA_COMPARISON.md)。本机运行 `node tools/archaeology/reference-browser.mjs` 后可打开 http://127.0.0.1:4180 对照原版，安装步骤见 [考古流程](docs/ARCHAEOLOGY.md)。
+2026-09-10：Phase 3 已完成第三批静态规则推进。除 M4、30Hz 射击计数和扳机锁外，本轮直接解析原版 SWF 的 `arm_gun_316` 时间线并交叉核对 FFDec 反编译源码，将 USP/M4 换弹改为 28/34 个动画帧推进。本次 43 个单元测试、14 个 Chromium 测试通过。详见 [原版行为对照表](docs/ORIGINAL_BEHAVIOR_MATRIX.md) 和 [复刻对照报告](docs/REPLICA_COMPARISON.md)。
 
-实验室已加入有限备用弹药和空弹匣自动换弹；Q切枪保留弹药与共享冷却并取消换弹；L手动换弹需等射击冷却结束。USP备用弹匣数来自原版，但当前实验角色使用弹药倍率1，时长/瞄准仍待校准，CARBINE仍为实验武器。
+实验室已加入有限备用弹药和空弹匣自动换弹；Q 切枪保留弹药与共享射击计数并取消换弹；L 手动换弹需等射击计数归零。USP 与 M4 的基础配置及换弹动画跨度来自原版静态证据，当前实验角色仍使用显式弹药倍率 1；瞄准、射程、弹道和完成帧跨事件排序仍待校准。
 
-按照 `Project_Strike_Codex_Development_Plan.docx` 第 15 节，交付 **Phase 0 可执行考古工具链 + Phase 1 Movement Lab**。这是本地运行、可测量的灰盒移动实验室；Phase 2 Gun Lab 已加入 USP、CARBINE、射线、弹药、换弹、伤害和复活闭环；3v3、机器人和进度系统属于后续阶段。
+按照 `Project_Strike_Codex_Development_Plan.docx` 第 15 节，已交付 **Phase 0 可执行考古工具链 + Phase 1 Movement Lab + Phase 2 Gun Lab 灰盒闭环**，并进入 Phase 3 原版对照。当前 Gun Lab 包含 USP、M4、射线、弹药、换弹、伤害和复活闭环；3v3、机器人和进度系统属于后续阶段。
 
 已从原发行门户 Not Doppler 获取并校验 2012 原作 SFH1 v1.2.1，完成 FFDec 脚本/资源提取及首批代码事实核对。官方便携 FFDec、Temurin Java 和 Ruffle 位于 gitignored 的 `tools/vendor/`。现有实验室移动值仍标为 `TUNED`；原版运行观测和手感校准尚未完成。来源与已知事实见 [REFERENCE_FINDINGS.md](docs/REFERENCE_FINDINGS.md)。
 
@@ -33,7 +33,7 @@ npm run dev
 | 0.25 倍慢速 | T |
 | 碰撞体、速度、台阶辅助范围、瞄准线、HUD | H |
 
-F 开火，Q 切换 USP/CARBINE，按住 F 自动连射，L 换弹。右侧滑块实时调参。完成起跳和落地后，底部显示高度、顶点时间、总滞空和水平距离；可以导出 JSON。失去窗口焦点清空输入，掉入缺口自动重置。平台只允许从上方落脚；地形中的 28 px 台阶超过默认辅助高度，需要跳跃。
+F 开火，Q 切换 USP/M4，按住 F 时 M4 自动连射，L 换弹。右侧滑块实时调参。完成起跳和落地后，底部显示高度、顶点时间、总滞空和水平距离；可以导出 JSON。失去窗口焦点清空输入，掉入缺口自动重置。平台只允许从上方落脚；地形中的 28 px 台阶超过默认辅助高度，需要跳跃。
 
 ## 原版研究
 

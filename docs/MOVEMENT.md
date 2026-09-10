@@ -1,5 +1,7 @@
 # Movement Lab 参数与偏差
 
+2026-09-10 Phase 3第二批：移动与碰撞仍按120Hz运行，本轮未修改移动默认值。射击改为每4个物理步推进1个30Hz战斗步，并在该步先尝试射击再递减计数。暂停/慢速沿用同一仿真时间；单步只推进1/120秒。此调整不代表Movement、攀爬、平台或角色姿态已与原版对齐，连续运动容差仍待原版测量后预先锁定。
+
 实验权威配置：`src/game/config/movement.ts`。本表每一数值对应 `archaeology/reverse_engineering_db.json` 中的 `movement.<key>.initial` 记录；类型统一为 **TUNED**，confidence 0.1 表示与原版一致性的置信度很低，不是软件运行正确率。原版现已有 EXTRACTED 常量和单独 INFERRED 量纲换算，见 REFERENCE_FINDINGS.md 与 `sfh1.v121.movement.*`。本表仍保持此前实验配置，等待运行观测校准；尚无原版 OBSERVED 测量记录。
 
 | key | 初始值 | 单位 | evidence id |

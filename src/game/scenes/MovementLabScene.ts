@@ -20,9 +20,7 @@ export class MovementLabScene extends Phaser.Scene {
   simTime = 0;
   private accumulator = 0;
   private pendingJump = false;
-  private pendingFire = false;
   private mouseHeld = false;
-  private fireBlockedUntilRelease = false;
   private singleSteps = 0;
   private keys = new Set<string>();
   private overlay!: Phaser.GameObjects.Graphics;
@@ -79,31 +77,29 @@ export class MovementLabScene extends Phaser.Scene {
       if (event.code === 'KeyP') this.togglePause();
       if (event.code === 'KeyT') this.slow = !this.slow;
       if (event.code === 'KeyH') this.debugVisible = !this.debugVisible;
-      if (event.code === 'KeyF' && !this.paused && !this.fireBlockedUntilRelease) this.pendingFire = true;
+      if (event.code === 'KeyF' && !this.paused) this.syncTrigger();
       if (event.code === 'KeyL' && !this.paused) this.gunLab.gun.reload();
       if (event.code === 'KeyQ' && !this.paused) {
-        this.gunLab.select(this.gunLab.weapon.id === 'usp' ? 'carbine' : 'usp');
-        this.fireBlockedUntilRelease = this.keys.has('KeyF') || this.mouseHeld;
-        this.pendingFire = false;
+        this.gunLab.select(this.gunLab.weapon.id === 'usp' ? 'm4' : 'usp');
       }
       if (event.code === 'Period') this.step();
       if (/^Digit[1-4]$/.test(event.code)) this.reset(Number(event.code.slice(-1)) - 1);
     };
     const up = (event: KeyboardEvent) => {
       this.keys.delete(event.code);
-      if (!this.keys.has('KeyF') && !this.mouseHeld) this.fireBlockedUntilRelease = false;
+      this.syncTrigger();
     };
-    const blur = () => { this.keys.clear(); this.pendingJump = false; this.pendingFire = false; this.mouseHeld = false; this.fireBlockedUntilRelease = false; };
+    const blur = () => { this.keys.clear(); this.pendingJump = false; this.mouseHeld = false; this.gunLab.setTrigger(false); };
     window.addEventListener('keydown', down); window.addEventListener('keyup', up); window.addEventListener('blur', blur);
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (pointer.leftButtonDown()) {
         this.mouseHeld = true;
-        if (!this.paused && !this.fireBlockedUntilRelease) this.pendingFire = true;
+        if (!this.paused) this.syncTrigger();
       }
     });
     const pointerUp = () => {
       this.mouseHeld = false;
-      if (!this.keys.has('KeyF')) this.fireBlockedUntilRelease = false;
+      this.syncTrigger();
     };
     this.input.on('pointerup', pointerUp);
     this.input.on('pointerupoutside', pointerUp);
@@ -117,11 +113,12 @@ export class MovementLabScene extends Phaser.Scene {
     const point = stations[this.station];
     this.soldier.reset(point.x, point.y);
     this.keys.clear(); this.pendingJump = false; this.accumulator = 0; this.singleSteps = 0;
-    this.pendingFire = false; this.mouseHeld = false; this.fireBlockedUntilRelease = false;
+    this.mouseHeld = false; this.gunLab.setTrigger(false);
     this.measurements.reset();
     this.cameras.main.centerOn(point.x, 405);
   }
-  togglePause() { this.paused = !this.paused; this.accumulator = 0; this.pendingJump = false; this.pendingFire = false; }
+  togglePause() { this.paused = !this.paused; this.accumulator = 0; this.pendingJump = false; }
+  private syncTrigger() { this.gunLab.setTrigger(!this.paused && (this.keys.has('KeyF') || this.mouseHeld)); }
   step() { this.paused = true; this.singleSteps++; }
   snapshot() {
     const b = this.soldier.body;
@@ -137,9 +134,8 @@ export class MovementLabScene extends Phaser.Scene {
     // Synchronize each fixed step, rather than accumulating body deltas across render frames.
     this.physics.world.postUpdate();
     this.simTime += dt;
-    this.gunLab.tick(dt * 1000, this.simTime * 1000);
-    if (!this.fireBlockedUntilRelease && (this.pendingFire || ((this.keys.has('KeyF') || this.mouseHeld) && this.gunLab.weapon.automatic))) this.fire();
-    this.pendingFire = false;
+    const aim = this.input.activePointer.positionToCamera(this.cameras.main) as Phaser.Math.Vector2;
+    this.gunLab.tick(dt * 1000, this.simTime * 1000, { x: this.soldier.body.center.x, y: this.soldier.body.center.y }, aim);
     this.measurements.tick(this.simTime, this.soldier.body.center.x, this.soldier.body.bottom, this.soldier.grounded);
     if (this.soldier.body.y > simulation.respawnY) this.reset();
   }
@@ -159,7 +155,6 @@ export class MovementLabScene extends Phaser.Scene {
     this.telemetryTimer += deltaMs;
     if (this.telemetryTimer > 75) { this.telemetryTimer = 0; window.dispatchEvent(new CustomEvent('strike-telemetry', { detail: this.snapshot() })); }
   }
-  private fire() { const p = this.input.activePointer.positionToCamera(this.cameras.main) as Phaser.Math.Vector2; this.gunLab.fire(this.simTime * 1000, { x: this.soldier.body.center.x, y: this.soldier.body.center.y }, { x: p.x, y: p.y }); }
   private drawTarget() {
     const s = this.gunLab.snapshot(); this.targetArt.clear();
     this.targetArt.fillStyle(s.alive ? 0xd66e67 : 0x4b555b, .95).fillCircle(this.targetX, this.targetY, 24);
@@ -178,12 +173,13 @@ export class MovementLabScene extends Phaser.Scene {
     this.overlay.lineStyle(1, 0xd6ee67).strokeCircle(pointer.x, pointer.y, 6);
     const c = this.config;
     this.hud.setText([
-      `${this.paused ? 'PAUSED' : this.slow ? 'SLOW 0.25x' : 'LIVE'}  |  120 Hz  |  ${this.snapshot().state}`,
+      `${this.paused ? 'PAUSED' : this.slow ? 'SLOW 0.25x' : 'LIVE'}  |  MOVE 120 Hz / GUN 30 Hz  |  ${this.snapshot().state}`,
       `x ${b.center.x.toFixed(1)}  y ${b.center.y.toFixed(1)}  vx ${b.velocity.x.toFixed(1)}  vy ${b.velocity.y.toFixed(1)}  ground ${this.soldier.grounded}`,
       `TUNED: accel ${c.runAcceleration}  decel ${c.groundDeceleration}  speed ${c.maxRunSpeed}  air ${c.airAcceleration}`,
       `jump ${c.jumpVelocity}  gravity ${c.gravity}  fall ${c.maxFallSpeed}  step ${c.maxStepHeight}/${c.stepProbe}px`,
       `coyote ${c.coyoteTimeMs}ms  buffer ${c.jumpBufferMs}ms  drop ${c.dropThroughMs}ms  body ${c.bodyWidth}x${c.bodyHeight}`,
-      `weapon ${this.gunLab.weapon.id.toUpperCase()}  ammo ${this.gunLab.gun.ammo}/${this.gunLab.weapon.magazineSize} + ${this.gunLab.gun.reserveAmmo} reserve  reload ${this.gunLab.gun.reloadMs.toFixed(0)}ms  target ${this.gunLab.target.health}hp  score ${this.gunLab.score}`,
+      `weapon ${this.gunLab.weapon.id.toUpperCase()}  ammo ${this.gunLab.gun.ammo}/${this.gunLab.weapon.magazineSize} + ${this.gunLab.gun.reserveAmmo} reserve  reload ${this.gunLab.gun.reloadFrames}f  target ${this.gunLab.target.health}hp  score ${this.gunLab.score}`,
+      `ammo multiplier ${this.gunLab.ammoMultiplier}  delay ${this.gunLab.gun.cooldownFrames} ticks  EXTRACTED: reload frames  TUNED: range / aim`,
     ]);
   }
 }
