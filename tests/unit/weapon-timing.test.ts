@@ -1,0 +1,3 @@
+import { describe, expect, it } from 'vitest';
+import { CARBINE, GunController, USP } from '../../src/game/combat/Combat';
+describe('weapon timing', () => { it('supports automatic carbine cadence', () => { const g = new GunController(CARBINE); expect(g.fire('p', null, 0)).toBeNull(); expect(g.ammo).toBe(29); expect(g.fire('p', null, 1)).toBeNull(); g.tick(100); expect(g.fire('p', null, 100)).toBeNull(); }); it('uses explicit reload timing', () => { const g = new GunController(USP); g.fire('p', null, 0); g.tick(250); expect(g.reload()).toBe(true); expect(g.ammo).toBe(11); g.tick(899); expect(g.ammo).toBe(11); g.tick(1); expect(g.ammo).toBe(12); }); });

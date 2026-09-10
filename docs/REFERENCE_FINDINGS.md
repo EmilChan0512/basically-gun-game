@@ -1,5 +1,7 @@
 # SFH1 v1.2.1 参考来源与首轮发现
 
+2026-09-10更新：已导出6个战斗相关类的P-code，新增6条经过审核的原版弹药规则（证据库现有28条EXTRACTED），详见 [ORIGINAL_BEHAVIOR_MATRIX.md](ORIGINAL_BEHAVIOR_MATRIX.md)。本轮已通过Ruffle web 0.6.0进入Foundry快速比赛并读取Medic等级1/USP等HUD；未完成录像计时或移动对照，不将初查提升为完整OBSERVED基线。下文“未完成实际对局”为首轮历史状态。
+
 2026-09-09 从原发行门户 [Not Doppler 的 Strike Force Heroes 页面](https://www.notdoppler.com/strikeforceheroes.php)主动获取参考文件。页面明确署名 Sky9 Games，描述 15 个战役任务与 65 种以上武器，并将 SFH2、SFH3 单列链接。实际下载地址是 [门户嵌入 SWF](https://i.notdoppler.com/files/strikeforceheroes.swf?2017july3)。
 
 - 本地默认入口：`archaeology/swf/sfh1_reference.swf`，18,625,489 字节。

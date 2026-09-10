@@ -642,6 +642,128 @@
       },
       "notes": "13*30. Inferred continuous-rate equivalent assuming stable30 updates/s, base surface multipliers and unchanged coordinate scale. Does not reproduce discrete order, initial6-coordinate jump boost or ledge logic. Runtime TUNED config intentionally unchanged.",
       "timestamp": "2026-09-09T12:50:48.154Z"
+    },
+    {
+      "id": "sfh1.v121.weapon.usp.clipSpare",
+      "domain": "weapon",
+      "key": "clipSpare",
+      "value": 5,
+      "unit": "spare magazines",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/local/phase3-pcode/scripts/Stats_Guns.pcode",
+        "locator": "Init: USP addGun arg14=5, lines 248-315; addGun: arg14 -> clipSpare, lines 7319-7321",
+        "sha256": "cd640b81e6b071587a19350385c1183d3b1f43462a9e735e7df4935915c06164"
+      },
+      "notes": "USP base configuration. Human baseline reserve=60 only when unitInfo.amm=1; actual class/ammo multipliers are not assumed to be 1. Source SWF SHA256: 0b8d92dfae85917dd9bc0dc87997979bb825b3211d95d92f84040ffc9a1cc989. Reviewed 2026-09-10; FFDec 26.2.1 script:pcode.",
+      "timestamp": "2026-09-10T04:55:43.420Z"
+    },
+    {
+      "id": "sfh1.v121.weapon.ammo.initialization",
+      "domain": "weapon",
+      "key": "initialAmmo",
+      "value": "total=ceil(clipSize*(clipSpare+1)*unitInfo.amm); clip=clipSize; spare=total-clipSize",
+      "unit": "rule",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/local/phase3-pcode/scripts/Guns.pcode",
+        "locator": "setGuns: normal primary branch ofs0157-ofs024a, lines 369-510",
+        "sha256": "89e58997953dff343750beae80d6dc8cc5dd09a621a283a8e998d873b67b8d38"
+      },
+      "notes": "P-code control-flow reviewed, excluding clip skill / Machine Gun and zero-sized clips. Runtime currently implements baseline unitInfo.amm=1 only. Source SWF SHA256: 0b8d92dfae85917dd9bc0dc87997979bb825b3211d95d92f84040ffc9a1cc989. Reviewed 2026-09-10; FFDec 26.2.1 script:pcode.",
+      "timestamp": "2026-09-10T04:55:43.433Z"
+    },
+    {
+      "id": "sfh1.v121.weapon.reload.automatic",
+      "domain": "weapon",
+      "key": "automaticReload",
+      "value": true,
+      "unit": "boolean",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/local/phase3-pcode/scripts/Guns.pcode",
+        "locator": "checkReload: ofs0080-ofs00de, lines 3966-4026; shoot: call checkReload, line 3449",
+        "sha256": "89e58997953dff343750beae80d6dc8cc5dd09a621a283a8e998d873b67b8d38"
+      },
+      "notes": "Human ordinary weapon: when clipCur=0 and spareCur>0, checkReload starts reload; shoot calls it after ammo consumption, without waiting for shootDelay. No runtime observation claimed. Source SWF SHA256: 0b8d92dfae85917dd9bc0dc87997979bb825b3211d95d92f84040ffc9a1cc989. Reviewed 2026-09-10; FFDec 26.2.1 script:pcode.",
+      "timestamp": "2026-09-10T04:55:43.445Z"
+    },
+    {
+      "id": "sfh1.v121.weapon.reload.manualGuards",
+      "domain": "weapon",
+      "key": "manualReloadGuards",
+      "value": [
+        "clip not full",
+        "spareCur>0",
+        "not reloading",
+        "shootDelay=0",
+        "not noShoot"
+      ],
+      "unit": "conditions",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/local/phase3-pcode/scripts/Guns.pcode",
+        "locator": "manualReload: ofs000a-ofs00a1, lines 3780-3875",
+        "sha256": "89e58997953dff343750beae80d6dc8cc5dd09a621a283a8e998d873b67b8d38"
+      },
+      "notes": "Reachable branch conditions checked against P-code. Starting reload does not discard clipCur; timer duration remains unverified. Source SWF SHA256: 0b8d92dfae85917dd9bc0dc87997979bb825b3211d95d92f84040ffc9a1cc989. Reviewed 2026-09-10; FFDec 26.2.1 script:pcode.",
+      "timestamp": "2026-09-10T04:55:43.458Z"
+    },
+    {
+      "id": "sfh1.v121.weapon.reload.transfer",
+      "domain": "weapon",
+      "key": "reloadTransfer",
+      "value": "load=min(clipMax-clipCur,spareCur); clipCur+=load; spareCur-=load",
+      "unit": "rule",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/local/phase3-pcode/scripts/Guns.pcode",
+        "locator": "reloaded: ofs002d-ofs00f6, lines 3615-3724",
+        "sha256": "89e58997953dff343750beae80d6dc8cc5dd09a621a283a8e998d873b67b8d38"
+      },
+      "notes": "Normal match (useMod != clips). clips modifier deliberately excluded from this baseline implementation. Completion is driven by UnitMC.doneReload in the original, not a verified 900 ms timer. Source SWF SHA256: 0b8d92dfae85917dd9bc0dc87997979bb825b3211d95d92f84040ffc9a1cc989. Reviewed 2026-09-10; FFDec 26.2.1 script:pcode.",
+      "timestamp": "2026-09-10T04:55:43.471Z"
+    },
+    {
+      "id": "sfh1.v121.weapon.swap.state",
+      "domain": "weapon",
+      "key": "swapState",
+      "value": [
+        "reuse primary/secondary ammo objects",
+        "preserve shared shootDelay",
+        "cancel reloading",
+        "check new empty magazine"
+      ],
+      "unit": "rules",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.95,
+      "source": {
+        "file": "archaeology/local/phase3-pcode/scripts/Guns.pcode",
+        "locator": "swapGuns: lines 1079-1486, notably ofs0054/ofs008b, ofs02da-ofs02ee",
+        "sha256": "89e58997953dff343750beae80d6dc8cc5dd09a621a283a8e998d873b67b8d38"
+      },
+      "notes": "Reviewed reachable ammo selection and tail; method does not reset shootDelay. Human unflagged non-shield baseline. Inactive reload must not complete in background. Source SWF SHA256: 0b8d92dfae85917dd9bc0dc87997979bb825b3211d95d92f84040ffc9a1cc989. Reviewed 2026-09-10; FFDec 26.2.1 script:pcode.",
+      "timestamp": "2026-09-10T04:55:43.484Z"
+    },
+    {
+      "id": "combat.carbine.spareMagazines.initial",
+      "domain": "combat",
+      "key": "spareMagazines",
+      "value": 3,
+      "unit": "spare magazines",
+      "evidenceType": "TUNED",
+      "confidence": 0.1,
+      "source": {
+        "file": "src/game/combat/Combat.ts",
+        "locator": "CARBINE.spareMagazines"
+      },
+      "notes": "Experimental CARBINE only, not an identified SFH1 weapon. Temporary finite-ammo laboratory configuration.",
+      "timestamp": "2026-09-10T04:55:43.484Z"
     }
   ]
 }

@@ -4,17 +4,25 @@ import { stations, terrain } from '../config/course';
 import { Soldier } from '../characters/Soldier';
 import { JumpMeasurements } from '../debug/JumpMeasurements';
 import type { MoveInput } from '../movement/MovementController';
+import { GunLab } from '../combat/GunLab';
 
 export class MovementLabScene extends Phaser.Scene {
   soldier!: Soldier;
   config: MovementConfig = { ...defaults };
   measurements = new JumpMeasurements();
+  readonly gunLab = new GunLab();
+  private targetArt!: Phaser.GameObjects.Graphics;
+  private targetX = 980;
+  private targetY = 540;
   paused = false;
   slow = false;
   debugVisible = true;
   simTime = 0;
   private accumulator = 0;
   private pendingJump = false;
+  private pendingFire = false;
+  private mouseHeld = false;
+  private fireBlockedUntilRelease = false;
   private singleSteps = 0;
   private keys = new Set<string>();
   private overlay!: Phaser.GameObjects.Graphics;
@@ -32,7 +40,7 @@ export class MovementLabScene extends Phaser.Scene {
     for (let x = 0; x < simulation.worldWidth; x += 40) bg.lineBetween(x, 0, x, simulation.worldHeight);
     for (let y = 0; y < simulation.worldHeight; y += 40) bg.lineBetween(0, y, simulation.worldWidth, y);
     this.add.text(75, 295, 'MOVEMENT\nTEST FACILITY', { fontFamily: 'monospace', fontSize: '48px', color: '#2c3f49', lineSpacing: 4 });
-    this.add.text(78, 419, 'PROJECT STRIKE  /  NO REFERENCE VALUES VERIFIED', { fontFamily: 'monospace', fontSize: '10px', color: '#526b78' });
+    this.add.text(78, 419, 'PROJECT STRIKE  /  SWF RULES IN REVIEW · TIMING / AIM TUNED', { fontFamily: 'monospace', fontSize: '10px', color: '#526b78' });
     const platforms = this.physics.add.staticGroup();
     for (const t of terrain) {
       const visual = this.add.rectangle(t.x + t.width / 2, t.y + t.height / 2, t.width, t.height, t.oneWay ? 0x435957 : 0x354650);
@@ -58,6 +66,7 @@ export class MovementLabScene extends Phaser.Scene {
       const t = (object as Phaser.GameObjects.Rectangle).getData('terrain');
       return !t.oneWay || (this.soldier.dropRemaining <= 0 && this.soldier.body.velocity.y >= 0 && this.soldier.previousBottom <= t.y + 1);
     });
+    this.targetArt = this.add.graphics().setDepth(12);
     this.overlay = this.add.graphics().setDepth(20);
     this.hud = this.add.text(16, 16, '', { fontFamily: 'monospace', fontSize: '11px', color: '#d6ee67', backgroundColor: '#132029dd', padding: { x: 10, y: 9 }, lineSpacing: 5 }).setScrollFactor(0).setDepth(30);
     const down = (event: KeyboardEvent) => {
@@ -70,12 +79,34 @@ export class MovementLabScene extends Phaser.Scene {
       if (event.code === 'KeyP') this.togglePause();
       if (event.code === 'KeyT') this.slow = !this.slow;
       if (event.code === 'KeyH') this.debugVisible = !this.debugVisible;
+      if (event.code === 'KeyF' && !this.paused && !this.fireBlockedUntilRelease) this.pendingFire = true;
+      if (event.code === 'KeyL' && !this.paused) this.gunLab.gun.reload();
+      if (event.code === 'KeyQ' && !this.paused) {
+        this.gunLab.select(this.gunLab.weapon.id === 'usp' ? 'carbine' : 'usp');
+        this.fireBlockedUntilRelease = this.keys.has('KeyF') || this.mouseHeld;
+        this.pendingFire = false;
+      }
       if (event.code === 'Period') this.step();
       if (/^Digit[1-4]$/.test(event.code)) this.reset(Number(event.code.slice(-1)) - 1);
     };
-    const up = (event: KeyboardEvent) => this.keys.delete(event.code);
-    const blur = () => { this.keys.clear(); this.pendingJump = false; };
+    const up = (event: KeyboardEvent) => {
+      this.keys.delete(event.code);
+      if (!this.keys.has('KeyF') && !this.mouseHeld) this.fireBlockedUntilRelease = false;
+    };
+    const blur = () => { this.keys.clear(); this.pendingJump = false; this.pendingFire = false; this.mouseHeld = false; this.fireBlockedUntilRelease = false; };
     window.addEventListener('keydown', down); window.addEventListener('keyup', up); window.addEventListener('blur', blur);
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (pointer.leftButtonDown()) {
+        this.mouseHeld = true;
+        if (!this.paused && !this.fireBlockedUntilRelease) this.pendingFire = true;
+      }
+    });
+    const pointerUp = () => {
+      this.mouseHeld = false;
+      if (!this.keys.has('KeyF')) this.fireBlockedUntilRelease = false;
+    };
+    this.input.on('pointerup', pointerUp);
+    this.input.on('pointerupoutside', pointerUp);
     this.events.once('shutdown', () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', blur); });
     this.reset();
     window.dispatchEvent(new CustomEvent('strike-ready', { detail: this }));
@@ -86,14 +117,15 @@ export class MovementLabScene extends Phaser.Scene {
     const point = stations[this.station];
     this.soldier.reset(point.x, point.y);
     this.keys.clear(); this.pendingJump = false; this.accumulator = 0; this.singleSteps = 0;
+    this.pendingFire = false; this.mouseHeld = false; this.fireBlockedUntilRelease = false;
     this.measurements.reset();
     this.cameras.main.centerOn(point.x, 405);
   }
-  togglePause() { this.paused = !this.paused; this.accumulator = 0; this.pendingJump = false; }
+  togglePause() { this.paused = !this.paused; this.accumulator = 0; this.pendingJump = false; this.pendingFire = false; }
   step() { this.paused = true; this.singleSteps++; }
   snapshot() {
     const b = this.soldier.body;
-    return { time: this.simTime, x: b.center.x, y: b.center.y, vx: b.velocity.x, vy: b.velocity.y, grounded: this.soldier.grounded, state: this.soldier.grounded ? Math.abs(b.velocity.x) > 1 ? 'RUN' : 'IDLE' : b.velocity.y < 0 ? 'RISE' : 'FALL', paused: this.paused, slow: this.slow, step: this.soldier.lastStep, config: { ...this.config }, measurement: this.measurements.latest };
+    return { time: this.simTime, x: b.center.x, y: b.center.y, vx: b.velocity.x, vy: b.velocity.y, grounded: this.soldier.grounded, state: this.soldier.grounded ? Math.abs(b.velocity.x) > 1 ? 'RUN' : 'IDLE' : b.velocity.y < 0 ? 'RISE' : 'FALL', paused: this.paused, slow: this.slow, step: this.soldier.lastStep, config: { ...this.config }, measurement: this.measurements.latest, combat: this.gunLab.snapshot() };
   }
   simulate(input: MoveInput) {
     const dt = 1 / simulation.fixedHz;
@@ -105,6 +137,9 @@ export class MovementLabScene extends Phaser.Scene {
     // Synchronize each fixed step, rather than accumulating body deltas across render frames.
     this.physics.world.postUpdate();
     this.simTime += dt;
+    this.gunLab.tick(dt * 1000, this.simTime * 1000);
+    if (!this.fireBlockedUntilRelease && (this.pendingFire || ((this.keys.has('KeyF') || this.mouseHeld) && this.gunLab.weapon.automatic))) this.fire();
+    this.pendingFire = false;
     this.measurements.tick(this.simTime, this.soldier.body.center.x, this.soldier.body.bottom, this.soldier.grounded);
     if (this.soldier.body.y > simulation.respawnY) this.reset();
   }
@@ -119,9 +154,18 @@ export class MovementLabScene extends Phaser.Scene {
     this.cameras.main.centerOn(this.soldier.body.center.x, 405);
     const pointer = this.input.activePointer.positionToCamera(this.cameras.main) as Phaser.Math.Vector2;
     this.soldier.render(pointer);
+    this.drawTarget();
     this.drawDebug(pointer);
     this.telemetryTimer += deltaMs;
     if (this.telemetryTimer > 75) { this.telemetryTimer = 0; window.dispatchEvent(new CustomEvent('strike-telemetry', { detail: this.snapshot() })); }
+  }
+  private fire() { const p = this.input.activePointer.positionToCamera(this.cameras.main) as Phaser.Math.Vector2; this.gunLab.fire(this.simTime * 1000, { x: this.soldier.body.center.x, y: this.soldier.body.center.y }, { x: p.x, y: p.y }); }
+  private drawTarget() {
+    const s = this.gunLab.snapshot(); this.targetArt.clear();
+    this.targetArt.fillStyle(s.alive ? 0xd66e67 : 0x4b555b, .95).fillCircle(this.targetX, this.targetY, 24);
+    this.targetArt.lineStyle(3, 0xd6ee67).strokeCircle(this.targetX, this.targetY, 30);
+    this.targetArt.fillStyle(0x18252e).fillRect(this.targetX - 35, this.targetY + 32, 70, 6);
+    this.targetArt.fillStyle(0xd6ee67).fillRect(this.targetX - 35, this.targetY + 32, 70 * s.health / 100, 6);
   }
   private drawDebug(pointer: Phaser.Math.Vector2) {
     this.overlay.clear(); this.hud.setVisible(this.debugVisible);
@@ -139,6 +183,7 @@ export class MovementLabScene extends Phaser.Scene {
       `TUNED: accel ${c.runAcceleration}  decel ${c.groundDeceleration}  speed ${c.maxRunSpeed}  air ${c.airAcceleration}`,
       `jump ${c.jumpVelocity}  gravity ${c.gravity}  fall ${c.maxFallSpeed}  step ${c.maxStepHeight}/${c.stepProbe}px`,
       `coyote ${c.coyoteTimeMs}ms  buffer ${c.jumpBufferMs}ms  drop ${c.dropThroughMs}ms  body ${c.bodyWidth}x${c.bodyHeight}`,
+      `weapon ${this.gunLab.weapon.id.toUpperCase()}  ammo ${this.gunLab.gun.ammo}/${this.gunLab.weapon.magazineSize} + ${this.gunLab.gun.reserveAmmo} reserve  reload ${this.gunLab.gun.reloadMs.toFixed(0)}ms  target ${this.gunLab.target.health}hp  score ${this.gunLab.score}`,
     ]);
   }
 }

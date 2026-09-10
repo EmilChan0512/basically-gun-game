@@ -28,7 +28,7 @@ function renderTuning() {
 el('defaults').onclick = () => { if (lab) Object.assign(lab.config, defaults); renderTuning(); };
 window.addEventListener('strike-telemetry', ((event: CustomEvent<ReturnType<MovementLabScene['snapshot']>>) => {
   const s = event.detail;
-  el('telemetry').innerHTML = [['STATE', s.state], ['POSITION', `${s.x.toFixed(1)}, ${s.y.toFixed(1)}`], ['VELOCITY', `${s.vx.toFixed(1)}, ${s.vy.toFixed(1)}`], ['GROUNDED', s.grounded ? 'YES' : 'NO'], ['SIM TIME', `${s.time.toFixed(2)} s`], ['STEP ASSIST', `${s.step.toFixed(1)} px`]].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
+  el('telemetry').innerHTML = [['STATE', s.state], ['POSITION', `${s.x.toFixed(1)}, ${s.y.toFixed(1)}`], ['VELOCITY', `${s.vx.toFixed(1)}, ${s.vy.toFixed(1)}`], ['GROUNDED', s.grounded ? 'YES' : 'NO'], ['SIM TIME', `${s.time.toFixed(2)} s`], ['STEP ASSIST', `${s.step.toFixed(1)} px`], ['WEAPON', `${s.combat.weapon.toUpperCase()} ${s.combat.ammo} ammo / ${s.combat.reserveAmmo} reserve`], ['TARGET', `${s.combat.health} hp`]].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
   el('simulation-status').textContent = s.paused ? 'PAUSED / SINGLE STEP READY' : s.slow ? '0.25× / 120 Hz FIXED SIMULATION' : '120 Hz FIXED SIMULATION';
   el('pause').classList.toggle('active', s.paused); el('slow').classList.toggle('active', s.slow);
   el('debug').classList.toggle('active', !!lab?.debugVisible);
