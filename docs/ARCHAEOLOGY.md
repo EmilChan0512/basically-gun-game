@@ -1,7 +1,7 @@
 # Phase 0 本地考古流程
 
 ## 2026-09-10 第四批定向补充
-TODO: 全量浏览器回归发现旧暂停单步测试存在异步读取竞态，我已补上“等待 Phaser 实际推进”的检查，正在重跑，并更新证据与偏差文档。
+第四批回归已于2026-09-10在Windows工作区收尾：旧暂停单步用例保留“等待 Phaser 实际推进”的检查，全量16个Chromium测试通过；`npm run check`通过（62个单元测试、63条证据校验、资产隔离、TypeScript及生产构建）。本次只重跑复刻回归并核对证据分类，未重新执行下述macOS导出，也未新增原版OBSERVED证据。验收与剩余偏差见[验收状态](ACCEPTANCE.md)和[对照报告](REPLICA_COMPARISON.md)。
 
 沿用本地固定哈希SWF、FFDec26.2.1和便携JRE，补充导出`Status`与`UT`的AS/P-code，当前共13类。复现命令如下（AS导出将`script:pcode`改为`script:as`、输出目录改为`archaeology/exported`）：
 

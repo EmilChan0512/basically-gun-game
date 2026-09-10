@@ -14,13 +14,18 @@ export interface UnitHitbox {
   team?: number;
 }
 export interface HitRect { x: number; y: number; width: number; height: number }
-export type BulletHit = { type: 'unit'; target: string; region: HitRegion } | { type: 'wall' };
+export type BulletHit = { type: 'unit'; target: string; region: HitRegion } | { type: 'wall' } | { type: 'corpse'; target: string };
+export interface MuzzleGeometry { xOff: number; yOff: number; facing: 1 | -1 }
 export interface BulletTrace {
   origin: Point;
   end: Point;
   maxDistance: number;
   steps: number;
   hit: BulletHit | null;
+  preSteps: number;
+  initialHit: BulletHit | null;
+  /** Bullet.extra.headMult survives the constructor-to-subclass handoff within one shot. */
+  headMarked: boolean;
 }
 
 export function unitHitRects(unit: UnitHitbox): { full: HitRect; body: HitRect } {
@@ -63,29 +68,57 @@ export function traceBulletLine(options: {
   sourceTeam?: number;
   units: readonly UnitHitbox[];
   isOpaqueWall?: (point: Point) => boolean;
+  corpses?: readonly { id: string; position: Point }[];
+  /** When supplied, origin is the arm anchor, before Bullet's offset and 5px traversal. */
+  muzzle?: MuzzleGeometry;
 }): BulletTrace {
   const { origin, aim, units, source, sourceTeam, isOpaqueWall } = options;
   const maxDistance = sampleRangePx(options.rangeUnits, options.random);
   const dx = aim.x - origin.x, dy = aim.y - origin.y;
   const length = Math.hypot(dx, dy);
   // Zero-length aim is an explicit lab no-direction miss, not an extracted aiming rule.
-  const trace: BulletTrace = { origin: { ...origin }, end: { ...origin }, maxDistance, steps: 0, hit: null };
+  const trace: BulletTrace = { origin: { ...origin }, end: { ...origin }, maxDistance, steps: 0, hit: null, preSteps: 0, initialHit: null, headMarked: false };
   if (length === 0) return trace;
   const stepX = dx / length * BULLET_STEP_PX, stepY = dy / length * BULLET_STEP_PX;
-  for (let i = 0; i < Math.trunc(maxDistance / BULLET_STEP_PX); i++) {
-    trace.end.x += stepX;
-    trace.end.y += stepY;
-    trace.steps++;
+  const hitTest = (): BulletHit | null => {
     if (isOpaqueWall?.(trace.end)) {
-      trace.hit = { type: 'wall' };
-      break;
+      return { type: 'wall' };
     }
     // Bullet.hitTestAll keeps game.units order for overlapping units at the same sample.
     for (const unit of units) {
       if (unit.id === source || !unit.alive || unit.blurred || (sourceTeam && sourceTeam === unit.team)) continue;
       const region = hitRegionAt(trace.end, unit);
-      if (region) { trace.hit = { type: 'unit', target: unit.id, region }; break; }
+      if (region) {
+        if (region === 'head') trace.headMarked = true;
+        return { type: 'unit', target: unit.id, region };
+      }
     }
+    for (const corpse of options.corpses ?? []) {
+      if (Math.hypot(trace.end.x - corpse.position.x, trace.end.y - corpse.position.y) < 30) return { type: 'corpse', target: corpse.id };
+    }
+    return null;
+  };
+  if (options.muzzle) {
+    const { xOff, yOff, facing } = options.muzzle;
+    if (!Number.isInteger(xOff) || xOff < 0 || xOff > 1000) throw new RangeError('Muzzle xOff must be a supported unsigned step count.');
+    // Original rotations use sin/-cos; this is the equivalent perpendicular in Cartesian aim coordinates.
+    trace.end.x += -dy / length * facing * yOff;
+    trace.end.y += dx / length * facing * yOff;
+    for (let i = 0; i <= xOff; i++) {
+      trace.end.x += stepX * 0.5;
+      trace.end.y += stepY * 0.5;
+      trace.preSteps++;
+      trace.initialHit = hitTest();
+      if (trace.initialHit) break;
+    }
+    trace.origin = { ...trace.end };
+  }
+  // The subclass always advances again, even after an initial hit. Do not repair this original quirk.
+  for (let i = 0; i < Math.trunc(maxDistance / BULLET_STEP_PX); i++) {
+    trace.end.x += stepX;
+    trace.end.y += stepY;
+    trace.steps++;
+    trace.hit = hitTest();
     if (trace.hit) break;
   }
   return trace;

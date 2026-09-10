@@ -18,6 +18,10 @@
 
 浏览器首轮15/16通过：旧暂停单步用例在按键后立即读战斗帧，可能早于Phaser消费排队单步。已修改为等待仿真时间实际推进，不改游戏计时规则；最终验证结果见下方本批验证记录。
 
+本批最终验证（2026-09-10，Windows，Node 22.19.0）：`npm run test:gameplay`全量16/16个Chromium测试通过（41.0秒），包含暂停冻结/拒绝操作、单步换弹、四个120Hz步对应一个30Hz战斗帧、身体/头部命中及超射程扣弹。`npm run check`通过：10个测试文件、62个单元测试、63条证据校验、资产隔离、TypeScript及生产构建。构建仍有既有Phaser chunk超过500kB的提示。
+
+证据分类已复核为39 EXTRACTED、7 INFERRED、17 TUNED、0 OBSERVED，共63条。本次回归验证复刻实现，没有新增原版观测或升级证据类型；第四批静态规则切片已收尾，完整Phase 3仍未验收。下一步优先核对枪口偏移、5px预行进和初始命中交接，再补原版换弹计时与事件排序样本；地形遮挡、伤害修正链、玩家生命周期和移动校准继续待完成。
+
 ## 第三批：换弹动画帧（2026-09-10）
 
 本批直接使用固定哈希SWF与FFDec反编译源码。`Stats_Guns`给USP/M4指定`pistol`/`rifle`，`Guns.setFrame`播放对应reload标签；DefineSprite 501标签和`arm_gun_316`帧脚本给出第9→37帧与第81→115帧，`UnitMC.doneReload → Guns.reloaded`完成idle切换和弹药转移。

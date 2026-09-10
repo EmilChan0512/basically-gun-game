@@ -1,18 +1,20 @@
 import Phaser from 'phaser';
 import { BootScene } from './game/scenes/BootScene';
 import { MovementLabScene } from './game/scenes/MovementLabScene';
+import { OriginalSandboxScene } from './game/scenes/OriginalSandboxScene';
 import { defaults, tuningControls } from './game/config/movement';
 import './styles.css';
 
 let lab: MovementLabScene | undefined;
+let original: OriginalSandboxScene | undefined;
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 window.addEventListener('strike-ready', ((event: CustomEvent<MovementLabScene>) => { lab = event.detail; }) as EventListener);
-el('reset').onclick = () => lab?.reset();
-el('pause').onclick = () => lab?.togglePause();
-el('step').onclick = () => lab?.step();
-el('slow').onclick = () => { if (lab) lab.slow = !lab.slow; };
-el('debug').onclick = () => { if (lab) lab.debugVisible = !lab.debugVisible; };
-document.querySelectorAll<HTMLButtonElement>('[data-station]').forEach(b => b.onclick = () => lab?.reset(Number(b.dataset.station)));
+el('reset').onclick = () => (original ?? lab)?.reset();
+el('pause').onclick = () => (original ?? lab)?.togglePause();
+el('step').onclick = () => (original ?? lab)?.step();
+el('slow').onclick = () => { const scene = original ?? lab; if (scene) scene.slow = !scene.slow; };
+el('debug').onclick = () => { const scene = original ?? lab; if (scene) scene.debugVisible = !scene.debugVisible; };
+document.querySelectorAll<HTMLButtonElement>('[data-station]').forEach(b => b.onclick = () => (original ?? lab)?.reset(Number(b.dataset.station)));
 function renderTuning() {
   el('tuning').replaceChildren();
   for (const item of tuningControls) {
@@ -35,14 +37,35 @@ window.addEventListener('strike-telemetry', ((event: CustomEvent<ReturnType<Move
   if (s.measurement) { const m = s.measurement; el('measurement').textContent = `顶点 ${m.apexMs} ms  /  滞空 ${m.airtimeMs} ms  /  高度 ${m.heightPx} px  /  位移 ${m.distancePx} px`; }
 }) as EventListener);
 el('export-measurement').onclick = () => {
+  if (original) {
+    const blob = new Blob([JSON.stringify({ source: 'Replica original-rules sandbox; NOT an original observation', timestamp: new Date().toISOString(), ...original.snapshot() }, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'strike-original-rules.json'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); return;
+  }
   if (!lab) return;
   const blob = new Blob([JSON.stringify({ source: 'Project Strike Movement Lab; not original SFH', evidenceType: 'TUNED', timestamp: new Date().toISOString(), ...lab.snapshot() }, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'strike-movement-measurement.json'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 renderTuning();
+window.addEventListener('strike-original-ready', ((event: CustomEvent<OriginalSandboxScene>) => {
+  original = event.detail;
+  document.querySelector('.intro h2')!.textContent = '原版规则验证。';
+  document.querySelector('.intro > div > p:last-child')!.textContent = 'Medic Lv1 / 无技能 · 30Hz移动、枪口、后坐力与生命周期；灰盒对照仍在验收。';
+  el('tuning').textContent = '原版基线固定，不使用旧实验室调参。';
+  el<HTMLButtonElement>('defaults').disabled = true;
+  document.querySelector('footer > span')!.textContent = 'A D 移动 / SPACE 跳跃 / S 蹲下 / F 或鼠标射击 / Q 切枪 / L 换弹 / K 死亡测试 / R 重置';
+  el('measurement').textContent = '此入口使用30Hz原版规则。场景、站点和死亡测试键是验证设施；移动姿态与原版运行对照仍待验收。';
+  const labels = ['平地与起跳', '28px攀爬与60px墙', '180px缺口', '实心平台'];
+  document.querySelectorAll<HTMLButtonElement>('[data-station]').forEach((button, i) => button.querySelector('span')!.textContent = labels[i]);
+}) as EventListener);
+window.addEventListener('strike-original-telemetry', ((event: CustomEvent<ReturnType<OriginalSandboxScene['snapshot']>>) => {
+  const s = event.detail;
+  el('telemetry').innerHTML = [['STATE', s.life.alive ? s.crouching ? 'CROUCH' : s.jumping ? 'AIR' : 'GROUND' : 'DEAD'], ['POSITION', `${s.x.toFixed(1)}, ${s.y.toFixed(1)}`], ['VELOCITY / FRAME', `${s.vx.toFixed(2)}, ${s.vy.toFixed(2)}`], ['HEALTH', `${Math.ceil(s.life.health)} / 85`], ['RESPAWN', `${s.life.respawnFrames} frames`], ['WEAPON', `${s.combat.weapon.toUpperCase()} ${s.combat.ammo} + ${s.combat.reserveAmmo}`], ['RELOAD', `${s.combat.reloadFrames} frames`], ['TARGET', `${s.target.health.toFixed(2)} hp`]].map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('');
+  el('simulation-status').textContent = `${s.paused ? 'PAUSED' : s.slow ? '0.25×' : 'LIVE'} / 30 Hz ORIGINAL RULES`;
+  el('pause').classList.toggle('active', s.paused); el('slow').classList.toggle('active', s.slow);
+}) as EventListener);
 new Phaser.Game({
   type: Phaser.AUTO, parent: 'game', width: 1120, height: 620, backgroundColor: '#18252e',
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   physics: { default: 'arcade', arcade: { gravity: { x: 0, y: 0 }, debug: false, fps: 120, fixedStep: true } },
-  scene: [BootScene, MovementLabScene], render: { antialias: true, pixelArt: false },
+  scene: [BootScene, MovementLabScene, OriginalSandboxScene], render: { antialias: true, pixelArt: false },
 });

@@ -1,10 +1,10 @@
 import { BASE_HEAD_BONUS, type HitRegion } from './Ballistics';
 export const COMBAT_FRAME_MS = 1000 / 30;
 export type WeaponId = 'usp' | 'm4';
-export interface WeaponConfig { id: WeaponId; damage: number; magazineSize: number; spareMagazines: number; shootDelayFrames: number; automatic: boolean; rangeUnits: number; reloadFrames: number }
+export interface WeaponConfig { id: WeaponId; damage: number; magazineSize: number; spareMagazines: number; shootDelayFrames: number; automatic: boolean; rangeUnits: number; reloadFrames: number; recoil: number; xOff: number; yOff: number }
 // Stats_Guns + Guns uint assignment + arm_gun_316 timeline. Range is in original 10px units.
-export const USP: Readonly<WeaponConfig> = Object.freeze({ id: 'usp', damage: 15, magazineSize: 12, spareMagazines: 5, shootDelayFrames: 7, automatic: false, rangeUnits: 66, reloadFrames: 28 });
-export const M4: Readonly<WeaponConfig> = Object.freeze({ id: 'm4', damage: 10, magazineSize: 30, spareMagazines: 3, shootDelayFrames: 4, automatic: true, rangeUnits: 60, reloadFrames: 34 });
+export const USP: Readonly<WeaponConfig> = Object.freeze({ id: 'usp', damage: 15, magazineSize: 12, spareMagazines: 5, shootDelayFrames: 7, automatic: false, rangeUnits: 66, reloadFrames: 28, recoil: 3, xOff: 8, yOff: -8 });
+export const M4: Readonly<WeaponConfig> = Object.freeze({ id: 'm4', damage: 10, magazineSize: 30, spareMagazines: 3, shootDelayFrames: 4, automatic: true, rangeUnits: 60, reloadFrames: 34, recoil: 4, xOff: 10, yOff: -1 });
 export interface ShotClock { remainingFrames: number; phaseMs: number }
 export interface DamageEvent { source: string; target: string; amount: number; weapon: WeaponId; timeMs: number; hitRegion: HitRegion }
 export interface Combatant { id: string; health: number; maxHealth: number; alive: boolean; respawnAtMs: number | null }
