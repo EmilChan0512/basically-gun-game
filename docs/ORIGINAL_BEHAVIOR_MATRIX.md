@@ -1,5 +1,20 @@
 # 原版行为对照表
 
+## 第四批已核对：普通USP/M4飞行与头部因子（2026-09-10）
+
+适用：无额外射程/技能/装备修正的普通USP/M4；复刻接入范围为**枪口之后的直线采样阶段及基础头部因子**。证据ID除实验适配项外均有`sfh1.v121.`前缀。
+
+| 行为 | 静态结论 / 证据ID | 来源与当前实现边界 |
+| --- | --- | --- |
+| 随机射程 | USP66/M4 60，加含端点−3..3整数，再×10；`bullet.range` | Stats_Guns.Init/addGun、Bullet构造器ofs0109–ofs0123、UT.irand；630–690/570–630px从枪口后阶段计 |
+| 10px采样 | 先前进，再命中检查；上限uint(maxDist/10)；`bullet.lineStep` | Bullet_Line_Basic构造器ofs0049–ofs00c8；只接入该阶段，5px枪口预行进未接入 |
+| 单位矩形 | 站立26×66/身体44高；蹲下26×44/身体28高；严格边界；`bullet.unitHitbox` | Bullet.hitTestAll ofs01f6–ofs040c；UT.inBox严格比较；身体顶边属于头部 |
+| 遮挡与筛选 | 不透明墙→合格单位数组顺序→尸体；`bullet.hitOrder` | Bullet.hitTestAll；纯模块实现墙接口和单位筛选，场景墙位图/尸体尚未接入 |
+| 头部伤害 | 标记1.5，实际基础乘1.45；`damage.headBonus` | Status.damage ofs0458–ofs0535、Unit.setStats ofs0132；USP21.75/M4 14.5，保留小数；全修正链未接入 |
+| 实验适配 | 身体中心替代枪口、直线指针、墙关闭、靶移至x700 | `combat.ballisticsAdapter.initial`为TUNED，不算原版几何与完整瞄准还原 |
+
+`Status`、`UT`为本批额外导出，当前本地定向导出共13类，非历史491类全量恢复。以下历史表格中的固定距离/目标中心命中描述已被本批取代；尚无新增OBSERVED样本。
+
 更新：2026-09-10。目标 SWF：SFH1 v1.2.1，SHA256 `0b8d92dfae85917dd9bc0dc87997979bb825b3211d95d92f84040ffc9a1cc989`。
 
 当前已完成弹药、M4射击计数与USP/M4换弹动画帧的静态核对。EXTRACTED 表示可从原版字节码或SWF结构确定的事实，不能替代运行观测；表中待验证项不计入阶段通过。所有证据 ID 以下均省略 `sfh1.v121.` 前缀。
@@ -43,9 +58,9 @@
 | USP/M4 射击时序 | `weapon.usp.shootDelayConfig`、`weapon.shootDelay.counter`、`weapon.player.updateOrder` | 已实现静态顺序与7/4计数；原版录像和墙钟测量待完成，不把逻辑间隔当实测间隔 |
 | 换弹时序 | Guns.setFrame → MBFZ_fla.arm_gun_316 → UnitMC.doneReload；`weapon.reload.timeline` | 已接入USP 28帧、M4 34帧动画推进；同帧跨事件排序仍待运行观测 |
 | 第二把原版武器 | Stats_Guns.Init / addGun → Bullet_Line_Basic | 已核实并接入M4配置、射击计数与换弹帧；完整弹道和伤害倍率仍待对照 |
-| 散布/后坐力 | Guns.EnterFrame / makeBullet | 当前角度容差不是原版弹道；追踪dynRecoil、姿态/aim倍率及随机调用，核对P-code |
-| 射程与碰撞 | Bullet、Bullet_Line_Basic、hitTestAll / hitTestWall | 当前目标中心与固定距离判断；原版可见步进与射程扰动，完整碰撞顺序尚待核对 |
-| 伤害 | Bullet命中调用 → status.damage 的实际类 | 当前只有基础减血；职业、命中部位和修正尚未复刻 |
+| 散布/后坐力 | Guns.EnterFrame / makeBullet | 角度容差已移除；当前直线指针仍为TUNED。下一批追踪dynRecoil、姿态/aim倍率及随机调用，核对P-code |
+| 射程与碰撞 | Bullet、Bullet_Line_Basic、hitTestAll / hitTestWall | 已接入射程扰动、10px采样、严格单位框；5px枪口预行进与姿态起点、墙位图、尸体和特殊碰撞待接入 |
+| 伤害 | Bullet命中调用 → status.damage 的实际类 | 已接入基础头部因子1.45；职业、难度、暴击、技能与状态修正尚未完整复刻 |
 | 死亡/复活 | Unit死亡路径、Player.respawnTimer；`match.respawnTimerInitial` | 训练靶5000ms仅为实验；原版150次更新的实际时序、出生点、弹药重置待核对 |
 | 地面/空中移动 | Movement、Unit、Player；`movement.*` 与 `normalized.*` | 现有移动仍TUNED；需核对调用顺序、坐标缩放和实际运行样本 |
 | 攀爬/平台 | Movement的碰撞与攀爬分支 | 反编译残留未核清，当前台阶辅助和单向平台不能当原版事实 |
@@ -70,3 +85,7 @@ P-code 来自未修改 SWF，经 FFDec 26.2.1 `-format script:pcode -selectclass
 弹药状态测试预期来自上述P-code结论，见 `tests/unit/original-ammo.test.ts`；浏览器验证键盘换弹、备用弹药、切枪时按住扳机、暂停和单步。时间常量仍只验证实验计时器，不能据此宣称原版时长一致。
 
 移动、弹道和原版计时的连续误差容差尚未设定：应先取得运行基线、坐标缩放与采样误差，再在修改默认值前锁定容差。当前这些项目保持未验收。
+
+第四批补充源哈希：`Status.pcode` SHA256 `ea4ecf6c64b138d5f54ad304e73347a8be829bf2f60a66f4b5cc77c3752625d1`。
+
+第四批补充源哈希：`UT.pcode` SHA256 `c1cc93a0d8a5b89f55d42ec643bc261af7a8b9c1cc1bcfb4c573c5d8b7d13b9d`。

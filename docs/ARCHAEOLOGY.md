@@ -1,5 +1,21 @@
 # Phase 0 本地考古流程
 
+## 2026-09-10 第四批定向补充
+TODO: 全量浏览器回归发现旧暂停单步测试存在异步读取竞态，我已补上“等待 Phaser 实际推进”的检查，正在重跑，并更新证据与偏差文档。
+
+沿用本地固定哈希SWF、FFDec26.2.1和便携JRE，补充导出`Status`与`UT`的AS/P-code，当前共13类。复现命令如下（AS导出将`script:pcode`改为`script:as`、输出目录改为`archaeology/exported`）：
+
+```sh
+tools/vendor/java/jdk-21.0.12.1+1-jre/Contents/Home/bin/java \
+  -Djava.awt.headless=true -jar tools/vendor/ffdec/ffdec.jar -onerror abort \
+  -selectclass 'Status,UT' -format script:pcode \
+  -export script archaeology/local/phase3-pcode archaeology/swf/sfh1_reference.swf
+```
+
+核对范围为`Bullet_Line_Basic`飞行循环、`Bullet`射程与单位命中、`UT.irand/inBox`及`Status.damage`头部条件与`Unit`基础headBonus。P-code确认站立分支使用66高、蹲姿44高，`headMult=1.5`不能直接当伤害因子，基础headBonus为1.45。
+
+新增5条EXTRACTED及1条TUNED适配记录；总63条：39 EXTRACTED、7 INFERRED、17 TUNED、0 OBSERVED。研究哈希清单位于gitignored的`archaeology/local/phase3-pcode/batch4-review-manifest.json`。本批未运行原版采样；不沿用上批HUD初查作为本批验证。
+
 ## 2026-09-10 macOS恢复与第三批核对
 
 本次新工作区只有Git追踪内容，`archaeology/swf`、`exported`、`local`和`tools/vendor`中的既有研究产物并未随仓库迁移。以下“本机已有”描述属于上一次执行现场。已运行`npm ci`、`npm run archaeology:acquire`，再次取得同一固定哈希SWF；这不是新的版本基线。

@@ -12,8 +12,6 @@ export class MovementLabScene extends Phaser.Scene {
   measurements = new JumpMeasurements();
   readonly gunLab = new GunLab();
   private targetArt!: Phaser.GameObjects.Graphics;
-  private targetX = 980;
-  private targetY = 540;
   paused = false;
   slow = false;
   debugVisible = true;
@@ -38,7 +36,7 @@ export class MovementLabScene extends Phaser.Scene {
     for (let x = 0; x < simulation.worldWidth; x += 40) bg.lineBetween(x, 0, x, simulation.worldHeight);
     for (let y = 0; y < simulation.worldHeight; y += 40) bg.lineBetween(0, y, simulation.worldWidth, y);
     this.add.text(75, 295, 'MOVEMENT\nTEST FACILITY', { fontFamily: 'monospace', fontSize: '48px', color: '#2c3f49', lineSpacing: 4 });
-    this.add.text(78, 419, 'PROJECT STRIKE  /  SWF RULES IN REVIEW · TIMING / AIM TUNED', { fontFamily: 'monospace', fontSize: '10px', color: '#526b78' });
+    this.add.text(78, 419, 'PROJECT STRIKE  /  SWF RULES IN REVIEW · MUZZLE / RECOIL TUNED', { fontFamily: 'monospace', fontSize: '10px', color: '#526b78' });
     const platforms = this.physics.add.staticGroup();
     for (const t of terrain) {
       const visual = this.add.rectangle(t.x + t.width / 2, t.y + t.height / 2, t.width, t.height, t.oneWay ? 0x435957 : 0x354650);
@@ -157,15 +155,22 @@ export class MovementLabScene extends Phaser.Scene {
   }
   private drawTarget() {
     const s = this.gunLab.snapshot(); this.targetArt.clear();
-    this.targetArt.fillStyle(s.alive ? 0xd66e67 : 0x4b555b, .95).fillCircle(this.targetX, this.targetY, 24);
-    this.targetArt.lineStyle(3, 0xd6ee67).strokeCircle(this.targetX, this.targetY, 30);
-    this.targetArt.fillStyle(0x18252e).fillRect(this.targetX - 35, this.targetY + 32, 70, 6);
-    this.targetArt.fillStyle(0xd6ee67).fillRect(this.targetX - 35, this.targetY + 32, 70 * s.health / 100, 6);
+    const { full, body } = s.targetBounds;
+    this.targetArt.fillStyle(s.alive ? 0xd66e67 : 0x4b555b, .95).fillRect(full.x, body.y, full.width, body.height);
+    this.targetArt.fillStyle(s.alive ? 0xe8b36b : 0x4b555b, .95).fillRect(full.x, full.y, full.width, body.y - full.y);
+    this.targetArt.lineStyle(1, 0xd6ee67).strokeRect(full.x, full.y, full.width, full.height);
+    this.targetArt.fillStyle(0x18252e).fillRect(full.x - 22, full.y + full.height + 6, 70, 6);
+    this.targetArt.fillStyle(0xd6ee67).fillRect(full.x - 22, full.y + full.height + 6, 70 * s.health / this.gunLab.target.maxHealth, 6);
   }
   private drawDebug(pointer: Phaser.Math.Vector2) {
     this.overlay.clear(); this.hud.setVisible(this.debugVisible);
     if (!this.debugVisible) return;
     const b = this.soldier.body;
+    const shot = this.gunLab.lastShot;
+    if (shot) {
+      this.overlay.lineStyle(2, shot.hit ? 0xf5ba70 : 0x67cfee, .7).lineBetween(shot.origin.x, shot.origin.y, shot.end.x, shot.end.y);
+      this.overlay.strokeCircle(shot.end.x, shot.end.y, 3);
+    }
     this.overlay.lineStyle(1, 0xd6ee67, .8).strokeRect(b.x, b.y, b.width, b.height);
     this.overlay.lineStyle(1, 0x67cfee, .8).lineBetween(b.center.x, b.center.y, b.center.x + b.velocity.x * .17, b.center.y + b.velocity.y * .17);
     this.overlay.lineStyle(1, 0xd6ee67, .25).lineBetween(b.center.x, b.center.y, pointer.x, pointer.y);
@@ -179,7 +184,8 @@ export class MovementLabScene extends Phaser.Scene {
       `jump ${c.jumpVelocity}  gravity ${c.gravity}  fall ${c.maxFallSpeed}  step ${c.maxStepHeight}/${c.stepProbe}px`,
       `coyote ${c.coyoteTimeMs}ms  buffer ${c.jumpBufferMs}ms  drop ${c.dropThroughMs}ms  body ${c.bodyWidth}x${c.bodyHeight}`,
       `weapon ${this.gunLab.weapon.id.toUpperCase()}  ammo ${this.gunLab.gun.ammo}/${this.gunLab.weapon.magazineSize} + ${this.gunLab.gun.reserveAmmo} reserve  reload ${this.gunLab.gun.reloadFrames}f  target ${this.gunLab.target.health}hp  score ${this.gunLab.score}`,
-      `ammo multiplier ${this.gunLab.ammoMultiplier}  delay ${this.gunLab.gun.cooldownFrames} ticks  EXTRACTED: reload frames  TUNED: range / aim`,
+      `last shot ${shot ? `${shot.steps} x 10px / range ${shot.maxDistance}px / ${shot.hit?.type === 'unit' ? shot.hit.region : shot.hit?.type ?? 'miss'}` : 'none'}  head x1.45 (no skills)`,
+      `ammo multiplier ${this.gunLab.ammoMultiplier}  delay ${this.gunLab.gun.cooldownFrames} ticks  EXTRACTED: reload / range / hitbox  TUNED: muzzle / recoil; wall mask OFF`,
     ]);
   }
 }

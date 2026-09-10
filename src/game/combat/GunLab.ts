@@ -1,5 +1,5 @@
 import { M4, GunController, applyDamage, respawn, USP, type Combatant, type DamageEvent, type WeaponConfig, type WeaponId, type ShotClock } from './Combat';
-export interface Point { x: number; y: number }
+import { traceBulletLine, unitHitRects, type BulletTrace, type Point, type RandomSource, type UnitHitbox } from './Ballistics';
 export class GunLab {
   private readonly shotClock: ShotClock = { remainingFrames: 0, phaseMs: 0 };
   private readonly guns: Record<WeaponId, GunController>;
@@ -8,8 +8,10 @@ export class GunLab {
   combatFrame = 0;
   shotsFired = 0;
   lastShotFrame: number | null = null;
-  gun: GunController; weapon: WeaponConfig = USP; readonly target: Combatant = { id: 'target-dummy', health: 100, maxHealth: 100, alive: true, respawnAtMs: null }; readonly targetPoint: Point = { x: 980, y: 540 }; score = 0; lastEvent: DamageEvent | null = null;
-  constructor(readonly ammoMultiplier = 1) {
+  lastShot: BulletTrace | null = null;
+  targetCrouching = false;
+  gun: GunController; weapon: WeaponConfig = USP; readonly target: Combatant = { id: 'target-dummy', health: 100, maxHealth: 100, alive: true, respawnAtMs: null }; readonly targetPoint: Point = { x: 700, y: 540 }; score = 0; lastEvent: DamageEvent | null = null;
+  constructor(readonly ammoMultiplier = 1, private readonly random: RandomSource = Math.random) {
     this.guns = { usp: new GunController(USP, this.shotClock, ammoMultiplier), m4: new GunController(M4, this.shotClock, ammoMultiplier) };
     this.gun = this.guns.usp;
   }
@@ -26,14 +28,21 @@ export class GunLab {
     // Guns.swapGuns preserves the shared shootDelay, cancels reload, then checks the new clip.
     this.gun.checkReload();
   }
+  get targetHitbox(): UnitHitbox {
+    return { id: this.target.id, position: { x: this.targetPoint.x, y: this.targetPoint.y + 33 }, alive: this.target.alive, crouching: this.targetCrouching };
+  }
   fire(timeMs: number, origin: Point = { x: 180, y: 580 }, aim: Point = this.targetPoint): boolean {
-    const dx = aim.x-origin.x, dy = aim.y-origin.y, tx = this.targetPoint.x-origin.x, ty = this.targetPoint.y-origin.y;
-    const delta = Math.atan2(Math.sin(Math.atan2(dy,dx)-Math.atan2(ty,tx)), Math.cos(Math.atan2(dy,dx)-Math.atan2(ty,tx)));
-    const hit = dx*tx+dy*ty >= 0 && Math.abs(delta) <= this.gun.weapon.spreadDeg*Math.PI/180 && Math.hypot(tx,ty) <= this.gun.weapon.range;
-    const ammoBefore = this.gun.ammo;
-    const event = this.gun.fire('player', hit ? this.target : null, timeMs); this.lastEvent = event;
-    if (this.gun.ammo < ammoBefore) { this.shotsFired++; this.lastShotFrame = this.combatFrame; }
-    if (!event) return false; if (applyDamage(this.target,event)) this.score++; return true;
+    // Rejected trigger attempts must not advance the random stream or replace shot telemetry.
+    if (!this.gun.canFire) return false;
+    this.lastShot = traceBulletLine({ origin, aim, rangeUnits: this.weapon.rangeUnits, random: this.random, source: 'player', units: [this.targetHitbox] });
+    const hit = this.lastShot.hit;
+    const event = this.gun.fire('player', hit?.type === 'unit' ? this.target : null, timeMs, hit?.type === 'unit' ? hit.region : 'body');
+    this.lastEvent = event;
+    this.shotsFired++;
+    this.lastShotFrame = this.combatFrame;
+    if (!event) return false;
+    if (applyDamage(this.target, event)) this.score++;
+    return true;
   }
   tick(deltaMs: number, timeMs: number, origin?: Point, aim?: Point) {
     this.gun.tick(deltaMs, offsetMs => {
@@ -48,5 +57,5 @@ export class GunLab {
     });
     respawn(this.target,timeMs);
   }
-  snapshot() { return { weapon:this.weapon.id, ammo:this.gun.ammo, reserveAmmo:this.gun.reserveAmmo, ammoMultiplier:this.ammoMultiplier, cooldownFrames:this.gun.cooldownFrames, cooldownMs:this.gun.cooldownMs, combatFrame:this.combatFrame, shotsFired:this.shotsFired, lastShotFrame:this.lastShotFrame, reloadFrames:this.gun.reloadFrames, reloadMs:this.gun.reloadMs, health:this.target.health, alive:this.target.alive, score:this.score, lastEvent:this.lastEvent }; }
+  snapshot() { return { weapon:this.weapon.id, ammo:this.gun.ammo, reserveAmmo:this.gun.reserveAmmo, ammoMultiplier:this.ammoMultiplier, cooldownFrames:this.gun.cooldownFrames, cooldownMs:this.gun.cooldownMs, combatFrame:this.combatFrame, shotsFired:this.shotsFired, lastShotFrame:this.lastShotFrame, reloadFrames:this.gun.reloadFrames, reloadMs:this.gun.reloadMs, health:this.target.health, alive:this.target.alive, score:this.score, lastEvent:this.lastEvent, lastShot:this.lastShot, targetBounds:unitHitRects(this.targetHitbox), targetCrouching:this.targetCrouching }; }
 }

@@ -32,7 +32,10 @@ test('pause freezes combat, rejects actions and the next combat frame advances r
   await page.waitForTimeout(250);
   expect(await page.evaluate(() => window.__strike!.gunLab.snapshot())).toEqual(before);
   for (let i = 0; i < 4; i++) {
+    const timeBeforeStep = await page.evaluate(() => window.__strike!.simTime);
     await page.keyboard.press('.');
+    // Keydown queues the step; wait for Phaser's next render to consume it before inspecting combat.
+    await page.waitForFunction(time => window.__strike!.simTime > time, timeBeforeStep);
     const current = await page.evaluate(() => window.__strike!.gunLab.snapshot());
     if (current.combatFrame === before.combatFrame) expect(current.reloadFrames).toBe(before.reloadFrames);
     else {

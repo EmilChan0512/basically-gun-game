@@ -1,11 +1,12 @@
+import { BASE_HEAD_BONUS, type HitRegion } from './Ballistics';
 export const COMBAT_FRAME_MS = 1000 / 30;
 export type WeaponId = 'usp' | 'm4';
-export interface WeaponConfig { id: WeaponId; damage: number; magazineSize: number; spareMagazines: number; shootDelayFrames: number; automatic: boolean; range: number; reloadFrames: number; spreadDeg: number }
-// Stats_Guns + Guns uint assignment + arm_gun_316 timeline. Range/aim remain TUNED placeholders.
-export const USP: Readonly<WeaponConfig> = Object.freeze({ id: 'usp', damage: 15, magazineSize: 12, spareMagazines: 5, shootDelayFrames: 7, automatic: false, range: 900, reloadFrames: 28, spreadDeg: 0 });
-export const M4: Readonly<WeaponConfig> = Object.freeze({ id: 'm4', damage: 10, magazineSize: 30, spareMagazines: 3, shootDelayFrames: 4, automatic: true, range: 1000, reloadFrames: 34, spreadDeg: 2 });
+export interface WeaponConfig { id: WeaponId; damage: number; magazineSize: number; spareMagazines: number; shootDelayFrames: number; automatic: boolean; rangeUnits: number; reloadFrames: number }
+// Stats_Guns + Guns uint assignment + arm_gun_316 timeline. Range is in original 10px units.
+export const USP: Readonly<WeaponConfig> = Object.freeze({ id: 'usp', damage: 15, magazineSize: 12, spareMagazines: 5, shootDelayFrames: 7, automatic: false, rangeUnits: 66, reloadFrames: 28 });
+export const M4: Readonly<WeaponConfig> = Object.freeze({ id: 'm4', damage: 10, magazineSize: 30, spareMagazines: 3, shootDelayFrames: 4, automatic: true, rangeUnits: 60, reloadFrames: 34 });
 export interface ShotClock { remainingFrames: number; phaseMs: number }
-export interface DamageEvent { source: string; target: string; amount: number; weapon: WeaponId; timeMs: number }
+export interface DamageEvent { source: string; target: string; amount: number; weapon: WeaponId; timeMs: number; hitRegion: HitRegion }
 export interface Combatant { id: string; health: number; maxHealth: number; alive: boolean; respawnAtMs: number | null }
 export class GunController {
   ammo: number;
@@ -53,13 +54,14 @@ export class GunController {
     this.reloadFrames = this.weapon.reloadFrames;
     if (this.insideCombatFrame) this.reloadStartedThisFrame = true;
   }
-  fire(source: string, target: Combatant | null, timeMs: number): DamageEvent | null {
-    if (this.cooldownFrames > 0 || this.reloadFrames > 0 || this.ammo <= 0) return null;
+  get canFire() { return this.cooldownFrames === 0 && this.reloadFrames === 0 && this.ammo > 0; }
+  fire(source: string, target: Combatant | null, timeMs: number, hitRegion: HitRegion = 'body'): DamageEvent | null {
+    if (!this.canFire) return null;
     this.ammo--;
     this.shotClock.remainingFrames = this.weapon.shootDelayFrames;
     this.checkReload();
     if (!target || !target.alive) return null;
-    return { source, target: target.id, amount: this.weapon.damage, weapon: this.weapon.id, timeMs };
+    return { source, target: target.id, amount: this.weapon.damage * (hitRegion === 'head' ? BASE_HEAD_BONUS : 1), weapon: this.weapon.id, timeMs, hitRegion };
   }
   // Guns.manualReload: cooldown blocks manual reload; ammunition stays in the clip.
   reload() {

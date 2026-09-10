@@ -769,11 +769,27 @@
       "id": "sfh1.v121.weapon.m4.configuration",
       "domain": "reference.weapon.m4",
       "key": "configuration",
-      "value": { "class": 1, "levelRequired": 1, "damage": 10, "clipSize": 30, "clipSpare": 3, "rangeConfig": 60, "recoilConfig": 4, "automatic": true, "shootDelay": 0.15, "bulletClass": "Bullet_Line_Basic", "reloadFrame": "rifle" },
+      "value": {
+        "class": 1,
+        "levelRequired": 1,
+        "damage": 10,
+        "clipSize": 30,
+        "clipSpare": 3,
+        "rangeConfig": 60,
+        "recoilConfig": 4,
+        "automatic": true,
+        "shootDelay": 0.15,
+        "bulletClass": "Bullet_Line_Basic",
+        "reloadFrame": "rifle"
+      },
       "unit": "source configuration; range is not laboratory pixels",
       "evidenceType": "EXTRACTED",
       "confidence": 0.98,
-      "source": { "file": "archaeology/local/phase3-pcode/scripts/Stats_Guns.pcode", "locator": "Init lines 1750-1832, M4 stack through ofs0c4c; addGun lines 7243-7348 maps arguments 7,8,13-18; frameReload/cls map arguments 27/30", "sha256": "cd640b81e6b071587a19350385c1183d3b1f43462a9e735e7df4935915c06164" },
+      "source": {
+        "file": "archaeology/local/phase3-pcode/scripts/Stats_Guns.pcode",
+        "locator": "Init lines 1750-1832, M4 stack through ofs0c4c; addGun lines 7243-7348 maps arguments 7,8,13-18; frameReload/cls map arguments 27/30",
+        "sha256": "cd640b81e6b071587a19350385c1183d3b1f43462a9e735e7df4935915c06164"
+      },
       "notes": "Reviewed reachable P-code branches, skipping constant-condition obfuscation. SFH1 v1.2.1 SWF SHA256 0b8d92dfae85917dd9bc0dc87997979bb825b3211d95d92f84040ffc9a1cc989; FFDec 26.2.1. No runtime cadence, damage modifiers, projectile geometry or reload duration claimed.",
       "timestamp": "2026-09-10T10:11:52.000Z"
     },
@@ -781,11 +797,18 @@
       "id": "sfh1.v121.weapon.shootDelay.counter",
       "domain": "reference.weapon",
       "key": "shootDelayCounter",
-      "value": { "assignment": "uint(curGun.shootDelay * 30)", "update": "decrement once when nonzero" },
+      "value": {
+        "assignment": "uint(curGun.shootDelay * 30)",
+        "update": "decrement once when nonzero"
+      },
       "unit": "logical updates",
       "evidenceType": "EXTRACTED",
       "confidence": 0.98,
-      "source": { "file": "archaeology/local/phase3-pcode/scripts/Guns.pcode", "locator": "uint slot line 80; shoot ofs0478-ofs0493 (lines 3235-3250); EnterFrame ofs000c-ofs003c (lines 1730-1757)", "sha256": "89e58997953dff343750beae80d6dc8cc5dd09a621a283a8e998d873b67b8d38" },
+      "source": {
+        "file": "archaeology/local/phase3-pcode/scripts/Guns.pcode",
+        "locator": "uint slot line 80; shoot ofs0478-ofs0493 (lines 3235-3250); EnterFrame ofs000c-ofs003c (lines 1730-1757)",
+        "sha256": "89e58997953dff343750beae80d6dc8cc5dd09a621a283a8e998d873b67b8d38"
+      },
       "notes": "Normal USP/M4 path. Positive fractional values truncate on assignment to uint. Source SWF is the fixed v1.2.1 hash in weapon.m4.configuration. Does not equate configuration seconds with measured wall-clock intervals.",
       "timestamp": "2026-09-10T10:11:52.000Z"
     },
@@ -793,11 +816,18 @@
       "id": "sfh1.v121.weapon.player.updateOrder",
       "domain": "reference.weapon",
       "key": "playerUpdateOrder",
-      "value": ["held mouse calls gun.shoot", "UnitEnterFrame calls status.EnterFrame then gun.EnterFrame then MC.EnterFrame then mov.EnterFrame"],
+      "value": [
+        "held mouse calls gun.shoot",
+        "UnitEnterFrame calls status.EnterFrame then gun.EnterFrame then MC.EnterFrame then mov.EnterFrame"
+      ],
       "unit": "ordered calls",
       "evidenceType": "EXTRACTED",
       "confidence": 0.97,
-      "source": { "file": "archaeology/local/phase3-pcode/scripts/Player.pcode", "locator": "EnterFrame living-player branch ofs0128-ofs013a, then ofs0318 (lines 439-445, 680-682)", "sha256": "794604b4ebcdf16ca933e5e24cc3f2b0137f1e8dc330b8ac41e7e2c6a37c6d54" },
+      "source": {
+        "file": "archaeology/local/phase3-pcode/scripts/Player.pcode",
+        "locator": "EnterFrame living-player branch ofs0128-ofs013a, then ofs0318 (lines 439-445, 680-682)",
+        "sha256": "794604b4ebcdf16ca933e5e24cc3f2b0137f1e8dc330b8ac41e7e2c6a37c6d54"
+      },
       "notes": "Followed Unit.pcode UnitEnterFrame ofs00bc-ofs00ea, lines 4467-4487, SHA256 8998b398cd4cf30adfffd9e1fdf02824cccacb090310023576b1d941c232df33. Alive human baseline; excludes death/out-of-bounds/status-induced transitions. This is static ordering, not a video measurement.",
       "timestamp": "2026-09-10T10:11:52.000Z"
     },
@@ -805,11 +835,28 @@
       "id": "sfh1.v121.weapon.cadence.baseline",
       "domain": "reference.weapon",
       "key": "cadenceBaseline",
-      "value": { "uspCounter": 7, "m4Counter": 4, "m4ShotFrames": [1,5,9], "uspEarliestRetriggerFrames": [1,8,15] },
+      "value": {
+        "uspCounter": 7,
+        "m4Counter": 4,
+        "m4ShotFrames": [
+          1,
+          5,
+          9
+        ],
+        "uspEarliestRetriggerFrames": [
+          1,
+          8,
+          15
+        ]
+      },
       "unit": "30 Hz logical frame indices; first eligible frame is 1",
       "evidenceType": "INFERRED",
       "confidence": 0.95,
-      "source": { "file": "archaeology/local/phase3-pcode/scripts/Guns.pcode", "locator": "Derived from weapon.shootDelay.counter + weapon.player.updateOrder + USP/M4 config records", "sha256": "89e58997953dff343750beae80d6dc8cc5dd09a621a283a8e998d873b67b8d38" },
+      "source": {
+        "file": "archaeology/local/phase3-pcode/scripts/Guns.pcode",
+        "locator": "Derived from weapon.shootDelay.counter + weapon.player.updateOrder + USP/M4 config records",
+        "sha256": "89e58997953dff343750beae80d6dc8cc5dd09a621a283a8e998d873b67b8d38"
+      },
       "notes": "Source-order execution inference: shot sets 7/4, same frame decrements to 6/3. USP requires release after each successful shot and another press held at the eligible frame. Assumes ammo, no reload and uninterrupted living-player updates. Approximately 233.333/133.333 ms of nominal simulation time, NOT OBSERVED runtime timing.",
       "timestamp": "2026-09-10T10:11:52.000Z"
     },
@@ -817,11 +864,20 @@
       "id": "sfh1.v121.weapon.trigger.latch",
       "domain": "reference.weapon",
       "key": "triggerLatch",
-      "value": ["shoot rejects shotPressed", "successful human semiautomatic shot sets shotPressed", "releaseMouse clears shotPressed", "swapGuns while mDown sets shotPressed even for automatic weapons"],
+      "value": [
+        "shoot rejects shotPressed",
+        "successful human semiautomatic shot sets shotPressed",
+        "releaseMouse clears shotPressed",
+        "swapGuns while mDown sets shotPressed even for automatic weapons"
+      ],
       "unit": "rules",
       "evidenceType": "EXTRACTED",
       "confidence": 0.97,
-      "source": { "file": "archaeology/local/phase3-pcode/scripts/Guns.pcode", "locator": "shoot ofs0032-ofs0056 and ofs0151-ofs017b; releaseMouse; swapGuns mDown branch", "sha256": "89e58997953dff343750beae80d6dc8cc5dd09a621a283a8e998d873b67b8d38" },
+      "source": {
+        "file": "archaeology/local/phase3-pcode/scripts/Guns.pcode",
+        "locator": "shoot ofs0032-ofs0056 and ofs0151-ofs017b; releaseMouse; swapGuns mDown branch",
+        "sha256": "89e58997953dff343750beae80d6dc8cc5dd09a621a283a8e998d873b67b8d38"
+      },
       "notes": "Player.MouseDown only sets mDown; MouseUp clears mDown and calls gun.releaseMouse. A press blocked by cooldown is retried while held; a press entirely between player updates is not queued. Same fixed SWF; no synthesized timing observation.",
       "timestamp": "2026-09-10T10:11:52.000Z"
     },
@@ -833,7 +889,11 @@
       "unit": "total ammunition multiplier",
       "evidenceType": "INFERRED",
       "confidence": 0.97,
-      "source": { "file": "archaeology/local/phase3-pcode/scripts/Stats_Classes.pcode", "locator": "getClass class 1 ammMin=90 (lines 258-259), level interpolation ofs049d-ofs04b6 (lines 784-804)", "sha256": "b33cbd4089a0030c47a8e1e933a6637636e319830a19c209560c6c1528d70af8" },
+      "source": {
+        "file": "archaeology/local/phase3-pcode/scripts/Stats_Classes.pcode",
+        "locator": "getClass class 1 ammMin=90 (lines 258-259), level interpolation ofs049d-ofs04b6 (lines 784-804)",
+        "sha256": "b33cbd4089a0030c47a8e1e933a6637636e319830a19c209560c6c1528d70af8"
+      },
       "notes": "Level 1 yields 90; Unit.setClass multiplies by 0.01 (Unit.pcode lines 793-797, SHA256 8998b398cd4cf30adfffd9e1fdf02824cccacb090310023576b1d941c232df33). No skills/modifiers. Guns.setGuns gives USP ceil(72*.9)-12=53 and M4 ceil(120*.9)-30=78. Implemented as an optional ammo factor, not a full Medic class or observed timing result.",
       "timestamp": "2026-09-10T10:11:52.000Z"
     },
@@ -841,12 +901,19 @@
       "id": "combat.m4.placeholders.initial",
       "domain": "combat",
       "key": "m4Placeholders",
-      "value": { "range": 1000, "reloadMs": 1400, "spreadDeg": 2 },
+      "value": {
+        "range": 1000,
+        "reloadMs": 1400,
+        "spreadDeg": 2
+      },
       "unit": "laboratory pixels, milliseconds, target angular tolerance",
       "evidenceType": "TUNED",
       "confidence": 0.1,
-      "source": { "file": "src/game/combat/Combat.ts", "locator": "Historical M4.range, M4.reloadMs, M4.spreadDeg configuration" },
-      "notes": "Historical inherited laboratory placeholders. The 1400 ms reload value was replaced on 2026-09-10 by the source-reviewed rifle timeline; range and spreadDeg remain TUNED. spreadDeg is still target-center hit tolerance, NOT recovered weapon recoil or randomized spread.",
+      "source": {
+        "file": "src/game/combat/Combat.ts",
+        "locator": "Historical M4.range, M4.reloadMs, M4.spreadDeg configuration"
+      },
+      "notes": "Historical, fully superseded placeholders. Reload was replaced in batch 3; range and target-center spread tolerance were removed in batch 4 on 2026-09-10. Current range comes from bullet.range; straight lab aim with recoil disabled is separately marked TUNED in combat.ballisticsAdapter.initial.",
       "timestamp": "2026-09-10T10:11:52.000Z"
     },
     {
@@ -854,8 +921,18 @@
       "domain": "reference.weapon.reload",
       "key": "timeline",
       "value": {
-        "pistol": { "labelFrame": 9, "soundFrame": 9, "doneFrame": 37, "advanceFrames": 28 },
-        "rifle": { "labelFrame": 81, "soundFrame": 81, "doneFrame": 115, "advanceFrames": 34 }
+        "pistol": {
+          "labelFrame": 9,
+          "soundFrame": 9,
+          "doneFrame": 37,
+          "advanceFrames": 28
+        },
+        "rifle": {
+          "labelFrame": 81,
+          "soundFrame": 81,
+          "doneFrame": 115,
+          "advanceFrames": 34
+        }
       },
       "unit": "arm_gun_316 timeline frames",
       "evidenceType": "EXTRACTED",
@@ -888,6 +965,150 @@
       },
       "notes": "Direct FFDec decompiled source, cross-checked against UnitMC/Guns P-code. The implementation preserves numeric completion and ammunition transfer. Whether the Flash timeline completion script runs before or after the player ENTER_FRAME shooting attempt on the same displayed frame is not established by these method bodies and remains an explicit laboratory ordering.",
       "timestamp": "2026-09-10T12:55:00.000Z"
+    },
+    {
+      "id": "sfh1.v121.bullet.range",
+      "domain": "combat",
+      "key": "bulletRange",
+      "value": {
+        "usp": 66,
+        "m4": 60,
+        "randomMin": -3,
+        "randomMax": 3,
+        "pixelsPerUnit": 10
+      },
+      "unit": "weapon range units; pixels after scaling",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.98,
+      "source": {
+        "file": "archaeology/local/phase3-pcode/scripts/Bullet.pcode",
+        "locator": "constructor ofs00ef–ofs0123: stats.range + UT.irand(-3,3), multiplied by 10",
+        "sha256": "c6a28fe406319fcbc31a4756f41b9d0f607b14f7a2fb4df840640ad290eb9f75"
+      },
+      "notes": "Ordinary USP/M4 without extra.range. Stats_Guns.Init USP/M4 arg15 is 66/60; addGun maps arg15 to range (SHA256 cd640b81e6b071587a19350385c1183d3b1f43462a9e735e7df4935915c06164). UT.irand uses uint(random*(max-min+1))+min (SHA256 c1cc93a0d8a5b89f55d42ec643bc261af7a8b9c1cc1bcfb4c573c5d8b7d13b9d); both endpoints are included. Flight-stage ranges are 630..690 / 570..630 pixels, not distance from the soldier center; constructor muzzle travel is separate. No runtime measurement.",
+      "timestamp": "2026-09-10T14:51:47.326Z"
+    },
+    {
+      "id": "sfh1.v121.bullet.lineStep",
+      "domain": "combat",
+      "key": "lineStep",
+      "value": {
+        "stepPx": 10,
+        "advanceBeforeTest": true,
+        "iterationLimit": "uint(maxDist/10)",
+        "originTested": false
+      },
+      "unit": "pixels; discrete point samples",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.98,
+      "source": {
+        "file": "archaeology/local/phase3-pcode/scripts/Bullet_Line_Basic.pcode",
+        "locator": "constructor ofs0049–ofs00c8: advance x/y, hitTestAll, break, uint(maxDist/10)",
+        "sha256": "f5045fac0acb50df681c8dfc3df0b58e8a216498336a9d2b42e3a85c11266a00"
+      },
+      "notes": "Applies to the line-flight loop after Bullet constructor. Constructor uses 5px pre-travel with an inclusive xOff counter and sets ox/oy; that stage and its hit handoff are not integrated into the lab. Bullet velocity is rotation-derived length 10 (SHA256 c6a28fe406319fcbc31a4756f41b9d0f607b14f7a2fb4df840640ad290eb9f75). No continuous segment intersection; the last allowed sample is tested. Effects/tracer backtracking are separate from hit coordinates.",
+      "timestamp": "2026-09-10T14:51:47.326Z"
+    },
+    {
+      "id": "sfh1.v121.bullet.unitHitbox",
+      "domain": "combat",
+      "key": "unitHitbox",
+      "value": {
+        "width": 26,
+        "standingHeight": 66,
+        "standingBodyHeight": 44,
+        "crouchingHeight": 44,
+        "crouchingBodyHeight": 28,
+        "xOffset": -13,
+        "strictBounds": true
+      },
+      "unit": "original world pixels relative to Unit feet",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.98,
+      "source": {
+        "file": "archaeology/local/phase3-pcode/scripts/Bullet.pcode",
+        "locator": "hitTestAll ofs01f6–ofs040c: crouching branch and nested inBox classification",
+        "sha256": "c6a28fe406319fcbc31a4756f41b9d0f607b14f7a2fb4df840640ad290eb9f75"
+      },
+      "notes": "Standing full/body boxes start y-66/y-44; crouching starts y-44/y-28. UT.inBox uses strict > and < (SHA256 c1cc93a0d8a5b89f55d42ec643bc261af7a8b9c1cc1bcfb4c573c5d8b7d13b9d, inBox ofs001b–ofs00ae). Outside full box misses, inside body is body, remaining full box is head. Exact body-top seam is head. P-code iffalse ofs020c routes standing to 66px; do not infer branch ordering from obfuscated AS stack output. Coordinates are not physical collider dimensions.",
+      "timestamp": "2026-09-10T14:51:47.326Z"
+    },
+    {
+      "id": "sfh1.v121.bullet.hitOrder",
+      "domain": "combat",
+      "key": "hitOrder",
+      "value": {
+        "order": [
+          "opaqueWall",
+          "eligibleUnitsInArrayOrder",
+          "corpseActors"
+        ],
+        "excludedUnits": [
+          "shooter",
+          "dead",
+          "sBlur",
+          "sameNonzeroTeam"
+        ]
+      },
+      "unit": "per-sample collision ordering",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.98,
+      "source": {
+        "file": "archaeology/local/phase3-pcode/scripts/Bullet.pcode",
+        "locator": "hitTestAll: initial getPixel32 alpha ff; ofs0167–ofs01d9 eligibility; units loop followed by actors loop",
+        "sha256": "c6a28fe406319fcbc31a4756f41b9d0f607b14f7a2fb4df840640ad290eb9f75"
+      },
+      "notes": "Ordinary bullet without ignoreAll. Fully opaque bitmap wall pixel takes priority; then first eligible unit in game.units order. Team 0 does not exclude other team-0 units. Corpse actor proximity is checked after units in the original, but omitted in this lab; the core exposes an opaque-wall predicate, with no production bitmap/terrain adapter yet. Not proof of platform transparency or full collision parity.",
+      "timestamp": "2026-09-10T14:51:47.326Z"
+    },
+    {
+      "id": "sfh1.v121.damage.headBonus",
+      "domain": "combat",
+      "key": "headDamage",
+      "value": {
+        "marker": 1.5,
+        "baseHeadBonus": 1.45,
+        "uspHeadDamage": 21.75,
+        "m4HeadDamage": 14.5
+      },
+      "unit": "multipliers and HP before other modifiers",
+      "evidenceType": "EXTRACTED",
+      "confidence": 0.98,
+      "source": {
+        "file": "archaeology/local/phase3-pcode/scripts/Status.pcode",
+        "locator": "damage ofs0458–ofs0535: headMult truthiness -> non-Explosive/non-Melee and non-self -> unitInfo.headBonus multiply",
+        "sha256": "ea4ecf6c64b138d5f54ad304e73347a8be829bf2f60a66f4b5cc77c3752625d1"
+      },
+      "notes": "Bullet.hitTestAll sets headMult=1.5 as metadata (SHA256 c6a28fe406319fcbc31a4756f41b9d0f607b14f7a2fb4df840640ad290eb9f75); Status.damage does not multiply by that numeric marker. Unit.setStats base headBonus=1.45 (ofs0132, SHA256 8998b398cd4cf30adfffd9e1fdf02824cccacb090310023576b1d941c232df33). Headshot branch bypasses random critical branch; damage stays Number through hpCur subtraction. Ordinary USP/M4, no skills, shields, difficulty/status/team or other damage modifiers. This records the head factor, not a port of the entire Status pipeline.",
+      "timestamp": "2026-09-10T14:51:47.326Z"
+    },
+    {
+      "id": "combat.ballisticsAdapter.initial",
+      "domain": "combat",
+      "key": "ballisticsAdapter",
+      "value": {
+        "pixelScale": 1,
+        "origin": "soldier body center as post-muzzle surrogate",
+        "aim": "straight pointer direction; recoil disabled",
+        "wallMask": false,
+        "corpses": false,
+        "targetCenter": {
+          "x": 700,
+          "y": 540
+        },
+        "targetFeetOffsetY": 33,
+        "targetHealth": 100,
+        "respawnDelayMs": 5000
+      },
+      "unit": "laboratory adapter choices",
+      "evidenceType": "TUNED",
+      "confidence": 0.1,
+      "source": {
+        "file": "src/game/combat/GunLab.ts",
+        "locator": "targetPoint, targetHitbox, fire; MovementLabScene.simulate origin"
+      },
+      "notes": "Explicit TUNED integration boundary, not original muzzle/aim/terrain/lifecycle behavior. Post-muzzle flight rules use original pixels 1:1 pending runtime coordinate calibration. Target moved from x=980 to x=700 to remain reachable under the extracted minimum range. No spread tolerance is applied. Head bonus is the reviewed no-skill base, not the full damage pipeline. Zero-length aim consumes ammo but traces no path. No original-runtime samples.",
+      "timestamp": "2026-09-10T14:51:47.326Z"
     }
   ]
 }
