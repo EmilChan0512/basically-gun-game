@@ -9,7 +9,6 @@ export const characterAsset = (id: string) => `/assets/characters/${id}.svg`;
 type Joint = { part: string; name: string; matrix: Matrix };
 const movements: Record<string, Joint[][]> = recovered.locomotion;
 const arms: Record<string, { rear: Joint[][]; front: Joint[][] }> = recovered.arms;
-const grip: Record<WeaponId, string> = { usp: 'pistol', beretta: 'pistol', deagle: 'magnum', vector: 'mpistol', m4: 'rifle', ak47: 'rifle', shotgun: 'shotgun', saw: 'heavy', dragunov: 'sniper' };
 export const transformPoint = (m: Matrix, x: number, y: number) => ({ x: m[0] * x + m[2] * y + m[4], y: m[1] * x + m[3] * y + m[5] });
 export function compose(a: Matrix, b: Matrix): Matrix {
   const origin = transformPoint(a, b[4], b[5]);
@@ -35,7 +34,8 @@ export function characterPose(role: ClassId, weapon: WeaponId, options: PoseOpti
   const aim = options.aim ?? { x: 100 * facing, y: shoulder[5] };
   const angle = Math.atan2(aim.y - shoulder[5], (aim.x - shoulder[4] * facing) * facing);
   const c = Math.cos(angle), s = Math.sin(angle), root = [facing * c, s, -facing * s, c, shoulder[4] * facing, shoulder[5]];
-  const clip = arms[`${grip[weapon]}${reload > 0 ? '_reload' : options.flash ? '_fire' : ''}`];
+  const definition = WEAPONS[weapon];
+  const clip = arms[reload > 0 ? `${definition.reloadGrip}_reload` : options.flash ? `${definition.fireGrip}_fire` : definition.grip];
   const progress = reload > 0 ? Math.max(0, Math.min(.9999, 1 - reload / WEAPONS[weapon].config.reloadFrames)) : 0;
   const handParts = (poses: Joint[][]) => poses[Math.floor(progress * poses.length)].map(j => ({
     id: j.part === 'weapon' ? weapon : `${role}-${j.part}`, name: j.name, matrix: compose(root, j.matrix),
@@ -43,8 +43,8 @@ export function characterPose(role: ClassId, weapon: WeaponId, options: PoseOpti
   const rear = handParts(clip.rear), front = handParts(clip.front).filter(p => p.name !== 'gun');
   const gun = rear.find(p => p.id === weapon)!;
   const box = CHARACTER_ART[weapon];
-  const barrel: Record<WeaponId, number> = { usp: -.273, beretta: -.273, deagle: -.295, vector: -.214, m4: -.158, ak47: -.322, shotgun: -.221, dragunov: -.043, saw: -.056 };
-  return { parts: [...rear, ...body, ...front], muzzle: gun && transformPoint(gun.matrix, box.x + box.w - .5, box.y + box.h * (.5 + barrel[weapon])) };
+  const barrel: Partial<Record<WeaponId, number>> = { usp: -.273, beretta: -.273, deagle: -.295, vector: -.214, m4: -.158, ak47: -.322, shotgun: -.221, dragunov: -.043, saw: -.056 };
+  return { parts: [...rear, ...body, ...front], muzzle: gun && transformPoint(gun.matrix, box.x + box.w - .5, box.y + box.h * (.5 + (barrel[weapon] ?? -.18))) };
 }
 
 /** Map a native limb's joint endpoints to the two requested world joints. */

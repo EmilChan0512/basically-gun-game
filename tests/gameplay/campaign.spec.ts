@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { registerTestAccount } from '../helpers/account-ui';
+import { enterOffline } from '../helpers/offline-ui';
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/?offline');
   await page.waitForFunction(() => !!window.__strikeCampaign);
-  await registerTestAccount(page);
+  await enterOffline(page);
 });
 
 test('menu, briefing, real keyboard/mouse combat, pause, reload and retry are playable', async ({ page }) => {

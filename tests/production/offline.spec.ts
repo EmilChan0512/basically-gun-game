@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { registerTestAccount } from '../helpers/account-ui';
+import { enterOffline } from '../helpers/offline-ui';
 
 test('packaged production game loads and plays without Internet or development helpers', async ({ page }) => {
   const external: string[] = [], errors: string[] = [];
@@ -9,8 +9,8 @@ test('packaged production game loads and plays without Internet or development h
     return route.continue();
   });
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto('/');
-  await registerTestAccount(page);
+  await page.goto('/?offline');
+  await enterOffline(page);
   await page.locator('#continue-campaign').click(); await page.locator('#deploy').click();
   await expect(page.locator('#player-ammo')).toHaveText('M4  30 / 78');
   expect(await page.evaluate(() => window.__strikeCampaign)).toBeUndefined();
@@ -37,18 +37,18 @@ test('local server only serves packaged files and rejects write requests', async
   expect((await request.post('/')).status()).toBe(405);
 });
 
-test('production account, purchased gear, class skill and stored loadout work offline', async ({ page }) => {
+test('offline class, purchased item and saved loadout work without an account', async ({ page }) => {
   const external: string[] = [];
   await page.route('**/*', route => {
     if (new URL(route.request().url()).hostname !== '127.0.0.1') { external.push(route.request().url()); return route.abort(); }
     return route.continue();
   });
-  await page.goto('/'); await registerTestAccount(page, 'Offline Tank');
-  await page.locator('#armory-nav').click(); await page.locator('[data-class="tank"]').click(); await page.locator('[data-weapon="vector"]').click();
-  await expect(page.locator('#career-wallet')).toContainText('军资 150');
+  await page.goto('/?offline'); await enterOffline(page, 'Offline Tank');
+  await page.locator('#armory-nav').click(); await page.locator('[data-class="tank"]').click(); await page.locator('[data-item="ammo"]').click();
+  await expect(page.locator('#career-wallet')).toContainText('军资 230');
   await page.reload(); await page.locator('#continue-campaign').click(); await page.locator('#deploy').click();
   await expect(page.locator('#player-health')).toHaveText('生命 130 / 130');
-  await expect(page.locator('#player-ammo')).toHaveText('VECTOR  32 / 96');
+  await expect(page.locator('#player-ammo')).toHaveText('SHOTGUN  4 / 12');
   await page.keyboard.press('e'); await expect(page.locator('#abilities')).toContainText('装甲屏障：生效中');
   expect(external).toEqual([]);
 });

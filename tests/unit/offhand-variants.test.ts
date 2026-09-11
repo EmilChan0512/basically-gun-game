@@ -1,3 +1,4 @@
+import { CLASS_STARTERS, type ClassId } from '../../src/game/campaign/Catalog';
 import { expect, it } from 'vitest';
 import { SPECIAL_OFFHANDS, type SpecialOffhandId } from '../../src/shared/content/Offhands';
 import { validateEquipment } from '../../src/shared/content/Equipment';
@@ -11,13 +12,13 @@ import { MeleeSwing } from '../../src/shared/simulation/Melee';
 it.each(Object.keys(SPECIAL_OFFHANDS) as SpecialOffhandId[])('enforces class authority and preserves %s through respawn/checkpoint', id => {
   const definition = SPECIAL_OFFHANDS[id];
   for (const classId of ['medic', 'assassin', 'commando', 'tank']) {
-    const equip = { classId, primary: 'm4', secondary: id };
+    const equip = { classId, primary: CLASS_STARTERS[classId as ClassId], secondary: id };
     if (classId === definition.classId) expect(validateEquipment(equip)).toEqual(equip);
     else expect(() => validateEquipment(equip)).toThrow();
   }
   expect(() => validateEquipment({ primary: 'm4', secondary: id })).toThrow();
   const battle = new Battle({ ...MISSIONS[0], allies: 0, enemies: 1 }, 'normal', 'm4', seededRandom(1));
-  battle.equipActor(battle.player, { classId: definition.classId, primary: 'm4', secondary: id });
+  battle.equipActor(battle.player, { classId: definition.classId, primary: CLASS_STARTERS[definition.classId], secondary: id });
   const restored = Battle.restore(battle.checkpoint());
   restored.player.life.spawnProtectionFrames = 0; restored.damage(restored.player, 9999);
   restored.player.life.respawnFrames = 0; restored.tick(idleInput());
@@ -30,14 +31,14 @@ it('migrates illegal old offhands to a pistol, retaining progress and valid clas
   const progress = new CareerProgress(storage);
   expect(progress.equipOffhand('knife')).toBe(false);
   progress.selectClass('assassin'); expect(progress.equipOffhand('katana')).toBe(false);
-  progress.current.xp = 800; progress.current.loadout.level = 6;
+  progress.current.xp = 4960; progress.current.loadout.level = 32;
   expect(progress.equipOffhand('katana')).toBe(true);
   const raw = JSON.parse(storage.getItem(SAVE_KEY)!);
   raw.career.classes.medic.loadout.secondary = 'shield';
   storage.setItem(SAVE_KEY, JSON.stringify(raw));
   const restored = new CareerProgress(storage);
   expect(restored.loadout.secondary).toBe('katana');
-  expect(restored.current.xp).toBe(800);
+  expect(restored.current.xp).toBe(4960);
   restored.selectClass('medic'); expect(restored.loadout.secondary).toBe('usp');
 });
 it('short traces strike the nearest body once and long blades reach farther without hitting behind walls', () => {

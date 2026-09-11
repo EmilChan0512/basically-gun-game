@@ -1,18 +1,18 @@
 import { test, expect } from '@playwright/test';
-import { registerTestAccount } from '../helpers/account-ui';
+import { enterOffline } from '../helpers/offline-ui';
 
 test('curated textures load in campaign and sandbox without missing assets', async ({ page }) => {
   const failures: string[] = [];
-  page.on('response', r => { if (r.url().includes('/assets/reference/') && !r.ok()) failures.push(r.url()); });
+  page.on('response', r => { if (r.url().includes('/assets/') && !r.ok()) failures.push(r.url()); });
   page.on('pageerror', e => failures.push(e.message));
-  await page.goto('/');
+  await page.goto('/?offline');
   await page.waitForFunction(() => !!window.__strikeCampaign);
-  await registerTestAccount(page, 'Art Pilot');
+  await enterOffline(page, 'Art Pilot');
   await page.getByRole('button', { name: '开始行动', exact: true }).click();
   await page.getByRole('button', { name: '进入战斗' }).click();
   await page.mouse.move(1000, 600);
   await page.waitForFunction(() => window.__strikeCampaign!.battle.frame > 5);
-  expect(await page.evaluate(() => ['head', 'torso', 'm4', 'clouds', 'supply'].every(id => window.__strikeCampaign!.textures.exists(`ref-${id}`)))).toBe(true);
+  expect(await page.evaluate(() => ['actor-medic-head', 'actor-medic-torso', 'actor-m4', 'ref-clouds', 'ref-supply'].every(id => window.__strikeCampaign!.textures.exists(id)))).toBe(true);
   await page.screenshot({ path: 'artifacts/qa/reference-battle.png' });
   await page.goto('/?rules=original');
   await page.waitForFunction(() => !!window.__originalStrike);
@@ -52,7 +52,7 @@ test('four original class skins, reload phases and mirrored muzzle alignment ren
         if (row === 0) rig.tracer(graphics, { origin: { x: x + 55, y: y - 43 }, end: { x: x + 135, y: y - 43 } }, id);
         scene.add.text(x - 60, y + 8, ['idle / fire', 'reload: lower', 'reload: insert / crouch', 'reload: return / left'][row], { fontSize: '12px' });
       });
-      for (const part of ['head', 'torso', 'arm', 'leg', 'boot']) checks.push(scene.textures.exists(`ref-${role}-${part}`));
+      for (const part of ['head', 'torso', 'upperarm', 'forearm', 'hand', 'thigh', 'shin', 'boot']) checks.push(scene.textures.exists(`actor-${role}-${part}`));
     });
     return checks;
   });

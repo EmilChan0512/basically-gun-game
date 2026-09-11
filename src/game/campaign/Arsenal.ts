@@ -60,10 +60,14 @@ export class Arsenal {
         const angle = Math.atan2(aim.y - origin.y, aim.x - origin.x) + this.recoil.sampleDegrees(random) * spreadScale * Math.PI / 180;
         const weapon = this.gun.weapon;
         const definition = WEAPONS[weapon.id];
+        if (definition.projectile) {
+          traces.push({ origin: { ...origin }, end: { x: origin.x + Math.cos(angle), y: origin.y + Math.sin(angle) }, maxDistance: 0, steps: 0, preSteps: 0, initialHit: null, hit: null, headMarked: false });
+        } else {
         for (let i = 0; i < definition.pellets; i++) {
           const pelletAngle = angle + (definition.pellets === 1 ? 0 : (i / (definition.pellets - 1) - 0.5) * definition.spread * Math.PI / 180);
           traces.push(traceBulletLine({ source, sourceTeam: team, origin, aim: { x: origin.x + Math.cos(pelletAngle) * 1000, y: origin.y + Math.sin(pelletAngle) * 1000 },
             units, rangeUnits: weapon.rangeUnits, random, isOpaqueWall: p => wall(p.x, p.y), muzzle: { xOff: weapon.xOff, yOff: weapon.yOff, facing: aim.x >= origin.x ? 1 : -1 } }));
+        }
         }
         this.gun.fire(source, null, 0); this.shots++; this.recoil.afterShot();
         if (!weapon.automatic) this.latched = true;

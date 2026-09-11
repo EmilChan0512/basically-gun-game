@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { registerTestAccount } from '../helpers/account-ui';
+import { enterOffline } from '../helpers/offline-ui';
 
 test('offline custom delivery is limited to compatible maps and keeps campaign progress separate', async ({ page }) => {
-  await page.goto('/'); await registerTestAccount(page);
+  await page.goto('/?offline'); await enterOffline(page);
   await expect(page.locator('#custom-mode option[value="ctf"]')).toHaveJSProperty('disabled', true);
   await page.locator('#custom-map').selectOption('hijack');
   await page.locator('#custom-mode').selectOption('ctf');
@@ -22,7 +22,7 @@ test('offline custom delivery is limited to compatible maps and keeps campaign p
   await expect(page.locator('#campaign-radar [data-objective]')).toHaveCount(0);
 });
 test('selects Hijack, moves in the real map and returns without campaign progress', async ({ page }) => {
-  await page.goto('/'); await registerTestAccount(page);
+  await page.goto('/?offline'); await enterOffline(page);
   await page.locator('#custom-map').selectOption('hijack');
   await expect(page.locator('#custom-map-preview svg')).toHaveAttribute('viewBox', '0 0 2874 1430');
   await expect(page.locator('#custom-map-preview image')).toHaveAttribute('href', '/assets/reference/hijack.png');

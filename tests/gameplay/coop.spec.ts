@@ -1,3 +1,4 @@
+import { registerOnline } from '../helpers/online-account';
 import { test, expect } from '@playwright/test';
 import { startServer } from '../../server/server';
 import { COOP_RECORDS_KEY } from '../../src/client/session/CoopRecords';
@@ -8,6 +9,7 @@ test('a solo room starts cooperative waves and displays server spawned enemies',
   try {
     await page.goto('/?online'); await page.locator('#server').fill(`ws://127.0.0.1:${address.port}`);
     const beforeStorage = await page.evaluate(() => ({ ...localStorage }));
+    await registerOnline(page, 'Online Pilot');
     await page.locator('#create').click(); await expect(page.locator('#online-mode')).toBeVisible();
     await page.locator('#online-mode').selectOption('coop');
     await page.locator('#online-ready').click(); await expect(page.locator('#lobby')).not.toContainText('未准备');

@@ -1,3 +1,4 @@
+import { registerOnline } from '../helpers/online-account';
 import { test, expect } from '@playwright/test';
 import { startServer } from '../../server/server';
 
@@ -7,6 +8,7 @@ test('short clicks fire and tracers disappear during a stopped snapshot stream',
   const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
   try {
     await page.goto('/?online'); await page.locator('#server').fill(`ws://127.0.0.1:${address.port}`);
+    await registerOnline(page, 'Online Pilot');
     await page.locator('#create').click(); await expect(page.locator('#online-mode')).toBeVisible();
     await page.locator('#online-mode').selectOption('coop');
     await page.locator('#online-ready').click(); await expect(page.locator('#lobby')).not.toContainText('未准备');

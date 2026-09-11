@@ -79,6 +79,7 @@ export class Room {
     if (this.session) {
       this.session.battle.actors = this.session.battle.actors.filter(a => a.id !== actorId);
       this.session.battle.grenades = this.session.battle.grenades.filter(g => g.source.id !== actorId);
+      this.session.battle.projectiles = this.session.battle.projectiles.filter(p => p.sourceId !== actorId);
     }
     this.session?.unbind(id);
     this.players.delete(id);

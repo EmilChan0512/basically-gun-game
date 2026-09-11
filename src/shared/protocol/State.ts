@@ -8,6 +8,7 @@ export interface StateMessage {
   poses: { id: string; name: string; aim: { x: number; y: number } }[];
   effects: Battle['effects']; bursts: Battle['bursts'];
   grenades: { x: number; y: number }[];
+  projectiles?: { x: number; y: number; vx: number; vy: number }[];
   events: SimulationEvent[];
   movement?: ReturnType<OriginalMovement['checkpoint']>;
   jumpHeld?: boolean;

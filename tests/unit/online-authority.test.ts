@@ -44,16 +44,16 @@ it('authorizes before joining, rejects forged unlocks, and only rewards server-o
     a.send({ type: 'create', name: 'Guest' }); await wait(() => a.messages.some(m => m.type === 'error'));
     expect(server.rooms.size).toBe(1);
     const alice = await authorizeSocket(server, a.socket, 'Alice');
-    a.send({ type: 'purchase', kind: 'weapon', id: 'vector', price: 0, credits: 99999, accountId: 'other' });
-    await wait(() => a.messages.some(m => m.type === 'profile' && m.profile.credits === 150));
-    a.send({ type: 'profileEquip', equipment: { ...starterEquipment('assassin'), primary: 'vector', secondary: 'knife' } });
+    a.send({ type: 'purchase', kind: 'item', id: 'ammo', price: 0, credits: 99999, accountId: 'other' });
+    await wait(() => a.messages.some(m => m.type === 'profile' && m.profile.credits === 230));
+    a.send({ type: 'profileEquip', equipment: { ...starterEquipment('assassin'), primary: 'scout', secondary: 'usp' } });
     await wait(() => server.accounts.profile(alice.profile.id).selected === 'assassin');
     a.send({ type: 'create', name: 'Forged name', equipment: { ...starterEquipment('assassin'), primary: 'saw' } });
     await wait(() => a.messages.filter(m => m.type === 'error').length === 2);
     expect(server.rooms.size).toBe(1);
     a.send({ type: 'create', name: 'Forged name' }); await wait(() => a.messages.some(m => m.type === 'lobby'));
     const room = [...server.rooms.values()].find(r => !r.debug)!;
-    expect([...room.players.values()][0]).toMatchObject({ name: 'Alice', equipment: { classId: 'assassin', primary: 'vector', secondary: 'knife' } });
+    expect([...room.players.values()][0]).toMatchObject({ name: 'Alice', equipment: { classId: 'assassin', primary: 'scout', secondary: 'usp' } });
     const b = await connect(), bob = await authorizeSocket(server, b.socket, 'Bob');
     b.send({ type: 'join', code: room.id, name: 'Bob' }); await wait(() => room.players.size === 2);
     const duplicate = await connect();
@@ -74,7 +74,7 @@ it('authorizes before joining, rejects forged unlocks, and only rewards server-o
     await new Promise(r => setTimeout(r, 50));
     room.session!.battle.endMatch(1, 'reward fixture');
     await wait(() => server.accounts.profile(alice.profile.id).matches === 1);
-    expect(server.accounts.profile(alice.profile.id)).toMatchObject({ credits: 366, classes: { assassin: { xp: 160 }, medic: { xp: 0 } } });
+    expect(server.accounts.profile(alice.profile.id)).toMatchObject({ credits: 446, classes: { assassin: { xp: 160 }, medic: { xp: 0 } } });
     expect(server.accounts.profile(bob.profile.id)).toMatchObject({ credits: 390, matches: 1, wins: 0 });
     expect(server.accounts.profile(observer.profile.id)).toEqual(observer.profile);
     a.send({ type: 'return' }); await wait(() => !room.session);
@@ -82,7 +82,7 @@ it('authorizes before joining, rejects forged unlocks, and only rewards server-o
     a.send({ type: 'leave' }); await wait(() => a.messages.some(m => m.type === 'left'));
     a.send({ type: 'joinDebug', name: 'Alice' }); await wait(() => server.rooms.get('debug')!.players.size === 1);
     const beforeDebug = server.accounts.profile(alice.profile.id);
-    a.send({ type: 'equip', equipment: { ...starterEquipment('tank'), primary: 'saw', secondary: 'blast-shield', skill: 'iron', item: 'frag' } });
+    a.send({ type: 'equip', equipment: { ...starterEquipment('tank'), primary: 'shotgun', secondary: 'blast-shield', skill: 'iron', item: 'frag' } });
     await wait(() => server.rooms.get('debug')!.session!.battle.player.offhand?.id === 'blast-shield');
     expect(server.accounts.profile(alice.profile.id)).toEqual(beforeDebug);
   } finally { for (const socket of sockets) socket.terminate(); await server.close(); }

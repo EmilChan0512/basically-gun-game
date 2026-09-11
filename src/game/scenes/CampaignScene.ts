@@ -145,6 +145,7 @@ export class CampaignScene extends Phaser.Scene {
       if (effect.damage > 0 && effect.team === 1) this.label(label++, effect.killed ? '击败' : `${Math.round(effect.damage)}`, effect.trace.end.x, effect.trace.end.y - 24 - age, effect.killed ? '#efff91' : '#ffffff');
     }
     for (const grenade of b.grenades) this.art.fillStyle(0xeec17a).fillCircle(grenade.x, grenade.y, 5);
+    for (const p of b.projectiles) this.art.lineStyle(3, 0xffc56a, .9).lineBetween(p.x - p.vx * 2, p.y - p.vy * 2, p.x, p.y).fillStyle(0xffedbb).fillCircle(p.x, p.y, 3);
     for (const burst of b.bursts) {
       const fraction = (b.frame - burst.frame) / 18;
       this.art.lineStyle(3, burst.color, 1 - fraction).strokeCircle(burst.x, burst.y, burst.radius * (0.3 + fraction * 0.7));

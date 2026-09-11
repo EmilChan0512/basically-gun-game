@@ -7,7 +7,7 @@ interface Registry { version: 1; accounts: Account[]; migrated: boolean }
 const hex = (data: Uint8Array) => Array.from(data, n => n.toString(16).padStart(2, '0')).join('');
 const unhex = (value: string) => new Uint8Array(value.match(/.{2}/g)!.map(n => parseInt(n, 16)));
 
-/** Local device profiles. Passwords gate the UI; this is not server-side authentication. */
+/** Legacy format retained for compatibility tests only; no application entry point uses local login. Local device profiles. Passwords gate the UI; this is not server-side authentication. */
 export class Accounts {
   private registry: Registry = { version: 1, accounts: [], migrated: false };
   private activeId: string | null = null;

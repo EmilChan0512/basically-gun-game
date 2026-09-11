@@ -7,7 +7,7 @@ import type { WeaponId } from '../combat/Combat';
 import type { BulletTrace, Point } from '../combat/Ballistics';
 import { CHARACTER_ART, characterAsset, characterPose, jointMatrix, transformPoint, type CharacterPart } from '../../client/presentation/CharacterPose';
 
-const assets = [...Object.keys(WEAPONS), ...Object.keys(offhandFrames), 'briefcase-1', 'briefcase-2', 'hijack', 'supply', 'flash', 'hills', 'clouds', 'outpost', 'aircraft'];
+const assets = ['usp', 'm4', 'vector', 'shotgun', 'dragunov', 'saw', 'beretta', 'ak47', 'deagle', ...Object.keys(offhandFrames), 'briefcase-1', 'briefcase-2', 'hijack', 'supply', 'flash', 'hills', 'clouds', 'outpost', 'aircraft'];
 export function preloadReferenceArt(scene: Phaser.Scene) {
   for (const id of Object.keys(CHARACTER_ART)) scene.load.svg(`actor-${id}`, characterAsset(id), { scale: 4 });
   for (const id of assets) scene.load.image(`ref-${id}`, `/assets/reference/${id}.png`);

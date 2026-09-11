@@ -9,7 +9,7 @@ function fixture(secondary: 'knife' | 'shield') {
     terrain: [{ x: 0, y: 500, width: 1800, height: 200 }], collisionMask: undefined,
     navigation: [{ x: 100, y: 499, links: [1] }, { x: 500, y: 499, links: [0] }] }, 'normal', 'm4', seededRandom(9));
   battle.player.human = false; battle.actors[1].human = true;
-  battle.equipActor(battle.player, { classId: secondary === 'knife' ? 'assassin' : 'tank', primary: 'm4', secondary });
+  battle.equipActor(battle.player, { classId: secondary === 'knife' ? 'assassin' : 'tank', primary: secondary === 'knife' ? 'scout' : 'shotgun', secondary });
   battle.actors.forEach((a, i) => { a.movement.reset(200 + i * 80, 499); a.life.spawnProtectionFrames = 0; });
   battle.player.aim = { x: 280, y: 457 };
   return battle;

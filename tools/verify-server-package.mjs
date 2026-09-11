@@ -44,17 +44,17 @@ try {
   const send = message => socket.send(JSON.stringify({ protocol: welcome.protocol, content: welcome.content, ...message }));
   send({ type: 'auth', mode: 'register', name: 'Package QA', password: 'package-test-password' });
   await wait(() => messages.some(m => m.type === 'authenticated'));
-  send({ type: 'purchase', kind: 'weapon', id: 'vector' });
-  await wait(() => messages.some(m => m.type === 'profile' && m.profile.credits === 150));
+  send({ type: 'purchase', kind: 'item', id: 'ammo' });
+  await wait(() => messages.some(m => m.type === 'profile' && m.profile.credits === 230));
   send({ type: 'create', name: 'Package QA' }); await wait(() => messages.some(m => m.type === 'lobby'));
   const room = messages.find(m => m.type === 'lobby').room.id;
   send({ type: 'configure', mapId: 'hijack', mode: 'coop' });
-  send({ type: 'equip', equipment: { classId: 'tank', primary: 'm4', secondary: 'shield', skill: 'barrier', item: 'medkit' } });
+  send({ type: 'equip', equipment: { classId: 'tank', primary: 'shotgun', secondary: 'usp', skill: 'barrier', item: 'ammo' } });
   send({ type: 'ready', ready: true }); send({ type: 'start' });
   await wait(() => messages.some(m => m.type === 'state'));
   send({ type: 'input', roomId: room, round: 1, command: { sequence: 0,
     actions: ['swap'], input: { left: false, right: false, crouch: false, jump: false, fire: true, aim: { x: 900, y: 700 } } } });
-  await wait(() => messages.some(m => m.type === 'state' && m.ack === 0 && m.state.actors.find(a => a.id === m.actorId)?.offhand?.deployed));
+  await wait(() => messages.some(m => m.type === 'state' && m.ack === 0 && m.state.actors.find(a => a.id === m.actorId)?.weapon === 'usp'));
   // Exercise the bundled process's permanent debug room, not the source server.
   const debugMessages = [];
   debugSocket = new WebSocket(socket.url);
@@ -68,6 +68,11 @@ try {
   debugSend({ type: 'input', roomId: 'debug', round: debugMessages.find(m => m.type === 'state').round,
     command: { sequence: 0, actions: ['skill'], input: { left: false, right: false, crouch: false, jump: false, fire: false, aim: { x: 900, y: 700 } } } });
   await wait(() => debugMessages.some(m => m.type === 'state' && m.state.actors.find(a => a.id === m.actorId)?.skillFrames > 0));
+  debugSend({ type: 'equip', equipment: { classId: 'tank', primary: 'shotgun', secondary: 'shield', skill: 'barrier', item: 'medkit' } });
+  await wait(() => debugMessages.some(m => m.type === 'state' && m.state.actors.find(a => a.id === m.actorId)?.offhand?.id === 'shield'));
+  debugSend({ type: 'input', roomId: 'debug', round: debugMessages.find(m => m.type === 'state').round,
+    command: { sequence: 1, actions: ['swap'], input: { left: false, right: false, crouch: false, jump: false, fire: true, aim: { x: 900, y: 700 } } } });
+  await wait(() => debugMessages.some(m => m.type === 'state' && m.state.actors.find(a => a.id === m.actorId)?.offhand?.deployed));
   if (debugMessages.some(m => m.type === 'error' || m.type === 'rejected')) throw Error('Bundled debug loadout or skill rejected');
   const rejected = messages.filter(m => m.type === 'error' || m.type === 'rejected');
   if (rejected.length || errors) throw Error(JSON.stringify({ rejected, errors }));
@@ -90,7 +95,7 @@ try {
   if (JSON.stringify(restored.find(m => m.type === 'authenticated').profile) !== JSON.stringify(savedProfile)) throw Error('Bundled account progress lost after restart');
   const report = { date: new Date().toISOString(), contentVersion: welcome.content, isolatedDirectory: temporary,
     bundle: resolve('artifacts/project-strike-server/server.cjs'), passed: true,
-    checks: ['client/server/runtime content identity', 'server bundle SHA256', 'isolated bundle startup', 'deployment welcome probe', 'deployment content mismatch rejection', 'structured runtime logs', 'fatal startup log and nonzero exit', 'log privacy', 'create room', 'coop setup', 'authenticated M4/shield loadout', 'account purchase and persistence across bundled process restart', 'start', 'input acknowledgement', 'deployed shield snapshot', 'permanent debug room', 'live class/katana/skill/item change', 'debug skill activation'] };
+    checks: ['client/server/runtime content identity', 'server bundle SHA256', 'isolated bundle startup', 'deployment welcome probe', 'deployment content mismatch rejection', 'structured runtime logs', 'fatal startup log and nonzero exit', 'log privacy', 'create room', 'coop setup', 'authenticated class-specific shotgun/USP loadout', 'account purchase and persistence across bundled process restart', 'start', 'input acknowledgement', 'deployed debug shield snapshot', 'permanent debug room', 'live class/katana/skill/item change', 'debug skill activation'] };
   mkdirSync('artifacts/qa', { recursive: true });
   writeFileSync('artifacts/qa/server-package.json', JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report));

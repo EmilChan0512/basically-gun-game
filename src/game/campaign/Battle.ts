@@ -3,6 +3,8 @@ import { OriginalLife } from '../combat/OriginalLife';
 import { COMBAT_FRAME_MS, type WeaponId } from '../combat/Combat';
 import { traceBulletLine, type BulletTrace, type Point, type RandomSource } from '../combat/Ballistics';
 import { Arsenal } from './Arsenal';
+import { launchProjectile, stepProjectile, type WeaponProjectile } from '../../shared/simulation/WeaponProjectile';
+import { WEAPONS } from './Catalog';
 import { botInput } from '../../shared/simulation/BotController';
 import { EventJournal } from '../../shared/simulation/Events';
 import { createMode, resolveResult, type ModeRules, type MatchResult } from '../../shared/simulation/ModeRules';
@@ -61,6 +63,7 @@ export class Battle {
   events: BattleEvent[] = [];
   readonly journal = new EventJournal();
   grenades: Grenade[] = [];
+  projectiles: WeaponProjectile[] = [];
   bursts: { x: number; y: number; frame: number; radius: number; color: number }[] = [];
   notice = ''; noticeFrame = 0;
   readonly wall: (x: number, y: number) => boolean;
@@ -85,6 +88,7 @@ export class Battle {
     this.releaseObjective(actor.id);
     this.forgetActorInput(actor.id);
     this.grenades = this.grenades.filter(grenade => grenade.source.id !== actor.id);
+    this.projectiles = this.projectiles.filter(p => p.sourceId !== actor.id);
     this.installEquipment(actor, equipment);
     actor.life.deaths = deaths;
     if (!wasAlive) this.spawn(actor);
@@ -111,6 +115,7 @@ export class Battle {
       modeState: this.mode.checkpoint(), matchResult: this.matchResult, phaseMs: this.phaseMs, jumpHeld: [...this.jumpHeld], hitboxHistory: this.hitboxHistory.checkpoint(),
       effects: this.effects, events: this.events, journal: this.journal.checkpoint(), bursts: this.bursts, notice: this.notice, noticeFrame: this.noticeFrame,
       grenades: this.grenades.map(({ source, ...g }) => ({ ...g, sourceId: source.id })),
+      projectiles: this.projectiles,
       actors: this.actors.map(({ movement, life, arsenal, offhand, ...a }) => ({ ...a, offhand: offhand?.checkpoint(), movement: movement.checkpoint(),
         life: { ...life.snapshot(), maxHealth: life.maxHealth }, arsenal: arsenal.checkpoint() })) });
   }
@@ -129,6 +134,7 @@ export class Battle {
     battle.effects = state.effects; battle.events = state.events; battle.bursts = state.bursts;
     battle.journal.restore(state.journal);
     battle.notice = state.notice; battle.noticeFrame = state.noticeFrame;
+    battle.projectiles = state.projectiles ?? [];
     battle.grenades = state.grenades.map(({ sourceId, ...g }) => {
       const source = battle.actors.find(a => a.id === sourceId);
       if (!source) throw Error('Missing grenade source');
@@ -380,6 +386,13 @@ export class Battle {
       if (traces.length && this.waves) actor.life.spawnProtectionFrames = 0;
       if (traces.length && actor.kit?.skill === 'cloak') actor.skillFrames = 0;
       for (const trace of traces) {
+        if (WEAPONS[actor.arsenal.selected].projectile) {
+          this.projectiles.push(launchProjectile(actor.id, actor.team, actor.arsenal.selected, trace.origin, trace.end, this.random,
+            actor.skillFrames && actor.kit?.skill === 'overdrive' ? 1.2 : 1));
+          // A zero-length effect drives the shared muzzle flash and shot animation without a hitscan tracer.
+          this.effects.push({ frame: this.frame, actorId: actor.id, team: actor.team, trace: { ...trace, end: { ...trace.origin } }, damage: 0, killed: false });
+          continue;
+        }
         const targetId = trace.hit?.type === 'unit' ? trace.hit.target : null;
         const victim = this.actors.find(a => a.id === targetId);
         let amount = victim && !victim.life.spawnProtectionFrames ? actor.arsenal.gun.weapon.damage * (trace.headMarked ? 1.45 : 1) : 0;
@@ -395,6 +408,19 @@ export class Battle {
         actor.arsenal.resupply(); actor.supplyReady = this.frame + 300;
       }
     }
+    for (const projectile of this.projectiles) {
+      const impact = stepProjectile(projectile, this.hitboxes(), this.wall);
+      if (!impact) continue;
+      const definition = WEAPONS[projectile.weapon], rules = definition.projectile!;
+      this.bursts.push({ x: projectile.x, y: projectile.y, radius: rules.radius, frame: this.frame, color: 0xf5b267 });
+      for (const target of this.actors) {
+        const center = { x: target.movement.x, y: target.movement.y - 40 }, direct = target.id === impact.targetId;
+        if (!target.life.alive || target.team === projectile.team || !direct && (Math.hypot(center.x - projectile.x, center.y - projectile.y) >= rules.radius || !clearSight(projectile, center, this.wall))) continue;
+        this.applyDamage(target, { kind: 'explosion', sourceId: projectile.sourceId, origin: { x: projectile.x, y: projectile.y }, hitPoint: center,
+          amount: definition.config.damage * projectile.damageScale * (direct ? 1 : rules.splashMultiplier) });
+      }
+    }
+    this.projectiles = this.projectiles.filter(p => p.fuse > 0);
     for (const grenade of this.grenades) {
       const nx = grenade.x + grenade.vx, ny = grenade.y + grenade.vy;
       if (this.wall(nx, grenade.y) || nx < 0 || nx > this.mission.width) grenade.vx *= -0.5; else grenade.x = nx;
@@ -419,7 +445,7 @@ export class Battle {
     if (this.waves) {
       // Keep grenade sources until their last projectile resolves so checkpoint
       // restoration never loses its source actor.
-      this.actors = this.actors.filter(a => a.team === 1 || a.life.alive || this.grenades.some(g => g.source.id === a.id));
+      this.actors = this.actors.filter(a => a.team === 1 || a.life.alive || this.grenades.some(g => g.source.id === a.id) || this.projectiles.some(p => p.sourceId === a.id));
       const players = this.actors.filter(a => a.team === 1);
       const needsSpawn = this.waves.advance(players.map(a => ({ id: a.id, alive: a.life.alive })), this.actors.filter(a => a.team === 2 && a.life.alive).length);
       if (needsSpawn) {

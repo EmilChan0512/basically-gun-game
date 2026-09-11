@@ -12,6 +12,7 @@ await build({ absWorkingDir: root, entryPoints: ['server/main.ts'], outfile: joi
   bundle: true, platform: 'node', format: 'cjs', target: 'node22',
   external: ['bufferutil', 'utf-8-validate'], legalComments: 'eof' });
 copyFileSync(join(root, 'node_modules/ws/LICENSE'), join(folder, 'licenses/ws-MIT.txt'));
+await build({ absWorkingDir: root, entryPoints: ['server/admin.ts'], outfile: join(folder, 'admin.cjs'), bundle: true, platform: 'node', format: 'cjs', target: 'node22' });
 writeFileSync(join(folder, 'START.cmd'), '@echo off\r\ncd /d "%~dp0"\r\nnode server.cjs\r\npause\r\n');
 writeFileSync(join(folder, 'README.txt'), `Project Strike 权威服务器
 
@@ -29,7 +30,7 @@ Windows 双击 START.cmd，其他系统运行 node server.cjs。
 刀类仅限刺客，盾牌仅限重装兵；服务器验证职业与配装，不能在战斗中更改。
 开局后加入先观战；断线30秒内可用原页面“断线重连”恢复席位。
 超过保留期限需重新加入；服务器重启不支持恢复旧房间。
-联机账号与本机战役账号独立。先注册/登录并选择职业、技能和配装，再进入普通房间。
+账号均为联网账号。单机免登录，离线存档与服务端资产独立。先注册/登录并选择职业、技能和配装，再进入普通房间。
 金币、已购枪械/道具、各职业经验及配装保存在服务端 data/accounts.json。可用 ACCOUNT_DATA_DIR 指定固定目录；
 生产 systemd 使用 /var/lib/project-strike。升级程序时保留该目录，勿提交或发送数据库。
 单进程独占此目录；修改文件不是支持的管理接口。损坏存档会拒绝启动，不会覆盖为新档。
@@ -44,5 +45,5 @@ Windows 双击 START.cmd，其他系统运行 node server.cjs。
 `);
 writeFileSync(join(folder, 'manifest.json'), JSON.stringify({ builtAt: new Date().toISOString(), contentVersion: packageContentVersion(), node: '>=22.12',
   entry: 'server.cjs', sha256: createHash('sha256').update(readFileSync(join(folder, 'server.cjs'))).digest('hex'),
-  dependencies: 'ws bundled; optional native accelerators omitted', persistentRooms: false, persistentAccounts: true, accountSchema: 1 }, null, 2));
+  dependencies: 'ws bundled; optional native accelerators omitted', persistentRooms: false, persistentAccounts: true, accountSchema: 2 }, null, 2));
 console.log(`Server package: ${folder}`);

@@ -1,0 +1,39 @@
+name: Provision authorized test accounts
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  provision:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 5
+    concurrency:
+      group: backend-production
+      cancel-in-progress: false
+    env:
+      DEPLOY_HOST: ${{ vars.DEPLOY_HOST || '43.142.165.82' }}
+      DEPLOY_PORT: ${{ vars.DEPLOY_PORT || '22' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Provision once under the server deployment lock
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          BATCH: ${{ secrets.PROVISION_TEST_ACCOUNTS }}
+        run: |
+          set -euo pipefail
+          umask 077
+          test -n "$SSH_KEY" && test -n "$KNOWN_HOSTS" && test -n "$BATCH"
+          [[ "$DEPLOY_HOST" =~ ^[a-zA-Z0-9.-]+$ ]]
+          [[ "$DEPLOY_PORT" =~ ^[0-9]+$ ]]
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/account-admin
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          opts=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o IdentitiesOnly=yes -o ConnectTimeout=15 -i ~/.ssh/account-admin)
+          scp "${opts[@]}" -P "$DEPLOY_PORT" deploy/provision-test-accounts.sh "ubuntu@$DEPLOY_HOST:/tmp/strike-provision-$GITHUB_RUN_ID.sh"
+          printf '%s' "$BATCH" | ssh "${opts[@]}" -p "$DEPLOY_PORT" "ubuntu@$DEPLOY_HOST" "sudo -n bash '/tmp/strike-provision-$GITHUB_RUN_ID.sh'"
+          ssh "${opts[@]}" -p "$DEPLOY_PORT" "ubuntu@$DEPLOY_HOST" "rm -f '/tmp/strike-provision-$GITHUB_RUN_ID.sh'"
+      - name: Remove temporary SSH identity
+        if: always()
+        run: rm -f ~/.ssh/account-admin ~/.ssh/known_hosts

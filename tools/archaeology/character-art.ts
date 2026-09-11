@@ -1,3 +1,4 @@
+import weapons from '../../src/shared/content/weapon-catalog.json' with { type: 'json' };
 /** Recover vector body parts and authored joint transforms; never execute SWF scripts. */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -7,7 +8,7 @@ import { inspectTimeline, displayListAt } from './timeline';
 const swf = readFileSync('archaeology/swf/sfh1_reference.swf');
 const output = 'public/assets/characters'; mkdirSync(output, { recursive: true });
 const symbols = { forearm: 266, upperarm: 298, hand: 385, boot: 538, shin: 568, thigh: 598, torso: 631, head: 666 };
-const guns = { usp: 2, beretta: 3, deagle: 7, vector: 17, m4: 20, ak47: 25, saw: 32, shotgun: 44, dragunov: 52 };
+const guns = Object.fromEntries(Object.entries(weapons).map(([id, weapon]) => [id, weapon.artFrameId]));
 const art: Record<string, { x: number; y: number; w: number; h: number }> = {};
 const evidence: object[] = [];
 const browser = await chromium.launch(); const page = await browser.newPage();
@@ -53,7 +54,7 @@ function clip(timeline: typeof body, name: string, mapping: Record<string, strin
   return Array.from({ length: to - from }, (_, n) => pose(timeline, from + n, mapping));
 }
 const locomotion = Object.fromEntries(['idle', 'run1', 'runback1', 'run2', 'runback2', 'jump', 'fallloop', 'duckloop', 'duckrun', 'duckrunback'].map(name => [name, clip(body, name, bodyParts)]));
-const arms = Object.fromEntries(['pistol', 'mpistol', 'rifle', 'shotgun', 'heavy', 'sniper', 'magnum'].flatMap(name => [name, `${name}_fire`, `${name}_reload`]).map(name => [name, { rear: clip(rear, name, armParts), front: clip(front, name, armParts) }]));
+const arms = Object.fromEntries(['pistol', 'mpistol', 'rifle', 'shotgun', 'heavy', 'sniper', 'magnum', 'bullpup', 'rocket', 'launcher'].flatMap(name => [name, `${name}_fire`, `${name}_reload`]).map(name => [name, { rear: clip(rear, name, armParts), front: clip(front, name, armParts) }]));
 writeFileSync('src/client/presentation/character-poses.json', JSON.stringify({ art, locomotion, arms, restingArm: pose(front, 1, armParts) }));
 writeFileSync(`${output}/manifest.json`, JSON.stringify({ source: 'SFH1 v1.2.1', swfSha256: createHash('sha256').update(swf).digest('hex'),
   method: 'Static FFDec SVG export; original limb identities and placement matrices; normalized viewBox; thigh gun attachment hidden; no original scripts executed', assets: evidence }, null, 2));

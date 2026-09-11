@@ -18,7 +18,7 @@ describe('local accounts', () => {
   it('registers, verifies passwords, isolates careers, persists sessions and logs out', async () => {
     const storage = memory(), session = memory(), accounts = new Accounts(storage, session);
     await accounts.register('Alpha', 'alpha-secret');
-    const a = new CareerProgress(accounts.profileStorage()); a.buyWeapon('vector');
+    const a = new CareerProgress(accounts.profileStorage()); a.current.xp = 2240; a.current.loadout.level = 15; a.data.career.credits = 3000; a.buyWeapon('vector');
     expect(accounts.active?.name).toBe('Alpha'); expect(new Accounts(storage, session).active?.name).toBe('Alpha');
     const oldAdapter = accounts.profileStorage(); accounts.logout();
     expect(new Accounts(storage, session).active).toBeNull();
@@ -59,22 +59,23 @@ describe('career economy and loadouts', () => {
     expect(p.unlocked).toBe(1); expect(p.settle(b)).toBeNull();
     const loaded = new CareerProgress(store); expect(loaded.settle(b)).toBeNull();
     expect(loaded.equipSkill('regenerate')).toBe(true); expect(loaded.train('vitality')).toBe(true);
-    expect(loaded.buyWeapon('shotgun')).toBe(true); expect(loaded.equipWeapon('shotgun')).toBe(true);
+    expect(loaded.buyWeapon('needler')).toBe(true); expect(loaded.equipWeapon('needler')).toBe(true);
     const again = new CareerProgress(store);
-    expect(again.loadout).toMatchObject({ primary: 'shotgun', skill: 'regenerate', training: { vitality: 1 } });
+    expect(again.loadout).toMatchObject({ primary: 'needler', skill: 'regenerate', training: { vitality: 1 } });
     expect(again.current.xp).toBe(p.current.xp);
   });
   it('separates class levels, gates purchases, prevents overspending and duplicate unlock charges', () => {
     const p = new CareerProgress(memory());
     expect(p.buyWeapon('saw')).toBe(false); expect(p.equipSkill('regenerate')).toBe(false); expect(p.train('vitality')).toBe(false);
-    expect(p.buyWeapon('vector')).toBe(true); expect(p.data.career.credits).toBe(150);
-    expect(p.buyWeapon('vector')).toBe(false); expect(p.data.career.credits).toBe(150);
-    expect(p.buyItem('ammo')).toBe(true); expect(p.data.career.credits).toBe(30);
-    p.selectClass('tank'); expect(p.current.xp).toBe(0); expect(p.equipWeapon('vector')).toBe(true);
+    p.current.xp = 320; p.current.loadout.level = 3;
+    expect(p.buyWeapon('uzi')).toBe(true); expect(p.data.career.credits).toBe(275);
+    expect(p.buyWeapon('uzi')).toBe(false); expect(p.data.career.credits).toBe(275);
+    expect(p.buyItem('ammo')).toBe(true); expect(p.data.career.credits).toBe(155);
+    p.selectClass('tank'); expect(p.current.xp).toBe(0); expect(p.equipWeapon('uzi')).toBe(false);
     expect(p.loadout.classId).toBe('tank'); p.selectClass('medic'); expect(p.loadout.primary).toBe('m4');
     const battle = createBattle('tank'); battle.phase = 'lost'; battle.player.kills = 2;
     const result = p.settle(battle)!; expect(result.xp).toBe(55); expect(result.firstClear).toBe(false);
-    expect(p.data.career.classes.tank.xp).toBe(55); expect(p.data.career.classes.medic.xp).toBe(0);
+    expect(p.data.career.classes.tank.xp).toBe(55); expect(p.data.career.classes.medic.xp).toBe(320);
     expect(p.unlocked).toBe(0);
   });
   it('validates old and malformed saves instead of accepting impossible equipment or training', () => {
@@ -104,7 +105,7 @@ describe('class skills and tactical items in the actual battle', () => {
     const b = createBattle('medic', 'regenerate'); b.damage(b.player, 60); b.useSkill();
     const hp = b.player.life.health; for (let i = 0; i < 30; i++) b.tick(idleInput()); expect(b.player.life.health).toBeCloseTo(hp + 10);
     const supply = createBattle('commando'); supply.player.arsenal.gun.reserveAmmo = 0; supply.player.arsenal.gun.ammo = 10;
-    expect(supply.useSkill()).toBe(true); expect(supply.player.arsenal.gun.ammo).toBe(10); expect(supply.player.arsenal.gun.reserveAmmo).toBe(126);
+    expect(supply.useSkill()).toBe(true); expect(supply.player.arsenal.gun.ammo).toBe(10); expect(supply.player.arsenal.gun.reserveAmmo).toBe(210);
   });
   it('timed regeneration lasts exactly its configured number of logic updates', () => {
     const b = createBattle('medic', 'regenerate'); b.player.life.health = 1; b.player.life.regenDelay = 1000;
@@ -178,21 +179,23 @@ describe('class skills and tactical items in the actual battle', () => {
 
 describe('distinct weapon mechanics and playable professions', () => {
   for (const id of Object.keys(WEAPONS) as (keyof typeof WEAPONS)[]) it(`${id} spends ammunition and deals damage in the integrated battle`, () => {
-    const kit = defaultLoadout(); kit[WEAPONS[id].slot] = id;
+    const role = WEAPONS[id].classId; const kit = defaultLoadout(role === 'shared' ? 'medic' : role); kit[WEAPONS[id].slot] = id;
     const b = new Battle(MISSIONS[0], 'easy', 'm4', () => 0.5, kit);
     if (WEAPONS[id].slot === 'secondary') b.swap();
     b.player.movement.reset(300, 599.5); b.actors[1].movement.reset(500, 599.5); b.actors[1].life.spawnProtectionFrames = 0;
     b.player.aim = { x: 500, y: 566.5 }; const ammo = b.player.arsenal.gun.ammo;
     b.tick({ ...idleInput(), fire: true, aim: b.player.aim });
-    expect(b.player.arsenal.gun.ammo).toBe(ammo - 1); expect(b.actors[1].life.health).toBeLessThan(85);
+    expect(b.player.arsenal.gun.ammo).toBe(ammo - 1);
+    if (WEAPONS[id].projectile) for (let frame = 0; frame < 10 && b.actors[1].life.health === 85; frame++) b.tick(idleInput());
+    expect(b.actors[1].life.health).toBeLessThan(85);
   });
-  it('fires six shotgun pellets for one shell and respects semiautomatic release', () => {
+  it('fires five shotgun pellets for one shell and respects semiautomatic release', () => {
     const a = new Arsenal('shotgun'); const pose = { crouching: false, airborne: false, moving: false, aimStat: 1 };
     a.setTrigger(true);
     const traces = a.tick('p', 1, { x: 100, y: 100 }, { x: 400, y: 100 }, pose, [], () => false, () => 0.5);
-    expect(traces).toHaveLength(6); expect(a.gun.ammo).toBe(5); expect(new Set(traces.map(t => t.end.y)).size).toBe(6);
+    expect(traces).toHaveLength(5); expect(a.gun.ammo).toBe(3); expect(new Set(traces.map(t => t.end.y)).size).toBe(5);
     for (let i = 0; i < 40; i++) a.tick('p', 1, { x: 100, y: 100 }, { x: 400, y: 100 }, pose, [], () => false, () => 0.5);
-    expect(a.gun.ammo).toBe(5); expect(a.shots).toBe(1);
+    expect(a.gun.ammo).toBe(3); expect(a.shots).toBe(1);
     expect(WEAPONS.dragunov.config.rangeUnits).toBeGreaterThan(WEAPONS.m4.config.rangeUnits);
     expect(WEAPONS.saw.config.magazineSize).toBe(50); expect(WEAPONS.vector.config.shootDelayFrames).toBeLessThan(WEAPONS.m4.config.shootDelayFrames);
   });

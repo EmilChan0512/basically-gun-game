@@ -11,7 +11,7 @@ export function visibleState(message: StateMessage, visible: ReadonlySet<string>
     state: { ...message.state, actors: message.state.actors.filter(a => visible.has(a.id)) },
     poses: message.poses.filter(p => visible.has(p.id)),
     effects: message.effects.filter(e => !!e.actorId && visible.has(e.actorId) && hitVisible(e.trace.hit) && hitVisible(e.trace.initialHit)),
-    bursts: message.bursts.filter(pointVisible), grenades: message.grenades.filter(pointVisible),
+    bursts: message.bursts.filter(pointVisible), grenades: message.grenades.filter(pointVisible), projectiles: message.projectiles?.filter(pointVisible),
     events: message.events.filter(e => e.kind.startsWith('objective-') || e.kind === 'result'
       || (!e.actorId || visible.has(e.actorId)) && (!e.targetId || visible.has(e.targetId))),
   };

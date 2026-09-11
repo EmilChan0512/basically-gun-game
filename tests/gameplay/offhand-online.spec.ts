@@ -9,6 +9,10 @@ test('online knife and shield selection, authority actions and reconnect', async
   try {
     for (const page of pages) { page.on('pageerror', e => errors.push(e.message)); await page.goto('/?online'); await page.locator('#server').fill(`ws://127.0.0.1:${address.port}`); }
     for (const [i, page] of pages.entries()) await registerOnline(page, `Pilot ${i}`);
+    for (let i = 0; i < 2; i++) {
+      const p = (await server.accounts.login('login', `Pilot ${i}`, 'test-password-123', `fixture-${i}`)).profile;
+      server.accounts.settle(`fixture-level2-${i}`, [{ accountId: p.id, classId: i === 0 ? 'assassin' : 'tank', won: true, kills: 3 }]);
+    }
     await pages[0].locator('#create').click(); await expect(pages[0].locator('#online-loadout-brief')).toBeVisible();
     const room = [...server.rooms.values()][0];
     await pages[1].locator('#code').fill(room.id); await pages[1].locator('#join').click();
@@ -19,7 +23,7 @@ test('online knife and shield selection, authority actions and reconnect', async
     for (const page of pages) { await onlineLobby(page); await page.locator('#online-ready').click(); }
     await expect(pages[0].locator('#lobby')).not.toContainText('未准备');
     await pages[0].locator('#online-start').click();
-    for (const page of pages) { await expect(page.locator('#online-game')).toHaveAttribute('aria-busy', 'false'); await expect(page.locator('#online-hud')).toContainText('M4'); await page.keyboard.press('q'); }
+    for (const [i, page] of pages.entries()) { await expect(page.locator('#online-game')).toHaveAttribute('aria-busy', 'false'); await expect(page.locator('#online-hud')).toContainText(i === 0 ? 'SCOUT' : 'SHOTGUN'); await page.keyboard.press('q'); }
     await expect(pages[0].locator('#online-hud')).toContainText('战术刀');
     await expect(pages[1].locator('#online-hud')).toContainText('防弹盾');
     for (const page of pages) await page.locator('canvas').scrollIntoViewIfNeeded();

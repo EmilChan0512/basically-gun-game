@@ -40,12 +40,12 @@ test('debug loadout controls switch class, weapons, skill and item live and surv
     await expect(page.locator('#class-medic')).toHaveAttribute('aria-pressed', 'true');
     await selectOnlineClass(page, 'tank');
     await page.locator('#tab-secondary').click(); await expect(page.locator('[data-gear="knife"]')).toHaveCount(0);
-    await equipOnline(page, 'primary', 'saw');
+    await equipOnline(page, 'primary', 'spas12');
     await equipOnline(page, 'secondary', 'blast-shield');
     await equipOnline(page, 'skill', 'iron');
     await equipOnline(page, 'item', 'frag');
     const room = server.rooms.get('debug')!, actor = room.session!.battle.player, actorId = actor.id;
-    await expect.poll(() => actor.kit).toMatchObject({ classId: 'tank', primary: 'saw', secondary: 'blast-shield', skill: 'iron', item: 'frag' });
+    await expect.poll(() => actor.kit).toMatchObject({ classId: 'tank', primary: 'spas12', secondary: 'blast-shield', skill: 'iron', item: 'frag' });
     await expect(page.locator('#online-hud')).toContainText('钢铁意志');
     await expect(page.locator('#online-hud')).toContainText('破片手雷');
     // Do not click the canvas to avoid turning a menu interaction into firing.

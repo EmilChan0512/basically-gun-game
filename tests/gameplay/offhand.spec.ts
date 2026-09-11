@@ -1,10 +1,14 @@
+import { SAVE_KEY } from '../../src/game/campaign/Progress';
 import { test, expect } from '@playwright/test';
-import { registerTestAccount } from '../helpers/account-ui';
+import { enterOffline } from '../helpers/offline-ui';
 
 for (const id of ['knife', 'shield'] as const) test(`equips and uses ${id} from the real armory`, async ({ page }) => {
-  await page.goto('/'); await registerTestAccount(page);
+  await page.goto('/?offline'); await enterOffline(page);
   await page.locator('#edit-loadout').click();
   await page.locator(`[data-class="${id === 'knife' ? 'assassin' : 'tank'}"]`).click();
+  // Test-only saved campaign fixture at the original first offhand unlock level.
+  await page.evaluate(({ key, role }) => { const save = JSON.parse(localStorage.getItem(key)!); save.career.classes[role].xp = 160; localStorage.setItem(key, JSON.stringify(save)); }, { key: SAVE_KEY, role: id === 'knife' ? 'assassin' : 'tank' });
+  await page.reload(); await page.locator('#edit-loadout').click();
   await page.locator(`[data-offhand="${id}"]`).click();
   await expect(page.locator(`[data-offhand="${id}"]`)).toBeDisabled();
   await page.locator('#armory-back').click();
@@ -27,7 +31,7 @@ for (const id of ['knife', 'shield'] as const) test(`equips and uses ${id} from 
   await page.keyboard.up('f');
   await page.waitForFunction(() => window.__strikeCampaign!.battle.player.offhand!.canSwitch);
   await page.keyboard.press('q');
-  await expect(page.locator('#player-ammo')).toContainText('M4');
+  await expect(page.locator('#player-ammo')).toContainText(id === 'knife' ? 'SCOUT' : 'SHOTGUN');
   await page.keyboard.press('Escape'); await page.locator('#pause-home').click();
   await page.locator('#edit-loadout').click();
   await expect(page.locator(`[data-offhand="${id}"]`)).toBeDisabled();

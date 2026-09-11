@@ -24,7 +24,7 @@ Catalog目前包含9种枪械、刀与盾副手。Arsenal仅构造枪械控制�
 
 ## 当前扩展：账号与养成（2026-09-11）
 
-Accounts管理本机账号注册/登录和独立SaveStorage适配器；CareerProgress在原CampaignProgress上增量扩展职业、军资、解锁、训练和终局奖励，旧存档向后兼容。Catalog声明四职业、八技能、九枪械、刀盾副手及三道具。CareerPanels渲染账号页与军械库，出战时Battle接收配装副本。
+OnlineAccounts 管理唯一联网身份、服务端资产和资产流水；CareerProgress 管理免登录单机的独立离线存档。Catalog 声明四职业、八技能、54 枪械、12 刀盾及三道具。OnlineArmory 渲染联网配装，CareerPanels 渲染离线军械库。历史 Accounts 模块仅保留旧格式兼容测试，不再接入应用入口。
 
 Arsenal继续复用GunController/弹道，新增主副武器组合及霰弹多弹丸；Battle处理技能时长、道具次数、手雷和属性修正；CampaignScene负责E/G输入及反馈。原训练场仍只接受USP/M4，新增武器ID不会改变既有实验配置。
 

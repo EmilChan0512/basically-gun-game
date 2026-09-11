@@ -8,12 +8,11 @@ import { CampaignScene } from './game/scenes/CampaignScene';
 import { Battle } from './game/campaign/Battle';
 import { MISSIONS } from './game/campaign/Missions';
 import { CareerProgress, type Reward } from './game/campaign/CareerProgress';
-import { Accounts } from './game/campaign/Accounts';
-import { CLASSES, SKILLS, ITEMS, WEAPONS, SPECIAL_OFFHANDS } from './game/campaign/Catalog';
-import { renderAccounts, renderArmory } from './game/campaign/CareerPanels';
+import { canEquipWeapon, CLASSES, SKILLS, ITEMS, WEAPONS, SPECIAL_OFFHANDS } from './game/campaign/Catalog';
+import { renderArmory } from './game/campaign/CareerPanels';
 import './campaign.css';
 
-type Screen = 'menu' | 'briefing' | 'playing' | 'paused' | 'result' | 'ending' | 'accounts' | 'armory';
+type Screen = 'menu' | 'briefing' | 'playing' | 'paused' | 'result' | 'ending' | 'armory';
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 
 export function startCampaign() {
@@ -21,29 +20,24 @@ export function startCampaign() {
   document.title = 'Project Strike · 破晓行动';
   let storage: Storage | undefined;
   try { storage = window.localStorage; } catch { /* Continue without persistence. */ }
-  let session: Storage | undefined;
-  try { session = window.sessionStorage; } catch { /* Login remains available. */ }
-  const accounts = new Accounts(storage, session);
-  let guest = false;
-  let progress = new CareerProgress(accounts.active ? accounts.profileStorage() : undefined);
+  const progress = new CareerProgress(storage);
   let reward: Reward | null = null;
   let armoryReturn: Screen = 'menu';
-  let accountReturn: Screen = 'menu';
   let scene: CampaignScene | undefined, screen: Screen = 'menu', selected = progress.unlocked;
   document.querySelector('main')!.className = 'campaign-app';
   document.querySelector('main')!.innerHTML = `
-    <header><div class="brand"><span class="mark">S</span><div><h1>PROJECT STRIKE</h1><p>OPERATION DAYBREAK / 单人战役</p></div></div><nav class="campaign-nav"><button id="campaign-home">任务地图</button><button id="armory-nav">职业与军械库</button><button id="account-nav">账号</button><button id="sound">声音：开</button><a href="?rules=original">训练场</a></nav></header>
+    <header><div class="brand"><span class="mark">S</span><div><h1>PROJECT STRIKE</h1><p>OPERATION DAYBREAK / 单人战役</p></div></div><nav class="campaign-nav"><button id="campaign-home">任务地图</button><button id="armory-nav">职业与军械库</button><a id="account-nav" href="/?online">联网账号与资产</a><button id="sound">声音：开</button><a href="?rules=original">训练场</a></nav></header>
     <section class="campaign-title"><div><p class="eyebrow">一支小队 · 四场行动</p><h2 id="campaign-heading">破晓行动</h2></div><span id="save-status"></span></section>
     <section class="campaign-stage"><div id="game" aria-label="单人横版射击战役"></div>
       <div id="battle-top" hidden><span id="mission-label"></span><div class="scoreline"><b id="blue-score">0</b><span id="goal-label"></span><b id="red-score">0</b></div><span id="battle-time"></span><button id="battle-pause">暂停 Esc</button></div>
       <div id="battle-bottom" hidden><div><strong id="player-health"></strong><span id="player-ammo"></span></div><p id="abilities"></p><p id="battle-message"></p><p id="kill-feed"></p></div>
       <div id="campaign-overlay" aria-live="polite"></div>
     </section>
-    <section class="campaign-help"><p><kbd>A D / ← →</kbd> 移动 <kbd>W / 空格</kbd> 跳跃 <kbd>S / ↓</kbd> 蹲伏 <kbd>鼠标 / F</kbd> 射击 <kbd>Q</kbd> 切枪 <kbd>R / L</kbd> 换弹 <kbd>E</kbd> 职业技能 <kbd>G</kbd> 道具 <kbd>Esc / P</kbd> 暂停</p><p>青色是队友，橙色是敌人。阵亡会复活；出生区补给箱可补充备用弹药。进度只保存在这台设备。</p></section>`;
+    <section class="campaign-help"><p><kbd>A D / ← →</kbd> 移动 <kbd>W / 空格</kbd> 跳跃 <kbd>S / ↓</kbd> 蹲伏 <kbd>鼠标 / F</kbd> 射击 <kbd>Q</kbd> 切枪 <kbd>R / L</kbd> 换弹 <kbd>E</kbd> 职业技能 <kbd>G</kbd> 道具 <kbd>Esc / P</kbd> 暂停</p><p>青色是队友，橙色是敌人。阵亡会复活；出生区补给箱可补充备用弹药。单机免登录，进度只保存在这台设备；联网账号资产由服务器独立管理。</p></section>`;
 
   function saveStatus() {
-    $('save-status').textContent = guest ? '临时试玩 · 不保存进度' : progress.storageAvailable ? `本地进度 ${progress.data.completed.length} / ${MISSIONS.length}` : '存储不可用 · 本次仍可完整游玩';
-    $('account-nav').textContent = accounts.active?.name ?? '账号';
+    $('save-status').textContent = progress.storageAvailable ? `本地进度 ${progress.data.completed.length} / ${MISSIONS.length}` : '存储不可用 · 本次仍可完整游玩';
+    $('account-nav').textContent = '联网账号与资产';
   }
   const radar = document.createElement('div'); radar.id = 'campaign-radar'; radar.hidden = true;
   radar.style.cssText = 'position:absolute;right:12px;top:66px;width:230px;max-width:30%;z-index:2;pointer-events:none';
@@ -52,7 +46,7 @@ export function startCampaign() {
   function bind(id: string, action: () => void) { $(id).onclick = () => { action(); (document.activeElement as HTMLElement)?.blur(); }; }
   function settings() {
     const l = progress.loadout;
-    return `<div class="loadout"><label>行动难度<select id="difficulty"><option value="easy">轻松 · 更长反应时间</option><option value="normal">标准</option><option value="hard">老兵 · 更准的对手</option></select></label><label>主武器<select id="weapon">${progress.data.career.weapons.filter(id => WEAPONS[id].slot === 'primary' && WEAPONS[id].level <= l.level).map(id => `<option value="${id}">${WEAPONS[id].name}</option>`).join('')}</select></label><button id="edit-loadout">配装与升级</button></div><p class="brief-tip">${CLASSES[l.classId].name} Lv.${l.level} · E ${SKILLS[l.skill].name} · G ${ITEMS[l.item].name} · 军资 ${progress.data.career.credits}</p>`;
+    return `<div class="loadout"><label>行动难度<select id="difficulty"><option value="easy">轻松 · 更长反应时间</option><option value="normal">标准</option><option value="hard">老兵 · 更准的对手</option></select></label><label>主武器<select id="weapon">${progress.data.career.weapons.filter(id => canEquipWeapon(l.classId, id) && WEAPONS[id].slot === 'primary' && WEAPONS[id].level <= l.level).map(id => `<option value="${id}">${WEAPONS[id].name}</option>`).join('')}</select></label><button id="edit-loadout">配装与升级</button></div><p class="brief-tip">${CLASSES[l.classId].name} Lv.${l.level} · E ${SKILLS[l.skill].name} · G ${ITEMS[l.item].name} · 军资 ${progress.data.career.credits}</p>`;
   }
   function bindSettings() {
     $<HTMLSelectElement>('difficulty').value = progress.data.difficulty;
@@ -62,9 +56,8 @@ export function startCampaign() {
     bind('edit-loadout', () => { armoryReturn = screen; show('armory'); });
   }
   function show(next: Screen) {
-    if (!accounts.active && !guest && next !== 'accounts') next = 'accounts';
     screen = next;
-    $<HTMLButtonElement>('armory-nav').disabled = ['playing', 'paused', 'accounts'].includes(screen);
+    $<HTMLButtonElement>('armory-nav').disabled = ['playing', 'paused'].includes(screen);
     if (scene) { scene.activeBattle = screen === 'playing'; scene.clearInput(); }
     $('campaign-overlay').hidden = screen === 'playing';
     $('battle-top').hidden = !['playing', 'paused', 'result'].includes(screen);
@@ -74,10 +67,6 @@ export function startCampaign() {
     $('campaign-overlay').scrollTop = 0;
     saveStatus();
     if (screen === 'playing') return;
-    if (screen === 'accounts') {
-      renderAccounts($('campaign-overlay'), accounts, () => { guest = false; progress = new CareerProgress(accounts.profileStorage()); selected = progress.unlocked; scene?.loadBattle(new Battle(MISSIONS[selected])); show('menu'); }, () => { guest = true; progress = new CareerProgress(); selected = 0; scene?.loadBattle(new Battle(MISSIONS[0])); show('menu'); }, () => show(accountReturn));
-      return;
-    }
     if (screen === 'armory') { renderArmory($('campaign-overlay'), progress, () => show(armoryReturn), saveStatus); return; }
     if (screen === 'menu') {
       custom = null;
@@ -139,7 +128,6 @@ export function startCampaign() {
   }
   function pause() { if (screen === 'playing') show('paused'); else if (screen === 'paused') show('playing'); }
   bind('campaign-home', () => show('menu'));
-  bind('account-nav', () => { if (screen !== 'accounts') accountReturn = screen === 'playing' ? 'paused' : screen; show('accounts'); });
   bind('armory-nav', () => { armoryReturn = screen === 'briefing' || screen === 'result' ? screen : 'menu'; show('armory'); }); bind('battle-pause', pause);
   bind('sound', () => { if (scene) { scene.audio.enabled = !scene.audio.enabled; scene.audio.unlock(); $('sound').textContent = scene.audio.enabled ? '声音：开' : '声音：关'; } });
   window.addEventListener('strike-campaign-ready', ((event: CustomEvent<CampaignScene>) => {
@@ -174,7 +162,7 @@ export function startCampaign() {
         scene!.audio.cue(b.phase === 'won' ? 'win' : 'lose'); show('result');
       }
     };
-    show(accounts.active ? 'menu' : 'accounts');
+    show('menu');
   }) as EventListener, { once: true });
   new Phaser.Game({ type: Phaser.AUTO, parent: 'game', width: 1120, height: 620, backgroundColor: '#142933',
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH }, scene: [CampaignScene], render: { antialias: true } });

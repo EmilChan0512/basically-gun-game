@@ -202,16 +202,28 @@
       "sha256": "4b43b11f173e038a972ce6304d6c64732064ec2e335e034b9d00183adccbeda1"
     },
     {
+      "id": "uzi",
+      "symbol": 375,
+      "frame": 9,
+      "sha256": "eaec83a4b3e8ced696ab1f8ab7d149a94b861614365258b67a0fce7cb703d7cf"
+    },
+    {
+      "id": "mp5",
+      "symbol": 375,
+      "frame": 16,
+      "sha256": "b11669af9b58f701590b7d4d3285d23d1e9a615e93b40deef3275abdbe2dc2fe"
+    },
+    {
       "id": "beretta",
       "symbol": 375,
       "frame": 3,
       "sha256": "afb30e03e717b3b37dbab0febad7cb5576670eb52bc4ae96224694970c7dd688"
     },
     {
-      "id": "deagle",
+      "id": "skorpion",
       "symbol": 375,
-      "frame": 7,
-      "sha256": "53020bafba471e6e66df90bf40e99a2c2cd55e2250806f71bace3067b8bc6e29"
+      "frame": 10,
+      "sha256": "f1bb847249ef2b02167fc310bee4ef80c918a5dac8a98e8e5a7688f281a4db5c"
     },
     {
       "id": "vector",
@@ -220,10 +232,136 @@
       "sha256": "46ed09b251b1bccac1790d11afce42c7fdd028fbd15c31f7cdf176f8f5e81dbc"
     },
     {
+      "id": "socom",
+      "symbol": 375,
+      "frame": 4,
+      "sha256": "21912ebd1363a0197eb21ef34bfe7e58f1967dbbbf4734b7cac48f6dbad96099"
+    },
+    {
+      "id": "patriot",
+      "symbol": 375,
+      "frame": 12,
+      "sha256": "7047e88efdec8688950dd5330140e7f8d806d78c4170d25f98b84260f6de25cb"
+    },
+    {
+      "id": "ump",
+      "symbol": 375,
+      "frame": 15,
+      "sha256": "38e831373a1ad36b9710f8031466b2f9cd470b835f07c75578dc444ec5c4d9a7"
+    },
+    {
+      "id": "m1911",
+      "symbol": 375,
+      "frame": 5,
+      "sha256": "0e413400c2b14455ad5e2397a4e87cc7a8990a06d666b0d61bb5f7205a263797"
+    },
+    {
+      "id": "glock18",
+      "symbol": 375,
+      "frame": 11,
+      "sha256": "771fcfc97344ff450436bfa9d5b4ee682334c14fadff196a207648eac5ea05f1"
+    },
+    {
+      "id": "phantom",
+      "symbol": 375,
+      "frame": 18,
+      "sha256": "ceca42cd9d9a92547f0e9123cb2cf01ca3aaad782ef9eec17031d0f7f729bc01"
+    },
+    {
+      "id": "p99",
+      "symbol": 375,
+      "frame": 6,
+      "sha256": "175e9644fbb330718f50834ad7463f7ca4f803dad6e34e797f653ae340e0a516"
+    },
+    {
+      "id": "raffica",
+      "symbol": 375,
+      "frame": 8,
+      "sha256": "60b423f35a20dea7585567b7c3d1aa8cd18b7ad3c5c32c9acad57e927c3e1e0e"
+    },
+    {
+      "id": "aks",
+      "symbol": 375,
+      "frame": 14,
+      "sha256": "9b3f3cda50e07dc39635a6a99cf37627c0b1e2879b3873cce2180ca0c18f06d9"
+    },
+    {
+      "id": "deagle",
+      "symbol": 375,
+      "frame": 7,
+      "sha256": "53020bafba471e6e66df90bf40e99a2c2cd55e2250806f71bace3067b8bc6e29"
+    },
+    {
+      "id": "rcp90",
+      "symbol": 375,
+      "frame": 19,
+      "sha256": "bc4a5d83a40a82307660b98c62f35d9750b7fa4c723fb8c8fbf69da6d39d8c3e"
+    },
+    {
+      "id": "cyclone",
+      "symbol": 375,
+      "frame": 13,
+      "sha256": "0bfa2393a3fcaa7fd68709d1a1c4ea9910b4960ee5fccfda6f99feb226cf39d6"
+    },
+    {
       "id": "m4",
       "symbol": 375,
       "frame": 20,
       "sha256": "a7e81a41219dc3f95732f3a29c110b6b1b136d663953c12c009b8a450401ffbb"
+    },
+    {
+      "id": "needler",
+      "symbol": 375,
+      "frame": 27,
+      "sha256": "f803492504f498a52ad7096c31259a61b6397e252f76a2c1eadc3b3b707f567f"
+    },
+    {
+      "id": "famas",
+      "symbol": 375,
+      "frame": 21,
+      "sha256": "6e8162c9e00f4a5589670a07db2729df348e87bb31003b22dd10a004cdf42aff"
+    },
+    {
+      "id": "cougar",
+      "symbol": 375,
+      "frame": 26,
+      "sha256": "00bf15483bea154346516ca62958c2af3d9834d03026cd6f4b080b5ae9609da6"
+    },
+    {
+      "id": "scar",
+      "symbol": 375,
+      "frame": 22,
+      "sha256": "495f4da0846c2bbade3ad7fd8417096389bb81625e604c46e1e3e4502a926617"
+    },
+    {
+      "id": "p357",
+      "symbol": 375,
+      "frame": 28,
+      "sha256": "29f2278eddc3337b272c0c7e4fbafedfe54f573176cc7592c8b678c6e84796cb"
+    },
+    {
+      "id": "g36",
+      "symbol": 375,
+      "frame": 23,
+      "sha256": "2bfd0cbb775025b111d082687be429dba5520af8286d770748d54c22fa7db0fb"
+    },
+    {
+      "id": "colt45",
+      "symbol": 375,
+      "frame": 30,
+      "sha256": "fc8c77fe4a95e699b41e0f6f204ea13904d886740f722505962c922b223677df"
+    },
+    {
+      "id": "dragon",
+      "symbol": 375,
+      "frame": 24,
+      "sha256": "b6f93a794f21ff89153e91dc50618151a8d32ef8858fc051b4245332d96f2cc2"
+    },
+    {
+      "id": "p44",
+      "symbol": 375,
+      "frame": 29,
+      "sha256": "7b9e40b6ff8f5f29a2ba8b097cc7def55c64b6174f8446eb147ad8c4fb77f377"
     },
     {
       "id": "ak47",
@@ -232,10 +370,118 @@
       "sha256": "b0f080089bc8bb9ff9bcdbdf876db80bb2ef977943fe726247733e4267e23be0"
     },
     {
+      "id": "p500",
+      "symbol": 375,
+      "frame": 31,
+      "sha256": "60e87aceaaf94ceead8933f38a9c8e43071297575f331d72c971b4390edf66a6"
+    },
+    {
+      "id": "scout",
+      "symbol": 375,
+      "frame": 50,
+      "sha256": "82fdc3f44d19b0ea74efdd35fedd5df6b9989e808795420c328059f3c9ed5dc9"
+    },
+    {
+      "id": "barrett",
+      "symbol": 375,
+      "frame": 51,
+      "sha256": "1eab21eeb3f302992fae304552ebbf7b7c22e8ad0827ed43748b90564b61cd7e"
+    },
+    {
+      "id": "jackal",
+      "symbol": 375,
+      "frame": 53,
+      "sha256": "ef3d8d52bd8f6ba4a1e5f71ab8951a49a78fdf6580424fcfd8373261574cb222"
+    },
+    {
+      "id": "dragunov",
+      "symbol": 375,
+      "frame": 52,
+      "sha256": "51d59ebbfb5e45d970fe7ef96ed7b90d322696e5dfc07510f0f1504ec328ca7b"
+    },
+    {
+      "id": "crossbow",
+      "symbol": 375,
+      "frame": 55,
+      "sha256": "00cda84b9011785f06b9f1fa065e95061222b8fcf532687847fa68c2dc2027d4"
+    },
+    {
+      "id": "awp",
+      "symbol": 375,
+      "frame": 54,
+      "sha256": "07214deb4e3b063bf5787ce7b614db5afb3bce93d2d8f1274be6baf321a1aa1d"
+    },
+    {
       "id": "saw",
       "symbol": 375,
       "frame": 32,
       "sha256": "1d76baed946d5db80daff7bee2b76a52f6bae2ddf6e7243bf3d2465e3b05a782"
+    },
+    {
+      "id": "rpg",
+      "symbol": 375,
+      "frame": 38,
+      "sha256": "b434ee7c3520232189272595af2fff949cd626a3dd6c661f9ebe3aabc960b409"
+    },
+    {
+      "id": "rpd",
+      "symbol": 375,
+      "frame": 33,
+      "sha256": "11370c322bf68c653c548c8d200cf72d8c6a99587fff4a8e4cae481fe6f4a556"
+    },
+    {
+      "id": "thumper",
+      "symbol": 375,
+      "frame": 41,
+      "sha256": "9cfe6e27a35fc3bffc115b6a944569032361c70cae360fe214e381675ffacfce"
+    },
+    {
+      "id": "aughbar",
+      "symbol": 375,
+      "frame": 34,
+      "sha256": "5f0fdc61207e85efc91063d4eaca00442747144deecdde831d566acf7b98dc2e"
+    },
+    {
+      "id": "stinger",
+      "symbol": 375,
+      "frame": 40,
+      "sha256": "6771c80544c7563c7e0b2fc373349448ff922dbfbe1474397e2182e9ad658841"
+    },
+    {
+      "id": "firstblood",
+      "symbol": 375,
+      "frame": 35,
+      "sha256": "35801292959966c2c24bf91c7f23e4adb0bf056aacb24917f8373ba7cf0990d3"
+    },
+    {
+      "id": "lawnchair",
+      "symbol": 375,
+      "frame": 42,
+      "sha256": "1fadb357dedb4581bcdb0158ef6dbf77789c179e51680193d07d24c917123535"
+    },
+    {
+      "id": "oicw",
+      "symbol": 375,
+      "frame": 37,
+      "sha256": "24889bf4ba0edf076abd8ccdf6c56368d45e05cc6ebe5355261f7bdda8a666ef"
+    },
+    {
+      "id": "javelin",
+      "symbol": 375,
+      "frame": 39,
+      "sha256": "4ecd2f1408d8cda6205e83a527a47d83a031f975928da5fbcfe29e9c62467611"
+    },
+    {
+      "id": "minigun",
+      "symbol": 375,
+      "frame": 36,
+      "sha256": "343e30a3fff8125df1f61afd3ea445531ce5d82f3f8feb2e93bf271eac4cc417"
+    },
+    {
+      "id": "commando",
+      "symbol": 375,
+      "frame": 43,
+      "sha256": "6e41046b0ba797eea0882bf1a4855a845a77fe29bd9ed8e903c79b8751106ee3"
     },
     {
       "id": "shotgun",
@@ -244,10 +490,34 @@
       "sha256": "cbaca1b17f7e8efdda035ef04cdb36905fbeb6adb8aed18b924a5a0e14ee2168"
     },
     {
-      "id": "dragunov",
+      "id": "aa12",
       "symbol": 375,
-      "frame": 52,
-      "sha256": "51d59ebbfb5e45d970fe7ef96ed7b90d322696e5dfc07510f0f1504ec328ca7b"
+      "frame": 46,
+      "sha256": "b091c430d7be00e576032441ebbff755551ecc8ad01b634569aa40320797bb36"
+    },
+    {
+      "id": "spas12",
+      "symbol": 375,
+      "frame": 45,
+      "sha256": "1495a5bb247bc878d0fdb717e0b2d1cd377a8a380959d215d2c0d59e86f9c1c9"
+    },
+    {
+      "id": "striker",
+      "symbol": 375,
+      "frame": 47,
+      "sha256": "2f19af70e1c52939c6a9945dca0f526de9dba94661a8567c06a68037e8698372"
+    },
+    {
+      "id": "judgement",
+      "symbol": 375,
+      "frame": 49,
+      "sha256": "2bdab9c7b86b7c852a0c9ae8e85674ef01305f5694e5fb7232b7b5c2418ad581"
+    },
+    {
+      "id": "omar",
+      "symbol": 375,
+      "frame": 48,
+      "sha256": "5a9f4fe61bd2e86876912cf83d58e813c5624cf0b724e51a66f217a2285000a7"
     }
   ]
 }

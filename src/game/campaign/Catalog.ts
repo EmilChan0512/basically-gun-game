@@ -1,4 +1,5 @@
-import { M4, USP, type WeaponConfig, type WeaponId } from '../combat/Combat';
+import sourceWeapons from '../../shared/content/weapon-catalog.json' with { type: 'json' };
+import type { WeaponConfig, WeaponId } from '../combat/Combat';
 
 export type ClassId = 'medic' | 'assassin' | 'commando' | 'tank';
 export type SkillId = 'heal' | 'regenerate' | 'focus' | 'cloak' | 'supply' | 'overdrive' | 'barrier' | 'iron';
@@ -21,18 +22,15 @@ export const SKILLS: Record<SkillId, { name: string; description: string; cooldo
   barrier: { name: '装甲屏障', description: '4秒内受到的伤害降低50%', cooldown: 750, duration: 120, level: 1 },
   iron: { name: '钢铁意志', description: '6秒内抵挡下一次攻击的80%伤害', cooldown: 450, duration: 180, level: 2 },
 };
-export interface CatalogWeapon { config: Readonly<WeaponConfig>; name: string; description: string; price: number; level: number; slot: 'primary' | 'secondary'; pellets: number; spread: number; length: number; artFrame?: readonly [number, number, number, number] }
-export const WEAPONS: Record<WeaponId, CatalogWeapon> = {
-  ak47: { config: { ...M4, id: 'ak47', damage: 16, shootDelayFrames: 6, recoil: 6, reloadFrames: 42, rangeUnits: 65 }, name: 'AK 47', description: '较慢射速、较强单发伤害，后坐力更明显', price: 320, level: 2, slot: 'primary', pellets: 1, spread: 0, length: 46, artFrame: [26, 14, 57, 20] },
-  deagle: { config: { ...USP, id: 'deagle', damage: 34, magazineSize: 7, spareMagazines: 5, shootDelayFrames: 15, recoil: 7, reloadFrames: 38 }, name: 'Desert Eagle', description: '7发大威力副枪；射击间隔较长', price: 300, level: 2, slot: 'secondary', pellets: 1, spread: 0, length: 30, artFrame: [40, 12, 30, 19] },
-  m4: { config: M4, name: 'M4', description: '均衡的自动步枪', price: 0, level: 1, slot: 'primary', pellets: 1, spread: 0, length: 39 },
-  usp: { config: USP, name: 'USP', description: '可靠的半自动副武器', price: 0, level: 1, slot: 'secondary', pellets: 1, spread: 0, length: 26 },
-  vector: { config: { ...M4, id: 'vector', damage: 8, magazineSize: 32, shootDelayFrames: 3, rangeUnits: 48, recoil: 5, reloadFrames: 30 }, name: 'Vector', description: '高射速冲锋枪，适合近距离压制', price: 200, level: 1, slot: 'primary', pellets: 1, spread: 0, length: 30 },
-  shotgun: { config: { ...M4, id: 'shotgun', damage: 12, magazineSize: 6, spareMagazines: 5, shootDelayFrames: 22, automatic: false, rangeUnits: 32, recoil: 3, reloadFrames: 48 }, name: '破门者霰弹枪', description: '每发6颗弹丸，贴近目标威力更大', price: 280, level: 2, slot: 'primary', pellets: 6, spread: 12, length: 42 },
-  dragunov: { config: { ...M4, id: 'dragunov', damage: 58, magazineSize: 5, spareMagazines: 4, shootDelayFrames: 24, automatic: false, rangeUnits: 120, recoil: 1.4, reloadFrames: 48, xOff: 12 }, name: 'Dragunov', description: '低射速长射程步枪，重视精准点射', price: 500, level: 3, slot: 'primary', pellets: 1, spread: 0, length: 52 },
-  saw: { config: { ...M4, id: 'saw', damage: 11, magazineSize: 50, shootDelayFrames: 4, rangeUnits: 50, recoil: 7, reloadFrames: 66 }, name: 'SAW', description: '50发机枪，持续火力与较长换弹时间', price: 450, level: 3, slot: 'primary', pellets: 1, spread: 0, length: 46 },
-  beretta: { config: { ...USP, id: 'beretta', damage: 21, shootDelayFrames: 9, recoil: 4 }, name: 'Beretta', description: '威力更大的半自动手枪', price: 180, level: 2, slot: 'secondary', pellets: 1, spread: 0, length: 28 },
-};
+export interface ProjectileDefinition { kind: 'rocket' | 'bounce' | 'homing'; steps: number; gravity: number; radius: number; splashMultiplier: number; fuse: number; seekRadius: number; turn: number }
+export interface CatalogWeapon { config: Readonly<WeaponConfig>; source: string; classId: ClassId | 'shared'; name: string; description: string; price: number; level: number; slot: 'primary' | 'secondary'; pellets: number; spread: number; length: number; grip: string; reloadGrip: string; fireGrip: string; artFrameId: number; projectile?: ProjectileDefinition; artFrame?: readonly [number, number, number, number] }
+/** Stats_Guns class pools and level requirements. Knife/shield use secondary slots by design. */
+export const WEAPONS = sourceWeapons as Record<WeaponId, CatalogWeapon>;
+export const MAX_LEVEL = 50;
+export const MAX_XP = (MAX_LEVEL - 1) * 160;
+export const STARTER_WEAPONS: WeaponId[] = ['m4', 'scout', 'saw', 'shotgun', 'usp'];
+export function canEquipWeapon(classId: ClassId, id: WeaponId) { return WEAPONS[id]?.classId === 'shared' || WEAPONS[id]?.classId === classId; }
+export const CLASS_STARTERS: Record<ClassId, WeaponId> = { medic: 'm4', assassin: 'scout', commando: 'saw', tank: 'shotgun' };
 export const ITEMS: Record<ItemId, { name: string; description: string; price: number; level: number; charges: number }> = {
   medkit: { name: '急救包', description: '恢复自己40生命，每次出战2份', price: 0, level: 1, charges: 2 },
   ammo: { name: '弹药包', description: '补满备用弹药，每次出战2份', price: 120, level: 1, charges: 2 },
@@ -44,8 +42,8 @@ import type { SpecialOffhandId } from '../../shared/content/Offhands';
 export type { SpecialOffhandId };
 export type SecondaryId = WeaponId | SpecialOffhandId;
 export interface Loadout { classId: ClassId; primary: WeaponId; secondary: SecondaryId; skill: SkillId; item: ItemId; training: Training; level: number }
-export const defaultLoadout = (classId: ClassId = 'medic'): Loadout => ({ classId, primary: 'm4', secondary: 'usp', skill: CLASSES[classId].skills[0], item: 'medkit', training: { vitality: 0, handling: 0 }, level: 1 });
-export function levelForXp(xp: number) { return Math.min(10, 1 + Math.floor(Math.max(0, xp) / 160)); }
+export const defaultLoadout = (classId: ClassId = 'medic'): Loadout => ({ classId, primary: CLASS_STARTERS[classId], secondary: 'usp', skill: CLASSES[classId].skills[0], item: 'medkit', training: { vitality: 0, handling: 0 }, level: 1 });
+export function levelForXp(xp: number) { return Math.min(MAX_LEVEL, 1 + Math.floor(Math.max(0, xp) / 160)); }
 export function loadoutStats(loadout: Loadout) {
   const c = CLASSES[loadout.classId];
   return { health: c.health + loadout.training.vitality * 8, aim: c.aim + loadout.training.handling * 0.1, ammo: c.ammo };

@@ -1,7 +1,7 @@
 import { BASE_HEAD_BONUS, type HitRegion } from './Ballistics';
 export const COMBAT_FRAME_MS = 1000 / 30;
 export type LabWeaponId = 'usp' | 'm4';
-export type WeaponId = LabWeaponId | 'vector' | 'shotgun' | 'dragunov' | 'saw' | 'beretta' | 'ak47' | 'deagle';
+export type WeaponId = keyof typeof import('../../shared/content/weapon-catalog.json');
 export interface WeaponConfig { id: WeaponId; damage: number; magazineSize: number; spareMagazines: number; shootDelayFrames: number; automatic: boolean; rangeUnits: number; reloadFrames: number; recoil: number; xOff: number; yOff: number }
 // Stats_Guns + Guns uint assignment + arm_gun_316 timeline. Range is in original 10px units.
 export const USP: Readonly<WeaponConfig> = Object.freeze({ id: 'usp', damage: 15, magazineSize: 12, spareMagazines: 5, shootDelayFrames: 7, automatic: false, rangeUnits: 66, reloadFrames: 28, recoil: 3, xOff: 8, yOff: -8 });

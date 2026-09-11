@@ -1,4 +1,4 @@
-import { WEAPONS, CLASSES, ITEMS, isSpecialOffhand, canEquipOffhand, type ClassId, type SecondaryId, type SkillId, type ItemId } from '../../game/campaign/Catalog';
+import { WEAPONS, canEquipWeapon, CLASSES, ITEMS, isSpecialOffhand, canEquipOffhand, type ClassId, type SecondaryId, type SkillId, type ItemId } from '../../game/campaign/Catalog';
 import type { WeaponId } from '../../game/combat/Combat';
 export interface EquipmentLoadout { primary: WeaponId; secondary: SecondaryId; classId?: ClassId; skill?: SkillId; item?: ItemId }
 /** Structural validation. Server account ownership is checked separately; debug rooms bypass ownership only. */
@@ -10,6 +10,7 @@ export function validateEquipment(value: unknown): EquipmentLoadout {
     || !(isSpecialOffhand(data.secondary) || Object.hasOwn(WEAPONS, data.secondary) && WEAPONS[data.secondary as WeaponId].slot === 'secondary')) throw Error('Invalid equipment');
   if (data.classId !== undefined && (typeof data.classId !== 'string' || !Object.hasOwn(CLASSES, data.classId))) throw Error('Invalid class');
   const classId = (data.classId ?? 'medic') as ClassId;
+  if (!canEquipWeapon(classId, data.primary as WeaponId) || !isSpecialOffhand(data.secondary) && !canEquipWeapon(classId, data.secondary as WeaponId)) throw Error('武器与职业不匹配');
   if (data.skill !== undefined && (typeof data.skill !== 'string' || !CLASSES[classId].skills.includes(data.skill as SkillId))) throw Error('技能与职业不匹配');
   if (data.item !== undefined && (typeof data.item !== 'string' || !Object.hasOwn(ITEMS, data.item))) throw Error('Invalid tactical item');
   if (isSpecialOffhand(data.secondary) && !canEquipOffhand(String(data.classId ?? 'medic'), data.secondary)) throw Error('副手与职业不匹配：刀仅限刺客，盾仅限重装兵');

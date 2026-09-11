@@ -27,14 +27,13 @@ it('eight mixed clients through 150ms RTT resolve knife and front/rear shield da
     }
     await wait(() => logs.every(log => log.some(m => m.type === 'welcome')));
     const accounts = []; for (let i = 0; i < 8; i++) accounts.push(await authorizeSocket(server, sockets[i], `p${i}`));
-    server.accounts.settle('fixture-unlock', [{ accountId: accounts[7].profile.id, classId: 'medic', won: true, kills: 3 }]);
-    server.accounts.buy(accounts[7].profile.id, 'weapon', 'beretta');
+    for (const a of accounts) for (const classId of ['assassin', 'tank'] as const) server.accounts.settle(`fixture-${a.profile.id}-${classId}`, [{ accountId: a.profile.id, classId, won: true, kills: 3 }]);
     send(0, { type: 'create', name: 'p0' }); await wait(() => logs[0].some(m => m.type === 'lobby'));
     const code = logs[0].find(m => m.type === 'lobby').room.id;
     // Sequential joins give stable team assignment for the controlled pairs.
     for (let i = 1; i < 8; i++) { send(i, { type: 'join', code, name: `p${i}` }); await wait(() => logs[i].some(m => m.type === 'lobby')); }
-    const secondary = ['knife', 'shield', 'usp', 'shield', 'knife', 'usp', 'shield', 'beretta'];
-    for (let i = 0; i < 8; i++) { send(i, { type: 'equip', equipment: { classId: secondary[i] === 'knife' ? 'assassin' : secondary[i] === 'shield' ? 'tank' : 'medic', primary: 'm4', secondary: secondary[i] } }); send(i, { type: 'ready', ready: true }); }
+    const secondary = ['knife', 'shield', 'usp', 'shield', 'knife', 'usp', 'shield', 'usp'];
+    for (let i = 0; i < 8; i++) { send(i, { type: 'equip', equipment: { classId: secondary[i] === 'knife' ? 'assassin' : secondary[i] === 'shield' ? 'tank' : 'medic', primary: secondary[i] === 'knife' ? 'scout' : secondary[i] === 'shield' ? 'shotgun' : 'm4', secondary: secondary[i] } }); send(i, { type: 'ready', ready: true }); }
     await wait(() => logs[0].some(m => m.room?.players.length === 8 && m.room.players.every((p: any) => p.ready)));
     send(0, { type: 'start' }); await wait(() => logs.every(log => log.some(m => m.type === 'state')));
     const room = server.rooms.get(code)!;

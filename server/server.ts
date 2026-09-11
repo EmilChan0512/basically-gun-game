@@ -257,7 +257,7 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
         const message: StateMessage = { type: 'state', roomId: client.room!.id, round: client.room!.round, actorId: session.actorId(client.id), mapId: client.room!.mapId, mode: client.room!.mode,
           state: b.snapshot(), result: b.result, ack: session.acknowledgements()[client.id] ?? -1,
           poses: b.actors.map(a => ({ id: a.id, name: a.name, aim: { ...a.aim } })), effects: b.effects, bursts: b.bursts,
-          grenades: b.grenades.map(g => ({ x: g.x, y: g.y })), events: b.journal.since(eventCursor) };
+          grenades: b.grenades.map(g => ({ x: g.x, y: g.y })), projectiles: b.projectiles.map(p => ({ x: p.x, y: p.y, vx: p.vx, vy: p.vy })), events: b.journal.since(eventCursor) };
         message.movement = b.actors.find(a => a.id === message.actorId)?.movement.checkpoint();
         message.jumpHeld = session.jumpHeld(client.id);
         // WebSocket delivers in order. Advance only when queued successfully;

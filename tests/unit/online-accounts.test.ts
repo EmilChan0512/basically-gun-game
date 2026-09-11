@@ -1,3 +1,4 @@
+import { STARTER_WEAPONS } from '../../src/game/campaign/Catalog';
 import { it, expect, afterEach, vi } from 'vitest';
 import { mkdtempSync, readFileSync, writeFileSync, mkdirSync, renameSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -13,12 +14,14 @@ it('keeps independent accounts, purchases and per-class loadouts after a fresh s
   const path = file(), store = new OnlineAccounts(path);
   const a = await store.login('register', 'Alice', 'alice-password', 'a');
   const b = await store.login('register', 'Bob', 'bob-password', 'b');
-  store.buy(a.profile.id, 'weapon', 'vector');
-  store.equip(a.profile.id, { ...starterEquipment('assassin'), primary: 'vector', secondary: 'knife' });
+  store.settle('fixture-level3', [{ accountId: a.profile.id, classId: 'assassin', won: true, kills: 19 }]);
+  store.equip(a.profile.id, starterEquipment('assassin'));
+  store.buy(a.profile.id, 'weapon', 'uzi');
+  store.equip(a.profile.id, { ...starterEquipment('assassin'), primary: 'scout', secondary: 'uzi' });
   const reopened = new OnlineAccounts(path);
   const alice = await reopened.login('login', 'ＡＬＩＣＥ', 'alice-password', 'a');
-  expect(alice.profile).toMatchObject({ credits: 150, selected: 'assassin', weapons: ['m4', 'usp', 'vector'] });
-  expect(alice.profile.classes.assassin.equipment).toMatchObject({ primary: 'vector', secondary: 'knife' });
+  expect(alice.profile).toMatchObject({ credits: 683, selected: 'assassin', weapons: [...STARTER_WEAPONS, 'uzi'] });
+  expect(alice.profile.classes.assassin.equipment).toMatchObject({ primary: 'scout', secondary: 'uzi' });
   expect(reopened.authenticate(a.token).id).toBe(a.profile.id);
   expect(reopened.profile(b.profile.id)).toEqual(b.profile);
   const raw = readFileSync(path, 'utf8');
@@ -35,10 +38,10 @@ it('enforces ownership, price, class and level without accepting arbitrary progr
   ]) expect(() => store.equip(profile.id, equipment)).toThrow();
   expect(() => store.buy(profile.id, 'weapon', 'ak47')).toThrow();
   expect(() => store.buy(profile.id, 'weapon', '__proto__')).toThrow();
-  store.buy(profile.id, 'weapon', 'vector');
+  expect(() => store.buy(profile.id, 'weapon', 'vector')).toThrow('等级');
   expect(() => store.buy(profile.id, 'weapon', 'vector')).toThrow();
   store.buy(profile.id, 'item', 'ammo');
-  expect(store.profile(profile.id).credits).toBe(30);
+  expect(store.profile(profile.id).credits).toBe(230);
   expect(store.profile(profile.id).classes.medic.equipment).toEqual(starterEquipment());
 });
 
@@ -50,7 +53,7 @@ it('settles a server result once across restart, only advances the played class 
   expect(reopened.settle('room-instance:1', rewards)).toEqual([]);
   expect(reopened.profile(profile.id)).toMatchObject({ credits: 566, matches: 1, wins: 1, classes: { assassin: { xp: 160 }, medic: { xp: 0 } } });
   reopened.equip(profile.id, { ...starterEquipment('assassin'), skill: 'cloak' });
-  reopened.buy(profile.id, 'weapon', 'ak47');
+  expect(() => reopened.buy(profile.id, 'weapon', 'ak47')).toThrow('职业');
   expect(() => reopened.equip(profile.id, { ...starterEquipment('medic'), primary: 'ak47' })).toThrow();
 });
 
@@ -68,7 +71,7 @@ it('rejects wrong passwords, duplicate normalized registration and expired or re
 it('fails closed on corrupt data and rolls back memory if an atomic write fails', async () => {
   const path = file(), store = new OnlineAccounts(path), { profile } = await store.login('register', 'Pilot', 'password-123', 'a');
   renameSync(path, `${path}.backup`); mkdirSync(path);
-  expect(() => store.buy(profile.id, 'weapon', 'vector')).toThrow('保存失败');
+  expect(() => store.buy(profile.id, 'item', 'ammo')).toThrow('保存失败');
   expect(store.profile(profile.id)).toEqual(profile);
   rmSync(path, { recursive: true }); writeFileSync(path, '{broken');
   expect(() => new OnlineAccounts(path)).toThrow();

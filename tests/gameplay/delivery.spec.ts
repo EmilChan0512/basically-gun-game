@@ -1,3 +1,4 @@
+import { registerOnline } from '../helpers/online-account';
 import { test, expect } from '@playwright/test';
 import { startServer } from '../../server/server';
 
@@ -12,6 +13,7 @@ test('delivery lobby, original art, pickup restriction and reconnect use authori
       page.on('pageerror', e => errors.push(e.message));
       await page.goto('/?online'); await page.locator('#server').fill(`ws://127.0.0.1:${address.port}`);
     }
+    for (const [i, page] of pages.entries()) await registerOnline(page, `Courier ${i}`);
     await pages[0].locator('#create').click();
     await expect(pages[0].locator('#online-mode')).toBeVisible();
     const room = [...server.rooms.values()][0];
