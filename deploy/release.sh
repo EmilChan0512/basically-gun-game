@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+set -euo pipefail
+umask 022
+release=${1:?Release ID required}
+[[ "$release" =~ ^[0-9a-f]{40}-[0-9]+-[0-9]+$ ]] || { echo 'Invalid release ID' >&2; exit 1; }
+root=/opt/project-strike
+exec 9>"$root/deploy.lock"
+flock -w 300 9
+incoming="$root/incoming/$release"
+target="$root/releases/$release"
+cd "$incoming"
+sha256sum -c backend.tar.gz.sha256
+mkdir "$target"
+tar -xzf backend.tar.gz -C "$target" --no-same-owner
+[[ "$(cat "$target/REVISION")" == "${release:0:40}" ]]
+/usr/bin/node --input-type=module - "$target" <<'NODE'
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+const dir = process.argv[2];
+const manifest = JSON.parse(readFileSync(`${dir}/manifest.json`, 'utf8'));
+if (createHash('sha256').update(readFileSync(`${dir}/server.cjs`)).digest('hex') !== manifest.sha256) {
+  throw Error('Server checksum mismatch');
+}
+NODE
+previous=$(readlink -f "$root/current" || true)
+activate() {
+  ln -s "$1" "$root/current.next"
+  mv -Tf "$root/current.next" "$root/current"
+}
+rollback() {
+  trap - ERR HUP INT TERM
+  echo 'Deployment failed; restoring previous release.' >&2
+  if [[ -n "$previous" && -d "$previous" ]]; then
+    activate "$previous"
+    sudo -n systemctl restart project-strike.service
+    /usr/bin/node "$previous/probe.mjs" || true
+  else
+    sudo -n systemctl stop project-strike.service
+    rm -f "$root/current"
+  fi
+  exit 1
+}
+trap rollback ERR HUP INT TERM
+activate "$target"
+sudo -n systemctl restart project-strike.service
+healthy=false
+for ((attempt=1; attempt<=15; attempt++)); do
+  if /usr/bin/node "$target/probe.mjs"; then healthy=true; break; fi
+  sleep 2
+done
+[[ "$healthy" == true ]]
+sleep 3
+systemctl is-active --quiet project-strike.service
+/usr/bin/node "$target/probe.mjs"
+trap - ERR HUP INT TERM
+echo "Deployed $release (previous: ${previous:-none})"

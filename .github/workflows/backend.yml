@@ -1,0 +1,98 @@
+name: Backend CI and deploy
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: node tools/package-game.mjs
+      - run: npm run package:server
+      - run: node tools/verify-server-package.mjs
+      - name: Check deployment scripts
+        run: |
+          bash -n deploy/install.sh deploy/release.sh
+          shellcheck deploy/install.sh deploy/release.sh
+      - name: Prepare release
+        run: |
+          cp deploy/probe.mjs artifacts/project-strike-server/
+          printf '%s\n' "$GITHUB_SHA" > artifacts/project-strike-server/REVISION
+          tar -czf backend.tar.gz -C artifacts/project-strike-server .
+          sha256sum backend.tar.gz > backend.tar.gz.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backend-${{ github.sha }}
+          path: |
+            backend.tar.gz
+            backend.tar.gz.sha256
+            deploy/release.sh
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: client-${{ github.sha }}
+          path: artifacts/project-strike-local/
+          retention-days: 14
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    concurrency:
+      group: backend-production
+      cancel-in-progress: false
+    env:
+      DEPLOY_HOST: ${{ vars.DEPLOY_HOST || '43.142.165.82' }}
+      DEPLOY_USER: strike-deploy
+      DEPLOY_PORT: ${{ vars.DEPLOY_PORT || '22' }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: backend-${{ github.sha }}
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          test -n "$SSH_KEY" && test -n "$KNOWN_HOSTS"
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+      - name: Upload and activate verified bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          latest=$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)
+          if [[ "$latest" != "$GITHUB_SHA" ]]; then
+            echo 'Skipping superseded commit; deploy the latest main run.'
+            exit 0
+          fi
+          [[ "$DEPLOY_HOST" =~ ^[a-zA-Z0-9.-]+$ ]]
+          [[ "$DEPLOY_PORT" =~ ^[0-9]+$ ]]
+          release="${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          remote="/opt/project-strike/incoming/$release"
+          opts=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=3)
+          ssh "${opts[@]}" -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$remote'"
+          scp "${opts[@]}" -P "$DEPLOY_PORT" backend.tar.gz backend.tar.gz.sha256 deploy/release.sh "$DEPLOY_USER@$DEPLOY_HOST:$remote/"
+          ssh "${opts[@]}" -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" "bash '$remote/release.sh' '$release'"
+      - name: Remove SSH credentials
+        if: always()
+        run: rm -f ~/.ssh/id_ed25519 ~/.ssh/known_hosts

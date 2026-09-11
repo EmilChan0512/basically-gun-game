@@ -2,7 +2,7 @@ import { mkdtempSync, copyFileSync, writeFileSync, mkdirSync, readFileSync } fro
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { WebSocket } from 'ws';
 
 const temporary = mkdtempSync(join(tmpdir(), 'strike-server-'));
@@ -26,6 +26,15 @@ try {
   await wait(() => messages.some(m => m.type === 'welcome'));
   const welcome = messages.find(m => m.type === 'welcome');
   if (welcome.content !== serverManifest.contentVersion) throw Error('Runtime content differs from package manifests');
+  copyFileSync('deploy/probe.mjs', join(temporary, 'probe.mjs'));
+  copyFileSync('artifacts/project-strike-server/manifest.json', join(temporary, 'manifest.json'));
+  const probe = () => spawnSync(process.execPath, ['probe.mjs', socket.url], {
+    cwd: temporary, encoding: 'utf8', windowsHide: true, timeout: 8000 });
+  const healthy = probe();
+  if (healthy.status !== 0) throw Error(`Deployment probe failed: ${healthy.stderr}`);
+  writeFileSync(join(temporary, 'manifest.json'), JSON.stringify({ ...serverManifest, contentVersion: 'invalid-test-version' }));
+  const mismatch = probe();
+  if (mismatch.status !== 1 || !mismatch.stderr.includes('Unexpected protocol or content version')) throw Error('Deployment probe did not reject content mismatch');
   const send = message => socket.send(JSON.stringify({ protocol: welcome.protocol, content: welcome.content, ...message }));
   send({ type: 'create', name: 'Package QA' }); await wait(() => messages.some(m => m.type === 'lobby'));
   const room = messages.find(m => m.type === 'lobby').room.id;
@@ -40,7 +49,7 @@ try {
   if (rejected.length || errors) throw Error(JSON.stringify({ rejected, errors }));
   const report = { date: new Date().toISOString(), contentVersion: welcome.content, isolatedDirectory: temporary,
     bundle: resolve('artifacts/project-strike-server/server.cjs'), passed: true,
-    checks: ['client/server/runtime content identity', 'server bundle SHA256', 'isolated bundle startup', 'create room', 'coop setup', 'AK47/shield loadout', 'start', 'input acknowledgement', 'deployed shield snapshot'] };
+    checks: ['client/server/runtime content identity', 'server bundle SHA256', 'isolated bundle startup', 'deployment welcome probe', 'deployment content mismatch rejection', 'create room', 'coop setup', 'AK47/shield loadout', 'start', 'input acknowledgement', 'deployed shield snapshot'] };
   mkdirSync('artifacts/qa', { recursive: true });
   writeFileSync('artifacts/qa/server-package.json', JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report));
