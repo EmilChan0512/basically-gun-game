@@ -11,7 +11,9 @@ export function createGameServer(root = defaultRoot) {
   return createServer(async (request, response) => {
     if (!['GET', 'HEAD'].includes(request.method ?? '')) { response.writeHead(405).end(); return; }
     try {
-      const pathname = decodeURIComponent(new URL(request.url ?? '/', 'http://localhost').pathname);
+      // Normalize decoded Windows separators before the containment check on
+      // every host, including Linux CI. URL parsing runs before percent decoding.
+      const pathname = decodeURIComponent(new URL(request.url ?? '/', 'http://localhost').pathname).replaceAll('\\', '/');
       const target = resolve(base, '.' + (pathname === '/' ? '/index.html' : pathname));
       if (!target.startsWith(base + sep)) { response.writeHead(403).end(); return; }
       const info = await stat(target);

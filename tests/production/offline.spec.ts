@@ -31,7 +31,9 @@ test('packaged production game loads and plays without Internet or development h
 test('local server only serves packaged files and rejects write requests', async ({ request }) => {
   const response = await request.get('/'); expect(response.status()).toBe(200); expect(response.headers()['content-type']).toContain('text/html');
   expect((await request.get('/missing.js')).status()).toBe(404);
-  expect((await request.get('/%2e%2e%5cpackage.json')).status()).toBe(403);
+  for (const path of ['/%2e%2e%5cpackage.json', '/%2e%2e%2fpackage.json', '/assets/%2e%2e%5c%2e%2e%5cpackage.json']) {
+    expect((await request.get(path)).status()).toBe(403);
+  }
   expect((await request.post('/')).status()).toBe(405);
 });
 
