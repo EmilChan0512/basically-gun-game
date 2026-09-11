@@ -22,7 +22,13 @@ if (createHash('sha256').update(readFileSync(`${dir}/server.cjs`)).digest('hex')
   throw Error('Server checksum mismatch');
 }
 NODE
-previous=$(readlink -f "$root/current" || true)
+previous=''
+if [[ -L "$root/current" ]]; then
+  previous=$(readlink -e "$root/current")
+elif [[ -e "$root/current" ]]; then
+  echo 'current must be a release symlink' >&2
+  exit 1
+fi
 activate() {
   ln -s "$1" "$root/current.next"
   mv -Tf "$root/current.next" "$root/current"
