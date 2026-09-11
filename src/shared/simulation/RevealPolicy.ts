@@ -1,5 +1,6 @@
 import type { SimulationEvent } from './Events';
 import { clearSight } from '../../game/campaign/Navigation';
+import { VISION_RADIUS, VISION_EYE_HEIGHT } from './Vision';
 export interface RevealActor {
   id: string; team: 1 | 2; movement: { x: number; y: number };
   life: { alive: boolean }; kit: { skill: string } | null; skillFrames: number;
@@ -22,8 +23,8 @@ export class RevealPolicy {
       if (target.kit?.skill === 'cloak' && target.skillFrames > 0) return false;
       const shot = this.lastShots.get(target.id);
       if (shot !== undefined && frame >= shot && frame - shot < 60) return true;
-      return observers.some(observer => Math.hypot(target.movement.x - observer.movement.x, target.movement.y - observer.movement.y) <= 620
-        && clearSight({ x: observer.movement.x, y: observer.movement.y - 42 },
+      return observers.some(observer => Math.hypot(target.movement.x - observer.movement.x, target.movement.y - observer.movement.y) <= VISION_RADIUS
+        && clearSight({ x: observer.movement.x, y: observer.movement.y - VISION_EYE_HEIGHT },
           { x: target.movement.x, y: target.movement.y - 33 }, wall));
     }).map(a => a.id));
   }

@@ -1,10 +1,11 @@
 import type { StateMessage } from './State';
 import { clearSight } from '../../game/campaign/Navigation';
+import { VISION_RADIUS, VISION_EYE_HEIGHT } from '../simulation/Vision';
 /** Filter every coordinate-bearing channel, not only radar actor markers. */
 export function visibleState(message: StateMessage, visible: ReadonlySet<string>, team: 1 | 2, wall: (x: number, y: number) => boolean): StateMessage {
   const observers = message.state.actors.filter(a => a.team === team && a.life.alive);
-  const pointVisible = (p: { x: number; y: number }) => observers.some(a => Math.hypot(p.x - a.x, p.y - a.y) <= 620
-    && clearSight({ x: a.x, y: a.y - 42 }, p, wall));
+  const pointVisible = (p: { x: number; y: number }) => observers.some(a => Math.hypot(p.x - a.x, p.y - a.y) <= VISION_RADIUS
+    && clearSight({ x: a.x, y: a.y - VISION_EYE_HEIGHT }, p, wall));
   const hitVisible = (hit: StateMessage['effects'][number]['trace']['hit']) => !hit || hit.type === 'wall' || visible.has(hit.target);
   return { ...message,
     state: { ...message.state, actors: message.state.actors.filter(a => visible.has(a.id)) },

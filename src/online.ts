@@ -8,6 +8,9 @@ import { radarSvg } from './client/presentation/Radar';
 import { WEAPONS, SPECIAL_OFFHANDS } from './game/campaign/Catalog';
 import type { OffhandView } from './shared/simulation/Offhand';
 import './campaign.css';
+import { VisionOverlay } from './client/presentation/VisionOverlay';
+import { CollisionWorld } from './shared/content/CollisionWorld';
+import { NETWORK_TICK_MS } from './shared/protocol/Timing';
 
 function equipmentText(actor: { weapon: string; ammo: number; reserve: number; offhand?: OffhandView }) {
   const offhand = actor.offhand;
@@ -135,6 +138,8 @@ class OnlineScene extends Phaser.Scene {
   private hud!: Phaser.GameObjects.Text;
   private keys = new Set<string>();
   private elapsed = 0;
+  private animationFrame = 0;
+  private vision!: VisionOverlay;
   private spectateIndex = 0;
   constructor(private network: NetworkSession) { super('Online'); }
   preload() { preloadReferenceArt(this); }
@@ -147,6 +152,8 @@ class OnlineScene extends Phaser.Scene {
     const background = this.add.graphics();
     for (const t of map.terrain) background.fillStyle(map.palette.wall).fillRect(t.x, t.y, t.width, t.height);
     if (map.artwork) { const a = map.artwork; this.add.image(a.x, a.y, `ref-${a.id}`).setOrigin(0).setDisplaySize(a.width, a.height); }
+    this.vision = new VisionOverlay(this, new CollisionWorld(map.terrain, map.collisionMask).solid);
+    this.add.text(16, 592, '共享视野 · 阴影内敌人不可见 · 开火或携包会暴露位置', { fontSize: '13px', color: '#d7e5ef', backgroundColor: '#10202dcc', padding: { x: 8, y: 4 } }).setScrollFactor(0).setDepth(10);
     this.rig = new ReferenceArt(this); this.graphics = this.add.graphics().setDepth(3);
     this.hud = this.add.text(16, 16, '', { fontSize: '18px', backgroundColor: '#10202dcc', padding: { x: 10, y: 10 } }).setScrollFactor(0).setDepth(10);
     const down = (e: KeyboardEvent) => {
@@ -165,24 +172,34 @@ class OnlineScene extends Phaser.Scene {
     const message = this.network.state; if (!message) return;
     const self = message.state.actors.find(a => a.id === message.actorId);
     const followed = self ?? message.state.actors[this.spectateIndex % message.state.actors.length];
-    const predicted = self ? this.network.prediction.movement ?? self : followed && this.network.interpolation.position(followed, performance.now());
-    if (predicted) this.cameras.main.centerOn(predicted.x, predicted.y - 150);
+    const now = performance.now();
     const aim = this.input.activePointer.positionToCamera(this.cameras.main) as Phaser.Math.Vector2;
-    this.elapsed += delta;
-    if (self && this.elapsed >= 1000 / 30) {
-      this.elapsed %= 1000 / 30;
-      this.network.input({ left: this.keys.has('KeyA'), right: this.keys.has('KeyD'), crouch: this.keys.has('KeyS'), jump: this.keys.has('Space') || this.keys.has('KeyW'), fire: this.input.activePointer.isDown && document.hasFocus(), aim: { x: aim.x, y: aim.y } });
+    this.elapsed += Math.min(delta, 100);
+    this.animationFrame += Math.min(delta, 100) / NETWORK_TICK_MS;
+    while (this.elapsed >= NETWORK_TICK_MS) {
+      this.elapsed -= NETWORK_TICK_MS;
+      if (self) this.network.input({ left: this.keys.has('KeyA'), right: this.keys.has('KeyD'), crouch: this.keys.has('KeyS'), jump: this.keys.has('Space') || this.keys.has('KeyW'), fire: this.input.activePointer.isDown && document.hasFocus(), aim: { x: aim.x, y: aim.y } });
     }
+    // Take an immutable render position AFTER input. Camera, sprite and vision
+    // must all consume the same position within this render frame.
+    const renderAlpha = message.result || this.network.socket.readyState !== WebSocket.OPEN ? 1 : this.elapsed / NETWORK_TICK_MS;
+    const predicted = self ? this.network.prediction.position(renderAlpha, delta) ?? self
+      : followed && this.network.interpolation.position(followed, now);
+    if (predicted) this.cameras.main.centerOn(predicted.x, predicted.y - 150);
     this.rig.begin(); this.graphics.clear();
     const positions = new Map<string, { x: number; y: number }>();
     for (const actor of message.state.actors) {
       const pose = message.poses.find(p => p.id === actor.id)!;
-      const position = actor.id === message.actorId && predicted ? predicted : this.network.interpolation.position(actor, performance.now());
+      const position = actor.id === message.actorId && predicted ? predicted : this.network.interpolation.position(actor, now);
       positions.set(actor.id, position);
-      this.rig.soldier(position.x, position.y, actor.crouching, actor.vx, actor.jumping, message.state.frame, pose.aim, actor.weapon, actor.team === 1 ? 0xb7e8de : 0xf1b0a0, actor.life.alive, actor.reload > 0, false, actor.offhand);
+      const motion = actor.id === message.actorId ? this.network.prediction.movement ?? actor : actor;
+      this.rig.soldier(position.x, position.y, motion.crouching, motion.vx, motion.jumping, this.animationFrame, actor.id === message.actorId ? aim : pose.aim, actor.weapon, actor.team === 1 ? 0xb7e8de : 0xf1b0a0, actor.life.alive, actor.reload > 0, false, actor.offhand);
     }
     this.rig.delivery(message.state.deliveryTargets, positions, this.graphics);
     for (const effect of message.effects) if (message.state.frame - effect.frame < 3) this.graphics.lineStyle(2, 0xffe9ad).lineBetween(effect.trace.origin.x, effect.trace.origin.y, effect.trace.end.x, effect.trace.end.y);
+    const team = this.network.room?.players.find(p => p.id === this.network.playerId)?.team ?? self?.team ?? 1;
+    this.vision.draw(message.state.actors.filter(a => a.team === team && a.life.alive)
+      .map(a => ({ id: a.id, ...(positions.get(a.id) ?? a) })));
     const wave = message.state.waves;
     const heading = wave ? `第${wave.wave}/${wave.scenario.waves.length}波 · 待增援${wave.remaining} · 团队复活${wave.revives} · ${wave.spawnBlocked ? '增援入口受阻，请离开入口' : wave.phase === 'intermission' ? '休整中' : '战斗中'}` : message.state.scores.join(' : ');
     this.hud.setText(`${message.mode === 'ctf' ? '公文包 · 先交付3次获胜 · ' : ''}${heading}  |  ${message.state.seconds}s\n${self ? `HP ${Math.ceil(self.life.health)}  ${equipmentText(self)}` : `观战：${message.poses.find(p => p.id === followed?.id)?.name ?? '等待角色'} · Tab切换`}`);

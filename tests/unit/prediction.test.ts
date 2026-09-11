@@ -35,3 +35,28 @@ it('replays unacknowledged input and converges to authority after delayed acknow
   prediction.accept(state());
   expect(prediction.movement!.checkpoint()).toEqual(b.player.movement.checkpoint());
 });
+
+it('renders between ticks, eases corrections and snaps life transitions without changing physics', () => {
+  const b = new Battle(customMatch('signal'), 'normal', 'm4', seededRandom(1));
+  const state = (): StateMessage => ({ type: 'state', roomId: 'test', round: 1, actorId: b.player.id, mapId: 'signal', mode: 'tdm', state: b.snapshot(), result: null,
+    ack: -1, movement: b.player.movement.checkpoint(), jumpHeld: false, poses: [], effects: [], bursts: [], grenades: [], events: [] });
+  const prediction = new Prediction(); prediction.accept(state());
+  const start = prediction.movement!.x;
+  prediction.input(0, { ...idleInput(), right: true });
+  const end = prediction.movement!.x;
+  expect(prediction.position(0, 0)!.x).toBe(start);
+  expect(prediction.position(0.5, 0)!.x).toBeCloseTo((start + end) / 2);
+  const displayed = prediction.position(1, 0)!;
+  b.player.movement.x += 12;
+  prediction.accept(state());
+  expect(prediction.movement!.x).toBeCloseTo(end + 12);
+  expect(prediction.position(1, 0)!.x).toBeCloseTo(displayed.x);
+  expect(prediction.position(1, 1000)!.x).toBeCloseTo(end + 12, 2);
+  b.player.life.deaths++; b.player.movement.reset(900, 300);
+  prediction.accept({ ...state(), ack: 0 });
+  expect(prediction.position(0.5, 16)).toEqual({ x: 900, y: 300 });
+  // Render samples are values, not mutable aliases shared by camera and rig.
+  const sample = prediction.position(1, 0)!;
+  prediction.input(1, { ...idleInput(), right: true });
+  expect(sample).toEqual({ x: 900, y: 300 });
+});
