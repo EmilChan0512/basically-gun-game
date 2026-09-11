@@ -13,8 +13,15 @@ test('admin searches users, previews and saves grants, handles conflicts, revoke
   const origin = `http://127.0.0.1:${(server.wss.address() as { port: number }).port}`, errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   try {
+    let resumeSession!: () => void;
+    const sessionGate = new Promise<void>(resolve => { resumeSession = resolve; });
+    await page.route('**/admin/api/session', async route => { await sessionGate; await route.continue(); });
     await page.goto(origin + '/admin/');
     await page.getByLabel('管理员账号').fill('admin'); await page.getByLabel('密码', { exact: true }).fill('admin-test-password');
+    await expect(page.getByRole('button', { name: '登录后台' })).toBeDisabled();
+    resumeSession();
+    await expect(page.getByRole('button', { name: '登录后台' })).toBeEnabled();
+    await page.unroute('**/admin/api/session');
     await page.getByRole('button', { name: '登录后台' }).click();
     await expect(page.locator('#total')).toHaveText('2 位用户');
     await page.locator('#query').fill('测试'); await page.getByRole('button', { name: '搜索', exact: true }).click();
