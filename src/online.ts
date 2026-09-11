@@ -18,7 +18,7 @@ function equipmentText(actor: { weapon: string; ammo: number; reserve: number; o
 }
 
 export function startOnline() {
-  document.body.innerHTML = `<main style="max-width:1120px;margin:24px auto"><h1>联机对战</h1><a href="/">返回单人游戏</a><div class="loadout"><label>服务器<input id="server" value="ws://127.0.0.1:4180"></label><label>昵称<input id="name" value="玩家" maxlength="24"></label><label>房间码<input id="code"></label><button id="create">创建房间</button><button id="join">加入房间</button><button id="reconnect">断线重连</button></div><p id="status">连接服务器后可创建或加入房间。</p><div id="lobby"></div><p id="online-hud" aria-live="off"></p><div id="online-game"></div><p>A/D移动 · 空格跳跃 · S蹲伏 · 鼠标射击 · Q切枪 · R换弹</p></main>`;
+  document.body.innerHTML = `<main style="max-width:1120px;margin:24px auto"><h1>联机对战</h1><a href="/">返回单人游戏</a><div class="loadout"><label>服务器<input id="server" value="ws://43.142.165.82:4180"></label><label>昵称<input id="name" value="玩家" maxlength="24"></label><label>房间码<input id="code"></label><button id="create">创建房间</button><button id="join">加入房间</button><button id="reconnect">断线重连</button></div><p id="status">连接服务器后可创建或加入房间。</p><div id="lobby"></div><p id="online-hud" aria-live="off"></p><div id="online-game"></div><p>A/D移动 · 空格跳跃 · S蹲伏 · 鼠标射击 · Q切枪 · R换弹</p></main>`;
   const el = (id: string) => document.getElementById(id)!;
   el('online-game').style.position = 'relative';
   const radar = document.createElement('div'); radar.id = 'online-radar'; radar.hidden = true;
