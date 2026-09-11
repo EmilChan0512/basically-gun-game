@@ -2,6 +2,9 @@ import { test, expect } from '@playwright/test';
 import { enterOffline } from '../helpers/offline-ui';
 
 test('offline purchase → mission rewards → skill and training → equipped combat → saved progress', async ({ page }) => {
+  // CI trace 34635698076 reached the final screenshot at 30s; the expanded
+  // armory and software WebGL snapshots need a separate total scenario budget.
+  if (process.env.CI) test.setTimeout(60000);
   const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
   await page.goto('/?offline');
   await enterOffline(page, 'Alpha');

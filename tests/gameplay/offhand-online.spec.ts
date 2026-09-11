@@ -2,6 +2,8 @@ import { registerOnline, selectOnlineClass, equipOnline, onlineLobby } from '../
 import { test, expect } from '@playwright/test';
 import { startServer } from '../../server/server';
 test('online knife and shield selection, authority actions and reconnect', async ({ browser }) => {
+  // CI trace 34635698076 reached reconnect at 30s after an 11s page load.
+  if (process.env.CI) test.setTimeout(60000);
   const server = startServer(0); await new Promise<void>(r => server.wss.once('listening', r));
   const address = server.wss.address(); if (!address || typeof address === 'string') throw Error('Missing port');
   const contexts = await Promise.all([browser.newContext(), browser.newContext()]);

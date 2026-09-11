@@ -3,9 +3,10 @@ import { test, expect } from '@playwright/test';
 import { startServer } from '../../server/server';
 
 test('two isolated browsers create, join, ready, start and independently switch weapons', async ({ browser }) => {
-  // Three software-rendered clients, authentication and two complete rounds
-  // exceed the default 30s budget on the CI runner; assertions keep their own timeouts.
-  test.setTimeout(60000);
+  // CI trace 34635698076 completed round one and reached the second start at
+  // 60s. Three software-rendered clients need a measured scenario budget;
+  // individual network/UI assertions retain their existing deadlines.
+  test.setTimeout(process.env.CI ? 120000 : 60000);
   const server = startServer(0);
   await new Promise<void>(resolve => server.wss.once('listening', resolve));
   const address = server.wss.address(); if (!address || typeof address === 'string') throw Error('No port');
