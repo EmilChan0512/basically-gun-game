@@ -5,6 +5,7 @@ import type { Room } from '../../shared/simulation/Room';
 import { Interpolation } from './Interpolation';
 import { Prediction } from './Prediction';
 import { CONTENT_VERSION } from '../../shared/protocol/ContentVersion';
+import { ShotPresentation } from './ShotPresentation';
 
 export class NetworkSession {
   socket: WebSocket;
@@ -12,6 +13,9 @@ export class NetworkSession {
   state: StateMessage | null = null;
   interpolation = new Interpolation();
   prediction = new Prediction();
+  shots = new ShotPresentation();
+  lastStateAt = 0;
+  skippedInputs = 0;
   private token = '';
   room: ReturnType<Room['lobby']> | null = null;
   onChange: () => void = () => {};
@@ -42,8 +46,12 @@ export class NetworkSession {
         if (this.room?.phase !== 'playing' || message.roomId !== this.room.id || message.round !== this.room.round) return;
         // Ordered transport can carry a forfeit/result or roster update at the
         // same simulation frame. Only genuinely older frames are stale.
-        if (!this.state || message.state.frame >= this.state.state.frame) { this.state = message; this.interpolation.push(message, performance.now()); this.prediction.accept(message); }
-      } else if (message.type === 'error') this.onError(message.message);
+        if (!this.state || message.state.frame >= this.state.state.frame) {
+          this.lastStateAt = performance.now(); this.state = message;
+          this.shots.accept(message, this.lastStateAt); this.interpolation.push(message, this.lastStateAt); this.prediction.accept(message);
+        }
+      } else if (message.type === 'rejected' && message.reason !== 'match-ended') this.onError(`操作未执行：${message.reason}`);
+      else if (message.type === 'error') this.onError(message.message);
       this.onChange();
     };
     this.socket.onerror = () => { this.suppressCloseError = true; this.onError('无法连接联机服务器'); };
@@ -65,6 +73,11 @@ export class NetworkSession {
   }
   input(input: BattleInput) {
     if (!this.state?.actorId || this.state.result || this.socket.readyState !== WebSocket.OPEN) return;
+    // Do not append stale controls to TCP's unsent queue or predict actions that
+    // are not sent. Resume from current controls when the connection recovers.
+    if (this.socket.bufferedAmount > 8192 || performance.now() - this.lastStateAt > 500) {
+      this.skippedInputs++; this.actions.clear(); return;
+    }
     const sequence = this.sequence++;
     this.prediction.input(sequence, input);
     this.send({ type: 'input', roomId: this.state.roomId, round: this.state.round, command: { sequence, input, actions: [...this.actions] } });

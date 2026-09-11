@@ -71,7 +71,7 @@ it('eight real WebSocket clients join, start and receive authoritative input res
     expect(resumedState.state.actors.some((a: any) => a.id === battle.player.id)).toBe(true); // Shot exposure survives reconnect.
     send(9, { type: 'input', roomId: code, round: 1, command: { sequence: 0, input: idleInput(), actions: ['swap'] } });
     await wait(() => logs[9].some(m => m.type === 'rejected'));
-    expect(logs[9].find(m => m.type === 'rejected').reason).toBe('invalid-command');
+    expect(logs[9].find(m => m.type === 'rejected').reason).toBe('stale-sequence');
     server.rooms.get(code)!.session!.battle.endMatch(1, 'terminal input fixture');
     send(9, { type: 'input', roomId: code, round: 1, command: { sequence: 1, input: idleInput(), actions: ['swap'] } });
     await wait(() => logs[9].some(m => m.type === 'rejected' && m.sequence === 1));

@@ -40,7 +40,9 @@ it('only authority metadata enables rewind and survives a queued checkpoint', ()
 });
 it('an old queued command falls back to current hitboxes after the hard history window', () => {
   const session = fixture();
-  for (let sequence = 0; sequence < 4; sequence++) session.submit('p', { sequence, input: idleInput(), actions: [] });
+  // Discrete actions are not coalesced, so this still exercises an actually
+  // queued old shot rather than the new continuous-input catch-up path.
+  for (let sequence = 0; sequence < 4; sequence++) session.submit('p', { sequence, input: idleInput(), actions: ['skill'] });
   session.submit('p', { ...fire, sequence: 4 }, 0);
   for (let i = 0; i < 5; i++) session.tick();
   expect(session.battle.actors[1].life.health).toBe(85);

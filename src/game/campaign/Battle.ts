@@ -275,7 +275,7 @@ export class Battle {
   }
   tick(input: BattleInput) { this.tickPlayers(new Map([[this.player.id, input]])); }
   /** Missing human commands are neutral; AI retains its own controller. */
-  tickPlayers(inputs: ReadonlyMap<string, BattleInput>, shotFrames: ReadonlyMap<string, number> = new Map()) {
+  tickPlayers(inputs: ReadonlyMap<string, BattleInput>, shotFrames: ReadonlyMap<string, number> = new Map(), instantHumanAim = false) {
     if (this.phase !== 'running') return;
     this.hitboxHistory.record(this.frame, this.hitboxes());
     this.frame++;
@@ -303,8 +303,8 @@ export class Battle {
       const m = actor.movement;
       m.x = Math.max(20, Math.min(this.mission.width - 20, m.x));
       if (m.y > (this.mission.killY ?? (this.mission.height ?? 700) + 140)) { this.damage(actor, 9999); continue; }
-      actor.aim.x += (control.aim.x - actor.aim.x) * 0.5;
-      actor.aim.y += (control.aim.y - actor.aim.y) * 0.5;
+      actor.aim.x += (control.aim.x - actor.aim.x) * (actor.human && instantHumanAim ? 1 : 0.5);
+      actor.aim.y += (control.aim.y - actor.aim.y) * (actor.human && instantHumanAim ? 1 : 0.5);
       const offhand = actor.offhand, attackSerial = offhand?.attackSerial;
       const meleeHits = offhand?.tick({ alive: actor.life.alive, fire: control.fire, sourceId: actor.id, team: actor.team,
         origin: { x: m.x, y: m.y - (m.crouching ? 28 : 42) }, aim: actor.aim, wall: this.wall,

@@ -30,7 +30,7 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
   type Client = { connectionId: string; connectedAt: number; warningAt: number; suppressedWarnings: number; id: string; room?: Room; count: number; window: number; eventMatch?: string; eventCursor?: number; latency: LatencyBudget; nextProbe: number };
   const clients = new Map<WebSocket, Client>();
   const send = (socket: WebSocket, data: unknown) => {
-    if (socket.readyState !== WebSocket.OPEN || socket.bufferedAmount >= 512000) { counters.skippedSends++; return false; }
+    if (socket.readyState !== WebSocket.OPEN || socket.bufferedAmount >= 65536) { counters.skippedSends++; return false; }
     socket.send(JSON.stringify(data)); return true;
   };
   const lobby = (room: Room) => { for (const [socket, client] of clients) if (client.room === room) send(socket, { type: 'lobby', room: room.lobby() }); };
@@ -94,10 +94,11 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
           else if (message.type === 'input') {
             if (message.roomId !== room.id || message.round !== room.round) throw Error('Match mismatch');
             const shotFrame = client.latency.shotFrame(room.session?.battle.frame ?? 0, now);
+            const rejection = room.session?.rejectionReason(client.id, message.command) ?? 'invalid-command';
             if (!room.command(client.id, message.command, shotFrame)) {
-              counters.rejectedCommands++; warnClient(client, 'invalid-command');
+              counters.rejectedCommands++; warnClient(client, rejection);
               send(socket, { type: 'rejected', sequence: message.command?.sequence,
-              reason: room.session?.battle.result ? 'match-ended' : 'invalid-command' });
+              reason: rejection });
             }
           } else throw Error('Unknown message');
         }
@@ -105,6 +106,8 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
     });
     socket.on('close', code => {
       counters.disconnections++;
+      if (client.room?.session) logger.log('info', 'network.client_metrics', { connectionId: client.connectionId, playerId: client.id,
+        ...roomFields(client.room), ...client.latency.metrics(performance.now()), input: client.room.session.diagnostics(client.id), bufferedBytes: socket.bufferedAmount, final: true });
       logger.log('info', 'client.disconnected', { connectionId: client.connectionId, playerId: client.id, roomId: client.room?.id, code, durationMs: Math.round(performance.now() - client.connectedAt), suppressedWarnings: client.suppressedWarnings });
       clients.delete(socket);
       if (client.room) {
@@ -134,6 +137,10 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
     }
     if (now - lastMetrics >= metricsIntervalMs) {
       lastMetrics = now;
+      for (const [socket, client] of clients) if (client.room?.session) {
+        logger.log('info', 'network.client_metrics', { connectionId: client.connectionId, playerId: client.id,
+          ...roomFields(client.room), ...client.latency.metrics(now), input: client.room.session.diagnostics(client.id), bufferedBytes: socket.bufferedAmount });
+      }
       const sorted = [...timings].sort((a, b) => a - b);
       logger.log('info', 'server.metrics', { connections: clients.size, rooms: rooms.size,
         activeMatches: [...rooms.values()].filter(r => r.session && !r.session.battle.result).length,

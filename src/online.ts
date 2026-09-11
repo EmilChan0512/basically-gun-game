@@ -11,6 +11,7 @@ import './campaign.css';
 import { VisionOverlay } from './client/presentation/VisionOverlay';
 import { CollisionWorld } from './shared/content/CollisionWorld';
 import { NETWORK_TICK_MS } from './shared/protocol/Timing';
+import { FireInput } from './client/session/FireInput';
 
 function equipmentText(actor: { weapon: string; ammo: number; reserve: number; offhand?: OffhandView }) {
   const offhand = actor.offhand;
@@ -140,13 +141,18 @@ class OnlineScene extends Phaser.Scene {
   private elapsed = 0;
   private animationFrame = 0;
   private vision!: VisionOverlay;
+  private fire = new FireInput();
   private spectateIndex = 0;
   constructor(private network: NetworkSession) { super('Online'); }
   preload() { preloadReferenceArt(this); }
   create() {
     if (document.getElementById('lobby')?.contains(document.activeElement)) (document.activeElement as HTMLElement)?.blur();
     document.getElementById('online-game')?.setAttribute('aria-busy', 'false');
-    this.input.on('pointerdown', () => (document.activeElement as HTMLElement)?.blur());
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      (document.activeElement as HTMLElement)?.blur();
+      if (pointer.leftButtonDown()) this.fire.edge(true, performance.now());
+    });
+    this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => { if (!pointer.leftButtonDown()) this.fire.edge(false, performance.now()); });
     const map = MAPS.find(m => m.id === this.network.state!.mapId)!.geometry;
     this.cameras.main.setBounds(0, 0, map.width, map.height ?? 700).setBackgroundColor(map.palette.sky);
     const background = this.add.graphics();
@@ -164,7 +170,7 @@ class OnlineScene extends Phaser.Scene {
       if (!e.repeat && e.code === 'KeyR') this.network.action('reload');
     };
     const up = (e: KeyboardEvent) => this.keys.delete(e.code);
-    const blur = () => this.keys.clear();
+    const blur = () => { this.keys.clear(); this.fire.clear(); };
     window.addEventListener('keydown', down); window.addEventListener('keyup', up); window.addEventListener('blur', blur);
     this.events.once('shutdown', () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', blur); });
   }
@@ -178,11 +184,12 @@ class OnlineScene extends Phaser.Scene {
     this.animationFrame += Math.min(delta, 100) / NETWORK_TICK_MS;
     while (this.elapsed >= NETWORK_TICK_MS) {
       this.elapsed -= NETWORK_TICK_MS;
-      if (self) this.network.input({ left: this.keys.has('KeyA'), right: this.keys.has('KeyD'), crouch: this.keys.has('KeyS'), jump: this.keys.has('Space') || this.keys.has('KeyW'), fire: this.input.activePointer.isDown && document.hasFocus(), aim: { x: aim.x, y: aim.y } });
+      if (self) this.network.input({ left: this.keys.has('KeyA'), right: this.keys.has('KeyD'), crouch: this.keys.has('KeyS'), jump: this.keys.has('Space') || this.keys.has('KeyW'), fire: document.hasFocus() && this.fire.sample(this.input.activePointer.leftButtonDown(), now), aim: { x: aim.x, y: aim.y } });
     }
     // Take an immutable render position AFTER input. Camera, sprite and vision
     // must all consume the same position within this render frame.
-    const renderAlpha = message.result || this.network.socket.readyState !== WebSocket.OPEN ? 1 : this.elapsed / NETWORK_TICK_MS;
+    const renderAlpha = message.result || this.network.socket.readyState !== WebSocket.OPEN
+      || now - this.network.lastStateAt > 500 || this.network.socket.bufferedAmount > 8192 ? 1 : this.elapsed / NETWORK_TICK_MS;
     const predicted = self ? this.network.prediction.position(renderAlpha, delta) ?? self
       : followed && this.network.interpolation.position(followed, now);
     if (predicted) this.cameras.main.centerOn(predicted.x, predicted.y - 150);
@@ -196,12 +203,13 @@ class OnlineScene extends Phaser.Scene {
       this.rig.soldier(position.x, position.y, motion.crouching, motion.vx, motion.jumping, this.animationFrame, actor.id === message.actorId ? aim : pose.aim, actor.weapon, actor.team === 1 ? 0xb7e8de : 0xf1b0a0, actor.life.alive, actor.reload > 0, false, actor.offhand);
     }
     this.rig.delivery(message.state.deliveryTargets, positions, this.graphics);
-    for (const effect of message.effects) if (message.state.frame - effect.frame < 3) this.graphics.lineStyle(2, 0xffe9ad).lineBetween(effect.trace.origin.x, effect.trace.origin.y, effect.trace.end.x, effect.trace.end.y);
+    for (const effect of this.network.shots.visible(now)) this.graphics.lineStyle(2, 0xffe9ad).lineBetween(effect.trace.origin.x, effect.trace.origin.y, effect.trace.end.x, effect.trace.end.y);
     const team = this.network.room?.players.find(p => p.id === this.network.playerId)?.team ?? self?.team ?? 1;
     this.vision.draw(message.state.actors.filter(a => a.team === team && a.life.alive)
       .map(a => ({ id: a.id, ...(positions.get(a.id) ?? a) })));
     const wave = message.state.waves;
     const heading = wave ? `第${wave.wave}/${wave.scenario.waves.length}波 · 待增援${wave.remaining} · 团队复活${wave.revives} · ${wave.spawnBlocked ? '增援入口受阻，请离开入口' : wave.phase === 'intermission' ? '休整中' : '战斗中'}` : message.state.scores.join(' : ');
     this.hud.setText(`${message.mode === 'ctf' ? '公文包 · 先交付3次获胜 · ' : ''}${heading}  |  ${message.state.seconds}s\n${self ? `HP ${Math.ceil(self.life.health)}  ${equipmentText(self)}` : `观战：${message.poses.find(p => p.id === followed?.id)?.name ?? '等待角色'} · Tab切换`}`);
+    if (now - this.network.lastStateAt > 500) this.hud.setText(this.hud.text + '\n网络停顿，等待服务器更新…');
   }
 }

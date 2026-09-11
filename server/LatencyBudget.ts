@@ -22,4 +22,11 @@ export class LatencyBudget {
     const ticks = Math.min(3, Math.floor((rtt / 2 + REMOTE_INTERPOLATION_MS) / NETWORK_TICK_MS));
     return Math.max(0, receivedFrame - ticks);
   }
+  metrics(now: number) {
+    const samples = this.samples.filter(s => now - s.at <= 10000);
+    const values = samples.map(s => s.rtt);
+    return { samples: values.length, rttMs: values.at(-1) ?? null,
+      minRttMs: values.length ? Math.min(...values) : null,
+      jitterMs: values.length > 1 ? Math.max(...values) - Math.min(...values) : null };
+  }
 }

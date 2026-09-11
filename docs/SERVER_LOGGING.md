@@ -13,11 +13,16 @@
 | `match.started/ended` | 对局开始与结果；每场结束只记录一次 |
 | `client.request_rejected/socket_error` | 协议、内容版本、非法请求、频率、超大 WebSocket 帧等问题 |
 | `server.metrics` | 当前连接/房间/对局数、RSS 内存、运行时长、模拟耗时 P95/P99、区间连接/断开/错误/拒绝指令/跳过发送数 |
+| `network.client_metrics` | 每个对局连接的 RTT、最近样本抖动、发送缓冲及输入/射击累计计数；断开时补记一次 |
 | `room.ready_changed/equipment_changed`（debug） | 准备状态与配装变化 |
 
 `connectionId` 在每次新连接时生成，`playerId` 在成功重连后沿用，`roomId + round` 标识一场对局。关闭原因文本和原始请求、输入指令、状态快照、玩家昵称、客户端 IP、重连令牌均不记录。JSON 编码保证换行不会伪造新记录；日志字段也做敏感键脱敏和长度限制。
 
-同一连接的请求警告最多每 10 秒一条，后续被抑制的数量在下一条警告或断开日志的 `suppressedWarnings` 中体现。每次请求错误仍计入 metrics，不逐帧写日志。`simulationP95Ms/P99Ms` 使用最近最多 2048 次模拟耗时样本，不是网络延迟；`interval` 中计数每次汇总后归零。`skippedSends` 表示连接已关闭或发送缓冲达到 512KB 时没有排入发送队列的消息数。
+同一连接的请求警告最多每 10 秒一条，后续被抑制的数量在下一条警告或断开日志的 `suppressedWarnings` 中体现。每次请求错误仍计入 metrics，不逐帧写日志。`simulationP95Ms/P99Ms` 使用最近最多 2048 次模拟耗时样本，不是网络延迟；`interval` 中计数每次汇总后归零。`skippedSends` 表示连接已关闭或发送缓冲达到 64KiB 时没有排入发送队列的消息数。
+
+`network.client_metrics` 中 `rttMs/minRttMs/jitterMs` 来自服务端 nonce 探测，最近 10 秒没有有效样本时为 null，不等于零延迟；jitter 为最近有效 RTT 样本的最大最小差。`input` 是该控制器本场累计值，重连沿用：`received/coalesced` 是接收/合并的指令数，`queue/maxQueue` 是当前/最大队列，`timeouts` 是触发 300ms 输入保护的次数。`firePresses` 是服务端观察到的扳机上升沿，不是浏览器真实点击总数；`shots` 是实际开火次数，`hitShots/damagingShots/wallShots/missShots` 区分命中角色、造成伤害、全部弹丸撞墙及全部落空。霰弹可能部分命中，分类不是互斥完整分区。
+
+`fireHeldTicks/reloadTicks/emptyTicks/cooldownTicks/deadFireTicks/offhandTicks` 记录扳机按下时的武器/生命状态，部分会重叠，不能直接除以 shots 算“射击失败率”。半自动武器持续按住只打一发、射速冷却、散布、掩体、盾牌及出生保护仍是正常规则。拒绝原因现区分 `stale-sequence/malformed-command/input-queue-full/not-controlled/match-ended`。
 
 ## 生产环境查看
 
