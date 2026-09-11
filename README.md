@@ -41,6 +41,8 @@ npm run play
 
 ## 训练与验证
 
+公网联机后端的 GitHub Actions、服务器初始化及部署配置见 [后端 CI/CD 部署说明](docs/BACKEND_DEPLOYMENT.md)。目标服务器 `43.142.165.82`，SSH 配置完成后启用自动部署。
+
 `?rules=original`为30Hz基础训练场，`?rules=lab`为旧120Hz调参实验室。训练场R仍为重置，战役R为换弹；实验功能不参与战役胜负。
 
 ```powershell
