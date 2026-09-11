@@ -24,7 +24,7 @@ jobs:
       - name: Install browser for gameplay verification
         run: npx playwright install --with-deps chromium
       - name: Verify debug controls and online equipment
-        run: npx playwright test tests/gameplay/online-accounts.spec.ts tests/gameplay/online.spec.ts tests/gameplay/debug-room.spec.ts tests/gameplay/offhand-online.spec.ts tests/gameplay/offhand.spec.ts tests/gameplay/offhand-variants.spec.ts
+        run: npx playwright test tests/gameplay/character-art.spec.ts tests/gameplay/online-accounts.spec.ts tests/gameplay/online.spec.ts tests/gameplay/debug-room.spec.ts tests/gameplay/offhand-online.spec.ts tests/gameplay/offhand.spec.ts tests/gameplay/offhand-variants.spec.ts
       - run: node tools/package-game.mjs
       - run: npm run package:server
       - run: node tools/verify-server-package.mjs

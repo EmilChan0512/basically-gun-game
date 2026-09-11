@@ -1,0 +1,253 @@
+{
+  "source": "SFH1 v1.2.1",
+  "swfSha256": "0b8d92dfae85917dd9bc0dc87997979bb825b3211d95d92f84040ffc9a1cc989",
+  "method": "Static FFDec SVG export; original limb identities and placement matrices; normalized viewBox; thigh gun attachment hidden; no original scripts executed",
+  "assets": [
+    {
+      "id": "assassin-forearm",
+      "symbol": 266,
+      "frame": 1,
+      "sha256": "e2a9dd52dcaa24cfe14d81d8435dde0671c5f9e6ea4b10947f197ee11a98c755"
+    },
+    {
+      "id": "assassin-upperarm",
+      "symbol": 298,
+      "frame": 1,
+      "sha256": "55a5b3647a45efd737178c247166ef2d273a736da8859fc145fdee6f6c178c34"
+    },
+    {
+      "id": "assassin-hand",
+      "symbol": 385,
+      "frame": 1,
+      "sha256": "3041ff8324196558f3f0d7c1130b3e071f76ae2d02f83075c06045bf951c70a8"
+    },
+    {
+      "id": "assassin-boot",
+      "symbol": 538,
+      "frame": 1,
+      "sha256": "b763b93b1c273efec279563ea5f478532218d600ec74a9ae7f9d6f4bf9a8e55f"
+    },
+    {
+      "id": "assassin-shin",
+      "symbol": 568,
+      "frame": 1,
+      "sha256": "9532de6898a8c3393d04bc71ed0f0bc10c57e7c4580efcd99ebf1e0f43ac5600"
+    },
+    {
+      "id": "assassin-thigh",
+      "symbol": 598,
+      "frame": 1,
+      "sha256": "9f87080f3ccb9a7507b560ffb5b73c468bfbf6bf1023461aeeedd65ef7958d3b"
+    },
+    {
+      "id": "assassin-torso",
+      "symbol": 631,
+      "frame": 1,
+      "sha256": "52b9205919db703245ac87469444162ca34ed7cea5b2445ff12ef327960f12b8"
+    },
+    {
+      "id": "assassin-head",
+      "symbol": 666,
+      "frame": 1,
+      "sha256": "b3bd4030248ab9080d6d06c086fd4fcb55830a8e2f2e9e8f146c6cbc7eba5d9f"
+    },
+    {
+      "id": "medic-forearm",
+      "symbol": 266,
+      "frame": 51,
+      "sha256": "158ba7602250993bdfdf9c8086548c96bb7b3aeb25e5924b7ebb06b2e66ca34f"
+    },
+    {
+      "id": "medic-upperarm",
+      "symbol": 298,
+      "frame": 51,
+      "sha256": "72973d5781f7c5be94819c12526f212ce09e311b0adff55c98cd8ef627890da9"
+    },
+    {
+      "id": "medic-hand",
+      "symbol": 385,
+      "frame": 51,
+      "sha256": "3041ff8324196558f3f0d7c1130b3e071f76ae2d02f83075c06045bf951c70a8"
+    },
+    {
+      "id": "medic-boot",
+      "symbol": 538,
+      "frame": 51,
+      "sha256": "bc033f5ef8d169815205e5d66730a0a4c9d0268a68c7e65b90a774e5d3274693"
+    },
+    {
+      "id": "medic-shin",
+      "symbol": 568,
+      "frame": 51,
+      "sha256": "c8f1c3c01038d10fdbf2419dbd177d80dcbaa0e6f696c053d6e86887b7d9b8c2"
+    },
+    {
+      "id": "medic-thigh",
+      "symbol": 598,
+      "frame": 51,
+      "sha256": "8cb2c2d3849c05d7bd199b4b45e3709912b2035f3e19346768bb1e50176b13a5"
+    },
+    {
+      "id": "medic-torso",
+      "symbol": 631,
+      "frame": 51,
+      "sha256": "a4172f91bf4fc37dc68abab7c55039ccf213a7c62cd72b0f4f3f2136cbb3066c"
+    },
+    {
+      "id": "medic-head",
+      "symbol": 666,
+      "frame": 51,
+      "sha256": "14d9c03dece9b82bdc1d0e5061f7e67c8e05ada6ada95e12ad9fcc3314099500"
+    },
+    {
+      "id": "tank-forearm",
+      "symbol": 266,
+      "frame": 101,
+      "sha256": "af18df7a6f133482ab5b51fe9bb4b29eb2bc83b55fefae9860cbfb87e6002f30"
+    },
+    {
+      "id": "tank-upperarm",
+      "symbol": 298,
+      "frame": 101,
+      "sha256": "ef1e05f530c458a26d15597d0fcc9b5d7fa5fea4dc276f0d66a2e58483fe74d1"
+    },
+    {
+      "id": "tank-hand",
+      "symbol": 385,
+      "frame": 101,
+      "sha256": "3041ff8324196558f3f0d7c1130b3e071f76ae2d02f83075c06045bf951c70a8"
+    },
+    {
+      "id": "tank-boot",
+      "symbol": 538,
+      "frame": 101,
+      "sha256": "9afcd4be38ee17e8f90ae8fb0c82ee832d1af9be8f5c9653f90b0de642f028f6"
+    },
+    {
+      "id": "tank-shin",
+      "symbol": 568,
+      "frame": 101,
+      "sha256": "e95a805270800dbc057684412aa7af8097bf503ec831b3e04e5f0f440d44c351"
+    },
+    {
+      "id": "tank-thigh",
+      "symbol": 598,
+      "frame": 101,
+      "sha256": "ef59d7f55396e711c2725ae61a9cddd9ab81754adc02a43fb81c93153cb65d71"
+    },
+    {
+      "id": "tank-torso",
+      "symbol": 631,
+      "frame": 101,
+      "sha256": "8f6124d8458c74855891b00606838fe9e4481581db288287b7fa49402f205751"
+    },
+    {
+      "id": "tank-head",
+      "symbol": 666,
+      "frame": 101,
+      "sha256": "da1d0fd308e99fe9dab4b8de8e5628426372317b0264a42fdc73fd0785658c31"
+    },
+    {
+      "id": "commando-forearm",
+      "symbol": 266,
+      "frame": 151,
+      "sha256": "4cf34cf02c24905dafa4c78367d19084ef631928c6b450ab4486bee3dc8fa679"
+    },
+    {
+      "id": "commando-upperarm",
+      "symbol": 298,
+      "frame": 151,
+      "sha256": "9bcb6f10d4d5ef4f20ad048beb5440396c18f86e2e71c6038be800483c0a568e"
+    },
+    {
+      "id": "commando-hand",
+      "symbol": 385,
+      "frame": 151,
+      "sha256": "3041ff8324196558f3f0d7c1130b3e071f76ae2d02f83075c06045bf951c70a8"
+    },
+    {
+      "id": "commando-boot",
+      "symbol": 538,
+      "frame": 151,
+      "sha256": "8dc2be635785f3c0a4b28d01721f3fdb919e4ff1ba2a9a4121f1b4e845117f1d"
+    },
+    {
+      "id": "commando-shin",
+      "symbol": 568,
+      "frame": 151,
+      "sha256": "434de01d927cf1fc5df3d8235f07cb6834874ed9f5c0806e41d2e7f8d81404b7"
+    },
+    {
+      "id": "commando-thigh",
+      "symbol": 598,
+      "frame": 151,
+      "sha256": "2ac518431af8d20b18bc4ec789b0bf26352abf88750861deae86c7a1d9e12861"
+    },
+    {
+      "id": "commando-torso",
+      "symbol": 631,
+      "frame": 151,
+      "sha256": "f042830bcc4bced7f437202c93e190ca1768019ecef4d504fb211716009d7b34"
+    },
+    {
+      "id": "commando-head",
+      "symbol": 666,
+      "frame": 151,
+      "sha256": "32e838f01bc7f3c0143b9e703379e26b4582706fdbf43e179ab133d79ffd4cc8"
+    },
+    {
+      "id": "usp",
+      "symbol": 375,
+      "frame": 2,
+      "sha256": "4b43b11f173e038a972ce6304d6c64732064ec2e335e034b9d00183adccbeda1"
+    },
+    {
+      "id": "beretta",
+      "symbol": 375,
+      "frame": 3,
+      "sha256": "afb30e03e717b3b37dbab0febad7cb5576670eb52bc4ae96224694970c7dd688"
+    },
+    {
+      "id": "deagle",
+      "symbol": 375,
+      "frame": 7,
+      "sha256": "53020bafba471e6e66df90bf40e99a2c2cd55e2250806f71bace3067b8bc6e29"
+    },
+    {
+      "id": "vector",
+      "symbol": 375,
+      "frame": 17,
+      "sha256": "46ed09b251b1bccac1790d11afce42c7fdd028fbd15c31f7cdf176f8f5e81dbc"
+    },
+    {
+      "id": "m4",
+      "symbol": 375,
+      "frame": 20,
+      "sha256": "a7e81a41219dc3f95732f3a29c110b6b1b136d663953c12c009b8a450401ffbb"
+    },
+    {
+      "id": "ak47",
+      "symbol": 375,
+      "frame": 25,
+      "sha256": "b0f080089bc8bb9ff9bcdbdf876db80bb2ef977943fe726247733e4267e23be0"
+    },
+    {
+      "id": "saw",
+      "symbol": 375,
+      "frame": 32,
+      "sha256": "1d76baed946d5db80daff7bee2b76a52f6bae2ddf6e7243bf3d2465e3b05a782"
+    },
+    {
+      "id": "shotgun",
+      "symbol": 375,
+      "frame": 44,
+      "sha256": "cbaca1b17f7e8efdda035ef04cdb36905fbeb6adb8aed18b924a5a0e14ee2168"
+    },
+    {
+      "id": "dragunov",
+      "symbol": 375,
+      "frame": 52,
+      "sha256": "51d59ebbfb5e45d970fe7ef96ed7b90d322696e5dfc07510f0f1504ec328ca7b"
+    }
+  ]
+}

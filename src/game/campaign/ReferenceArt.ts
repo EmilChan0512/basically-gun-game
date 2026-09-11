@@ -5,10 +5,11 @@ import { WEAPONS, SPECIAL_OFFHANDS, type ClassId } from './Catalog';
 import offhandFrames from '../../client/presentation/offhand-frames.json';
 import type { WeaponId } from '../combat/Combat';
 import type { BulletTrace, Point } from '../combat/Ballistics';
+import { CHARACTER_ART, characterAsset, characterPose, jointMatrix, transformPoint, type CharacterPart } from '../../client/presentation/CharacterPose';
 
-const assets = [...Object.keys(WEAPONS), ...Object.keys(offhandFrames), 'briefcase-1', 'briefcase-2', 'hijack', 'boot', 'leg', 'arm', 'torso', 'head', 'supply', 'flash', 'hills', 'clouds', 'outpost', 'aircraft'];
-for (const role of ['medic', 'assassin', 'commando', 'tank']) for (const part of ['boot', 'leg', 'arm', 'torso', 'head']) assets.push(`${role}-${part}`);
+const assets = [...Object.keys(WEAPONS), ...Object.keys(offhandFrames), 'briefcase-1', 'briefcase-2', 'hijack', 'supply', 'flash', 'hills', 'clouds', 'outpost', 'aircraft'];
 export function preloadReferenceArt(scene: Phaser.Scene) {
+  for (const id of Object.keys(CHARACTER_ART)) scene.load.svg(`actor-${id}`, characterAsset(id), { scale: 4 });
   for (const id of assets) scene.load.image(`ref-${id}`, `/assets/reference/${id}.png`);
   scene.load.once('complete', () => {
     for (const [id, bounds] of Object.entries(offhandFrames)) {
@@ -58,20 +59,33 @@ export class ReferenceArt {
       .setOrigin(0.5).setRotation(angle).setFlip(flip, false).setTint(tint).setAlpha(alpha);
     return image;
   }
+  private actorPart(part: CharacterPart, x: number, y: number) {
+    const box = CHARACTER_ART[part.id], m = part.matrix;
+    const center = transformPoint(m, box.x + box.w / 2, box.y + box.h / 2);
+    const scaleX = Math.hypot(m[0], m[1]), scaleY = (m[0] * m[3] - m[1] * m[2]) / scaleX;
+    const image = this.pool[this.cursor] ??= this.scene.add.image(0, 0, `actor-${part.id}`);
+    this.cursor++;
+    image.setTexture(`actor-${part.id}`).setDepth(2).setVisible(true).setOrigin(.5)
+      .setPosition(x + center.x, y + center.y).setDisplaySize(box.w * scaleX, box.h * Math.abs(scaleY))
+      .setRotation(Math.atan2(m[1], m[0])).setFlip(false, scaleY < 0).setTint(0xffffff).setAlpha(1);
+    return image;
+  }
   soldier(x: number, y: number, crouch: boolean, vx: number, jumping: boolean, frame: number, aim: { x: number; y: number }, weapon: string, tint: number, alive: boolean, reload = 0, flash = false, offhand?: OffhandView, role: ClassId = 'medic', actorId = 'player') {
     const skin = (part: string) => `${role}-${part}`;
-    tint = 0xffffff;
     const flip = offhand?.equipped && offhand.kind === 'melee' && offhand.age >= 0 ? offhand.facing.x < 0 : aim.x < x;
-    const facing = flip ? -1 : 1, height = crouch ? 44 : 66;
-    if (!alive) { this.part(skin('torso'), x, y - 7, 26, 23, Math.PI / 2, flip, tint, 0.45); return; }
-    const stride = jumping ? 5 : Math.sin(frame * 0.6) * Math.min(7, Math.abs(vx) * 1.5);
-    for (const side of [-1, 1]) {
-      const foot = x + side * (5 + stride);
-      this.part(skin('leg'), x + side * 5, y - (crouch ? 10 : 15), 10, crouch ? 16 : 25, side * stride * 0.06, flip);
-      this.part(skin('boot'), foot + facing * 2, y - 4, 14, 10, 0, flip);
+    if (!alive) { this.actorPart({ id: skin('torso'), name: 'fallen', matrix: [0, 1, -1, 0, 0, -5] }, x, y).setAlpha(.45); return; }
+    const special = !!offhand?.equipped && offhand.kind !== 'firearm';
+    const selectedWeapon = Object.hasOwn(WEAPONS, weapon) ? weapon as WeaponId : 'm4';
+    const pose = characterPose(role, selectedWeapon, { frame, vx, jumping, crouch, flip, reload, flash,
+      aim: { x: aim.x - x, y: aim.y - y }, bodyOnly: special });
+    for (const part of pose.parts) this.actorPart(part, x, y);
+    if (!special) {
+      if (pose.muzzle) {
+        const muzzle = { x: x + pose.muzzle.x, y: y + pose.muzzle.y }; this.muzzles.set(actorId, muzzle);
+        if (flash) { const angle = Math.atan2(aim.y - muzzle.y, aim.x - muzzle.x); this.part('flash', muzzle.x + Math.cos(angle) * 8, muzzle.y + Math.sin(angle) * 8, 20, 12, angle); }
+      }
+      return;
     }
-    this.part(skin('torso'), x, y - height + 34, 26, crouch ? 22 : 30, 0, flip, tint);
-    this.part(skin('head'), x + facing * 2, y - height + 12, 29, 29, 0, flip, tint);
     const anchorY = y - (crouch ? 28 : 42);
     if (offhand?.equipped && offhand.kind !== 'firearm') {
       const id = offhand.id ?? (offhand.kind === 'melee' ? 'knife' : 'shield');
@@ -82,9 +96,10 @@ export class ReferenceArt {
       const arm = (hand: Point, bend: number) => {
         const elbow = { x: x + (hand.x - x) * 0.5 - Math.sin(direction) * bend,
           y: anchorY + (hand.y - anchorY) * 0.5 + Math.cos(direction) * bend };
-        for (const [a, b] of [[{ x, y: anchorY + 3 }, elbow], [elbow, hand]])
-          this.part(skin('arm'), (a.x + b.x) / 2, (a.y + b.y) / 2, 8, Math.hypot(b.x - a.x, b.y - a.y) + 4,
-            Math.atan2(b.y - a.y, b.x - a.x) - Math.PI / 2, side < 0);
+        this.actorPart({ id: skin('upperarm'), name: 'offhand-upperarm', matrix: jointMatrix({ x, y: anchorY + 3 }, elbow, [-3, 0], [6, 10]) }, 0, 0);
+        this.actorPart({ id: skin('forearm'), name: 'offhand-forearm', matrix: jointMatrix(elbow, hand, [-1, 0], [10, -3]) }, 0, 0);
+        const rotation = direction;
+        this.actorPart({ id: skin('hand'), name: 'offhand-hand', matrix: [Math.cos(rotation), Math.sin(rotation), -Math.sin(rotation), Math.cos(rotation), hand.x - 4 * Math.cos(rotation), hand.y - 4 * Math.sin(rotation)] }, 0, 0);
       };
       if (definition.kind === 'melee') {
         const age = Math.max(0, offhand.age - 1), { windup, active, recovery } = definition;
@@ -121,26 +136,5 @@ export class ReferenceArt {
       }
       return;
     }
-    const definition = Object.hasOwn(WEAPONS, weapon) ? WEAPONS[weapon as WeaponId] : WEAPONS.m4;
-    const progress = reload > 0 ? Phaser.Math.Clamp(1 - reload / definition.config.reloadFrames, 0, 1) : 0;
-    const ease = (value: number) => { const t = Phaser.Math.Clamp(value, 0, 1); return t * t * (3 - 2 * t); };
-    const lower = reload > 0 ? ease(progress / 0.2) * (1 - ease((progress - 0.78) / 0.22)) : 0;
-    const angle = Math.atan2(aim.y - anchorY, aim.x - x) + facing * lower * 0.65;
-    if (!Object.hasOwn(WEAPONS, weapon)) weapon = 'm4';
-    const length = definition.length;
-    const texture = this.scene.textures.get(`ref-${weapon}`).get(definition.artFrame ? 'equipment' : '__BASE');
-    const gunHeight = Math.min(23, length * texture.height / texture.width);
-    this.part(weapon, x + Math.cos(angle) * 17, anchorY + Math.sin(angle) * 17, length, gunHeight, flip ? angle - Math.PI : angle, flip);
-    this.part(skin('arm'), x + Math.cos(angle) * 5, anchorY + 9, 12, 24, angle - Math.PI / 2, flip, tint);
-    // Support hand leaves the fore-end, reaches the belt, inserts, then returns.
-    const reach = reload > 0 ? Math.sin(Math.PI * Phaser.Math.Clamp((progress - 0.15) / 0.65, 0, 1)) : 0;
-    this.part(skin('arm'), x + Math.cos(angle) * (19 - reach * 13), anchorY + Math.sin(angle) * 12 + 6 + reach * 16,
-      9, 20, angle - Math.PI / 2 + facing * reach * 0.9, flip, tint);
-    const barrelOffsets: Record<string, number> = { usp: -0.273, m4: -0.158, vector: -0.214, shotgun: -0.221, dragunov: -0.043, saw: -0.056, ak47: -0.322, deagle: -0.295 };
-    const barrelY = (barrelOffsets[weapon] ?? -0.1) * gunHeight * facing;
-    const muzzle = { x: x + Math.cos(angle) * (17 + length / 2) - Math.sin(angle) * barrelY,
-      y: anchorY + Math.sin(angle) * (17 + length / 2) + Math.cos(angle) * barrelY };
-    this.muzzles.set(actorId, muzzle);
-    if (flash) this.part('flash', muzzle.x + Math.cos(angle) * 8, muzzle.y + Math.sin(angle) * 8, 20, 12, angle);
   }
 }

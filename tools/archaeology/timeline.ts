@@ -21,7 +21,7 @@ export function inspectTimeline(input: Buffer, className: string) {
   const sprite = header.tags.find(t => t.code === 39 && bytes.readUInt16LE(t.payloadOffset) === spriteId);
   if (!sprite) throw Error(`Sprite class not found: ${className}`);
   const labels: { frame: number; name: string }[] = [];
-  const placements: { frame: number; depth: number; name?: string; character?: number; x?: number; y?: number }[] = [];
+  const placements: { frame: number; depth: number; name?: string; character?: number; x?: number; y?: number; matrix?: number[] }[] = [];
   const operations: { frame: number; depth: number; remove?: boolean; move?: boolean; placement?: typeof placements[number] }[] = [];
   let frame = 1, p = sprite.payloadOffset + 4;
   const end = sprite.payloadOffset + sprite.length;
@@ -51,10 +51,12 @@ export function inspectTimeline(input: Buffer, className: string) {
         return signed && n > 0 && value >= 2 ** (n - 1) ? value - 2 ** n : value;
       };
       if (flags & 4) {
-        if (read(1)) { const n = read(5); read(n, true); read(n, true); }
-        if (read(1)) { const n = read(5); read(n, true); read(n, true); }
+        let a = 1, b = 0, c = 0, d = 1;
+        if (read(1)) { const n = read(5); a = read(n, true) / 65536; d = read(n, true) / 65536; }
+        if (read(1)) { const n = read(5); b = read(n, true) / 65536; c = read(n, true) / 65536; }
         const n = read(5);
         record.x = read(n, true) / 20; record.y = read(n, true) / 20;
+        record.matrix = [a, b, c, d, record.x, record.y];
         q = Math.ceil(bit / 8);
       }
       if (flags & 8) {

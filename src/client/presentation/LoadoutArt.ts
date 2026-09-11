@@ -1,5 +1,6 @@
 import { WEAPONS, SPECIAL_OFFHANDS, CLASSES, type ClassId } from '../../game/campaign/Catalog';
 import frames from './offhand-frames.json';
+import { CHARACTER_ART, characterAsset, characterPose } from './CharacterPose';
 import type { EquipmentLoadout } from '../../shared/content/Equipment';
 
 const source = (id: string) => `/assets/reference/${id}.png`;
@@ -20,20 +21,17 @@ const icons: Record<string, string> = {
 /** Presentation-only SVGs reuse the exact equipment frame seen in the game. */
 export function loadoutArt(id: string, label: string, className = ''): string {
   if (Object.hasOwn(icons, id)) return `<svg class="loadout-art ability-art ${className}" viewBox="0 0 64 64" role="img" aria-label="${label}"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${icons[id]}</g></svg>`;
+  if (Object.hasOwn(CHARACTER_ART, id)) return `<img class="loadout-art ${className}" src="${characterAsset(id)}" alt="${label}" draggable="false">`;
   const crop = Object.hasOwn(frames, id) ? frames[id as keyof typeof frames] : WEAPONS[id as keyof typeof WEAPONS]?.artFrame;
   if (crop) return `<svg class="loadout-art ${Object.hasOwn(SPECIAL_OFFHANDS, id) ? 'offhand-art' : ''} ${className}" viewBox="${crop.join(' ')}" role="img" aria-label="${label}"><image href="${source(id)}"/></svg>`;
   return `<img class="loadout-art ${className}" src="${source(id)}" alt="${label}" draggable="false">`;
 }
 
-/** A static paper-doll using the same proportions and layering as ReferenceArt. */
+/** Exactly the same joints, vectors and weapon grip used by the battle rig. */
 export function operatorArt(role: ClassId, equipment: EquipmentLoadout) {
-  const part = (id: string, x: number, y: number, w: number, h: number, angle = 0) =>
-    `<image href="${source(`${role}-${id}`)}" x="${x - w / 2}" y="${y - h / 2}" width="${w}" height="${h}" preserveAspectRatio="none" transform="rotate(${angle} ${x} ${y})"/>`;
-  const gun = WEAPONS[equipment.primary], height = gun.artFrame ? Math.min(23, gun.length * gun.artFrame[3] / gun.artFrame[2]) : 15;
-  return `<svg class="operator-art" viewBox="-48 -82 132 100" role="img" aria-label="${CLASSES[role].name}角色与${gun.name}配装预览">
-    ${part('leg', -7, -15, 10, 25, 6)}${part('boot', -7, -4, 14, 10)}${part('leg', 7, -15, 10, 25, -6)}${part('boot', 10, -4, 14, 10)}
-    ${part('torso', 0, -32, 26, 30)}${part('head', 2, -54, 29, 29)}
-    <svg x="${17 - gun.length / 2}" y="${-42 - height / 2}" width="${gun.length}" height="${height}" ${gun.artFrame ? `viewBox="${gun.artFrame.join(' ')}"` : 'viewBox="0 0 112 68"'}><image href="${source(equipment.primary)}" ${gun.artFrame ? '' : 'width="112" height="68" preserveAspectRatio="none"'}/></svg>
-    ${part('arm', 5, -33, 12, 24, -90)}${part('arm', 19, -36, 9, 20, -90)}
-  </svg>`;
+  const pose = characterPose(role, equipment.primary);
+  return `<svg class="operator-art" viewBox="-35 -78 112 90" role="img" aria-label="${CLASSES[role].name}角色与${WEAPONS[equipment.primary].name}配装预览">${pose.parts.map(part => {
+    const box = CHARACTER_ART[part.id];
+    return `<image href="${characterAsset(part.id)}" x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" transform="matrix(${part.matrix.join(' ')})"/>`;
+  }).join('')}</svg>`;
 }
