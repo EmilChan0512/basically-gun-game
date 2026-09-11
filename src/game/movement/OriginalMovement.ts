@@ -13,6 +13,11 @@ export class OriginalMovement {
   hardLandingFrames = 0;
   rotation = 0;
   constructor(readonly wall: WallMask) {}
+  checkpoint() {
+    return { x: this.x, y: this.y, vx: this.vx, vy: this.vy, jumping: this.jumping, crouching: this.crouching,
+      manualJump: this.manualJump, fallFrames: this.fallFrames, climb: this.climb, climbFrames: this.climbFrames,
+      hardLandingFrames: this.hardLandingFrames, rotation: this.rotation };
+  }
   reset(x: number, y: number) {
     this.x = x; this.y = y; this.vx = this.vy = 0;
     this.jumping = this.crouching = this.manualJump = false;

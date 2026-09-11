@@ -1,0 +1,50 @@
+import { mkdtempSync, copyFileSync, writeFileSync, mkdirSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { spawn } from 'node:child_process';
+import { WebSocket } from 'ws';
+
+const temporary = mkdtempSync(join(tmpdir(), 'strike-server-'));
+const serverManifest = JSON.parse(readFileSync('artifacts/project-strike-server/manifest.json', 'utf8'));
+const clientManifest = JSON.parse(readFileSync('artifacts/project-strike-local/manifest.json', 'utf8'));
+if (!serverManifest.contentVersion || serverManifest.contentVersion !== clientManifest.contentVersion) throw Error('Package content versions differ');
+if (createHash('sha256').update(readFileSync('artifacts/project-strike-server/server.cjs')).digest('hex') !== serverManifest.sha256) throw Error('Server bundle checksum mismatch');
+copyFileSync('artifacts/project-strike-server/server.cjs', join(temporary, 'server.cjs'));
+const child = spawn(process.execPath, ['server.cjs'], { cwd: temporary,
+  env: { ...process.env, PORT: '0', HOST: '127.0.0.1', NODE_PATH: '' }, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+let output = '', errors = '', socket;
+child.stdout.on('data', data => output += data); child.stderr.on('data', data => errors += data);
+const wait = async predicate => {
+  const until = Date.now() + 8000;
+  while (!predicate()) { if (child.exitCode !== null || Date.now() > until) throw Error(`Package timeout/exit: ${output} ${errors}`); await new Promise(r => setTimeout(r, 10)); }
+};
+try {
+  await wait(() => /ws:\/\/127\.0\.0\.1:\d+/.test(output));
+  socket = new WebSocket(output.match(/ws:\/\/127\.0\.0\.1:\d+/)[0]);
+  const messages = []; socket.on('message', raw => messages.push(JSON.parse(raw.toString())));
+  await wait(() => messages.some(m => m.type === 'welcome'));
+  const welcome = messages.find(m => m.type === 'welcome');
+  if (welcome.content !== serverManifest.contentVersion) throw Error('Runtime content differs from package manifests');
+  const send = message => socket.send(JSON.stringify({ protocol: welcome.protocol, content: welcome.content, ...message }));
+  send({ type: 'create', name: 'Package QA' }); await wait(() => messages.some(m => m.type === 'lobby'));
+  const room = messages.find(m => m.type === 'lobby').room.id;
+  send({ type: 'configure', mapId: 'hijack', mode: 'coop' });
+  send({ type: 'equip', equipment: { primary: 'ak47', secondary: 'shield' } });
+  send({ type: 'ready', ready: true }); send({ type: 'start' });
+  await wait(() => messages.some(m => m.type === 'state'));
+  send({ type: 'input', roomId: room, round: 1, command: { sequence: 0,
+    actions: ['swap'], input: { left: false, right: false, crouch: false, jump: false, fire: true, aim: { x: 900, y: 700 } } } });
+  await wait(() => messages.some(m => m.type === 'state' && m.ack === 0 && m.state.actors.find(a => a.id === m.actorId)?.offhand?.deployed));
+  const rejected = messages.filter(m => m.type === 'error' || m.type === 'rejected');
+  if (rejected.length || errors) throw Error(JSON.stringify({ rejected, errors }));
+  const report = { date: new Date().toISOString(), contentVersion: welcome.content, isolatedDirectory: temporary,
+    bundle: resolve('artifacts/project-strike-server/server.cjs'), passed: true,
+    checks: ['client/server/runtime content identity', 'server bundle SHA256', 'isolated bundle startup', 'create room', 'coop setup', 'AK47/shield loadout', 'start', 'input acknowledgement', 'deployed shield snapshot'] };
+  mkdirSync('artifacts/qa', { recursive: true });
+  writeFileSync('artifacts/qa/server-package.json', JSON.stringify(report, null, 2));
+  console.log(JSON.stringify(report));
+} finally {
+  socket?.terminate(); child.kill();
+  if (child.exitCode === null) await new Promise(r => child.once('exit', r));
+}

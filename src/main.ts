@@ -5,6 +5,7 @@ import { OriginalSandboxScene } from './game/scenes/OriginalSandboxScene';
 import { defaults, tuningControls } from './game/config/movement';
 import './styles.css';
 import { startCampaign } from './campaign';
+import { startOnline } from './online';
 
 function startLabs() {
 let lab: MovementLabScene | undefined;
@@ -74,4 +75,4 @@ new Phaser.Game({
 
 }
 const rules = new URLSearchParams(location.search).get('rules');
-if (rules === 'lab' || rules === 'original') startLabs(); else startCampaign();
+if (new URLSearchParams(location.search).has('online')) startOnline(); else if (rules === 'lab' || rules === 'original') startLabs(); else startCampaign();

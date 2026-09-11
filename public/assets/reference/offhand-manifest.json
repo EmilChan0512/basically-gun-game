@@ -1,0 +1,39 @@
+{
+  "sourceSwf": "0b8d92dfae85917dd9bc0dc87997979bb825b3211d95d92f84040ffc9a1cc989",
+  "method": "Unmodified copy of existing static FFDec PNG exports; no SWF execution",
+  "assets": [
+    {
+      "id": "knife",
+      "label": "Knife",
+      "frame": 63,
+      "symbol": 375,
+      "source": "archaeology/local/curated-export/DefineSprite_375_MBFZ_fla.Guns_290/63.png",
+      "file": "knife.png",
+      "width": 112,
+      "height": 68,
+      "sha256": "5b6c7eab190a977aa1fd9fe9dd58436f306e99dc03fec0096d3639f667f32bd5"
+    },
+    {
+      "id": "shield",
+      "label": "Riot",
+      "frame": 56,
+      "symbol": 375,
+      "source": "archaeology/local/curated-export/DefineSprite_375_MBFZ_fla.Guns_290/56.png",
+      "file": "shield.png",
+      "width": 112,
+      "height": 68,
+      "sha256": "1d373f5e34280fb68ed24c62544800f94c961a4f675f96bb63244a744ebbe975"
+    },
+    {
+      "id": "shield-back",
+      "label": "Riotb",
+      "frame": 68,
+      "symbol": 375,
+      "source": "archaeology/local/curated-export/DefineSprite_375_MBFZ_fla.Guns_290/68.png",
+      "file": "shield-back.png",
+      "width": 112,
+      "height": 68,
+      "sha256": "3d8f7c4503913cb45b1cf7102e0ef2939aafb9daf454515969ac32d0f3cb1bb2"
+    }
+  ]
+}

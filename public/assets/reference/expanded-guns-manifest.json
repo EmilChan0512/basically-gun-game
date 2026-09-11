@@ -1,0 +1,24 @@
+{
+  "sourceSwf": "0b8d92dfae85917dd9bc0dc87997979bb825b3211d95d92f84040ffc9a1cc989",
+  "method": "Unmodified static FFDec export; display frame bounds are registered in Catalog; no SWF execution",
+  "assets": [
+    {
+      "id": "ak47",
+      "label": "AK 47",
+      "frame": 25,
+      "symbol": 375,
+      "source": "archaeology/local/curated-export/DefineSprite_375_MBFZ_fla.Guns_290/25.png",
+      "file": "ak47.png",
+      "sha256": "2d3b572e0a700eb2e2434c91f150bc947a97280e2c28cc145d0d9c4994b6faa2"
+    },
+    {
+      "id": "deagle",
+      "label": "Desert Eagle",
+      "frame": 7,
+      "symbol": 375,
+      "source": "archaeology/local/curated-export/DefineSprite_375_MBFZ_fla.Guns_290/7.png",
+      "file": "deagle.png",
+      "sha256": "f0b08daa96e5607bf95a502aa8f495b835cf91abb397c3398cd8ed1a881e043a"
+    }
+  ]
+}

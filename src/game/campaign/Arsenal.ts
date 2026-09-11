@@ -17,11 +17,25 @@ export class Arsenal {
   constructor(selected: WeaponId = 'm4', primary?: WeaponId, secondary: WeaponId = 'usp', readonly ammoMultiplier = 0.9) {
     this.primary = primary ?? (WEAPONS[selected].slot === 'primary' ? selected : 'm4');
     this.secondary = secondary;
-    this.guns = new Map([this.primary, this.secondary].map(id => [id, new GunController(WEAPONS[id].config, this.clock, ammoMultiplier)]));
+    this.guns = new Map([...new Set([this.primary, this.secondary])].map(id => [id, new GunController(WEAPONS[id].config, this.clock, ammoMultiplier)]));
     this.selected = this.guns.has(selected) ? selected : this.primary;
     this.recoil = new Recoil(this.gun.weapon.recoil);
   }
   get gun() { return this.guns.get(this.selected)!; }
+  checkpoint() {
+    return { primary: this.primary, secondary: this.secondary, selected: this.selected, ammoMultiplier: this.ammoMultiplier,
+      clock: { ...this.clock }, latched: this.latched, held: this.held, shots: this.shots,
+      recoil: { base: this.recoil.base, dynamic: this.recoil.dynamic, upper: this.recoil.upper },
+      guns: [...this.guns].map(([id, gun]) => ({ id, state: gun.checkpoint() })) };
+  }
+  static restore(state: ReturnType<Arsenal['checkpoint']>) {
+    const arsenal = new Arsenal(state.selected, state.primary, state.secondary, state.ammoMultiplier);
+    Object.assign(arsenal.clock, state.clock);
+    arsenal.latched = state.latched; arsenal.held = state.held; arsenal.shots = state.shots;
+    Object.assign(arsenal.recoil, state.recoil);
+    for (const gun of state.guns) arsenal.guns.get(gun.id)!.restore(gun.state);
+    return arsenal;
+  }
   get empty() { return [...this.guns.values()].every(gun => gun.ammo === 0 && gun.reserveAmmo === 0); }
   setTrigger(held: boolean) { this.held = held; if (!held) this.latched = false; }
   swap() {

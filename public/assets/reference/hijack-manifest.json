@@ -1,0 +1,19 @@
+{
+  "sourceSwf": "0b8d92dfae85917dd9bc0dc87997979bb825b3211d95d92f84040ffc9a1cc989",
+  "collisionSymbol": 1323,
+  "shape": 1322,
+  "alphaRule": 255,
+  "localBounds": [
+    0,
+    0,
+    2873.95,
+    1429.7
+  ],
+  "artworkImage": 1320,
+  "artworkShape": 1321,
+  "artworkOrigin": [
+    143.45,
+    312.1
+  ],
+  "sha256": "8dd0195d6b41469f9ed8a93aa77f1680d9e9c6bf872503022a6f96fa42784e33"
+}

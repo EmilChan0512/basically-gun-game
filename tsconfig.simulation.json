@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "types": ["node"]
+  },
+  "include": ["src/shared/**/*.ts", "src/game/campaign/Battle.ts", "src/client/session/LocalSession.ts"]
+}

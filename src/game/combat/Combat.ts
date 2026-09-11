@@ -1,7 +1,7 @@
 import { BASE_HEAD_BONUS, type HitRegion } from './Ballistics';
 export const COMBAT_FRAME_MS = 1000 / 30;
 export type LabWeaponId = 'usp' | 'm4';
-export type WeaponId = LabWeaponId | 'vector' | 'shotgun' | 'dragunov' | 'saw' | 'beretta';
+export type WeaponId = LabWeaponId | 'vector' | 'shotgun' | 'dragunov' | 'saw' | 'beretta' | 'ak47' | 'deagle';
 export interface WeaponConfig { id: WeaponId; damage: number; magazineSize: number; spareMagazines: number; shootDelayFrames: number; automatic: boolean; rangeUnits: number; reloadFrames: number; recoil: number; xOff: number; yOff: number }
 // Stats_Guns + Guns uint assignment + arm_gun_316 timeline. Range is in original 10px units.
 export const USP: Readonly<WeaponConfig> = Object.freeze({ id: 'usp', damage: 15, magazineSize: 12, spareMagazines: 5, shootDelayFrames: 7, automatic: false, rangeUnits: 66, reloadFrames: 28, recoil: 3, xOff: 8, yOff: -8 });
@@ -22,6 +22,11 @@ export class GunController {
     this.reserveAmmo = Math.ceil(weapon.magazineSize * (weapon.spareMagazines + 1) * ammoMultiplier) - weapon.magazineSize;
   }
   get cooldownFrames() { return this.shotClock.remainingFrames; }
+  checkpoint() {
+    if (this.insideCombatFrame) throw Error('Checkpoint requires a tick boundary');
+    return { ammo: this.ammo, reserveAmmo: this.reserveAmmo, reloadFrames: this.reloadFrames, reloadStartedThisFrame: this.reloadStartedThisFrame };
+  }
+  restore(state: ReturnType<GunController['checkpoint']>) { Object.assign(this, state); }
   get cooldownMs() { return this.cooldownFrames * COMBAT_FRAME_MS; }
   get reloadMs() { return this.reloadFrames * COMBAT_FRAME_MS; }
   tick(deltaMs: number, beforeFrame?: (offsetMs: number) => void) {

@@ -5,5 +5,5 @@
     "esModuleInterop": true, "resolveJsonModule": true,
     "lib": ["ES2022", "DOM"], "types": ["node", "vite/client"]
   },
-  "include": ["src", "tools", "tests", "*.ts"]
+  "include": ["server", "src", "tools", "tests", "*.ts"]
 }

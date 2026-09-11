@@ -22,6 +22,7 @@ export function inspectTimeline(input: Buffer, className: string) {
   if (!sprite) throw Error(`Sprite class not found: ${className}`);
   const labels: { frame: number; name: string }[] = [];
   const placements: { frame: number; depth: number; name?: string; character?: number; x?: number; y?: number }[] = [];
+  const operations: { frame: number; depth: number; remove?: boolean; move?: boolean; placement?: typeof placements[number] }[] = [];
   let frame = 1, p = sprite.payloadOffset + 4;
   const end = sprite.payloadOffset + sprite.length;
   while (p < end) {
@@ -33,6 +34,7 @@ export function inspectTimeline(input: Buffer, className: string) {
     if (next > end) throw Error('Nested tag exceeds sprite');
     if (code === 1) frame++;
     if (code === 43) labels.push({ frame, name: bytes.toString('utf8', p, bytes.indexOf(0, p)) });
+    if (code === 5 || code === 28) operations.push({ frame, depth: bytes.readUInt16LE(p + (code === 5 ? 2 : 0)), remove: true });
     if (code === 26 || code === 70) {
       let q = p;
       const flags = bytes[q++];
@@ -65,9 +67,22 @@ export function inspectTimeline(input: Buffer, className: string) {
       if (flags & 16) q += 2;
       if (flags & 32) record.name = bytes.toString('utf8', q, bytes.indexOf(0, q));
       placements.push(record);
+      operations.push({ frame, depth, move: !!(flags & 1), placement: record });
     }
     p = next;
     if (code === 0) break;
   }
-  return { sha256: header.sha256, className, spriteId, frames: bytes.readUInt16LE(sprite.payloadOffset + 2), labels, placements };
+  return { sha256: header.sha256, className, spriteId, frames: bytes.readUInt16LE(sprite.payloadOffset + 2), labels, placements, operations };
+}
+
+/** Resolve inherited placement fields and removal in original tag order. */
+export function displayListAt(timeline: ReturnType<typeof inspectTimeline>, frame: number) {
+  if (!Number.isInteger(frame) || frame < 1 || frame > timeline.frames) throw Error('Invalid frame');
+  const depths = new Map<number, typeof timeline.placements[number]>();
+  for (const op of timeline.operations) {
+    if (op.frame > frame) break;
+    if (op.remove) depths.delete(op.depth);
+    else if (op.placement) depths.set(op.depth, { ...(op.move ? depths.get(op.depth) : {}), ...op.placement });
+  }
+  return [...depths.values()].sort((a, b) => a.depth - b.depth);
 }

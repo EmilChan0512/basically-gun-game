@@ -1,0 +1,41 @@
+import { test, expect } from '@playwright/test';
+import { registerTestAccount } from '../helpers/account-ui';
+
+test('offline custom delivery is limited to compatible maps and keeps campaign progress separate', async ({ page }) => {
+  await page.goto('/'); await registerTestAccount(page);
+  await expect(page.locator('#custom-mode option[value="ctf"]')).toHaveJSProperty('disabled', true);
+  await page.locator('#custom-map').selectOption('hijack');
+  await page.locator('#custom-mode').selectOption('ctf');
+  await page.locator('#custom-start').click();
+  await page.waitForFunction(() => window.__strikeCampaign!.battle.frame > 3);
+  expect(await page.evaluate(() => window.__strikeCampaign!.battle.mission.mode)).toBe('ctf');
+  expect(await page.evaluate(() => window.__strikeCampaign!.battle.snapshot().deliveryTargets?.length)).toBe(2);
+  await expect(page.locator('#campaign-radar')).toBeVisible();
+  await expect(page.locator('#campaign-radar [data-objective]')).toHaveCount(2);
+  await expect(page.locator('#battle-message')).toContainText('运回己方基地计分');
+  await page.screenshot({ path: 'artifacts/qa/delivery-offline.png' });
+  await page.keyboard.press('Escape'); await page.locator('#pause-home').click();
+  await expect(page.locator('[data-mission="1"]')).toBeDisabled();
+  await expect(page.locator('#campaign-radar')).toBeHidden();
+  await page.locator('#custom-start').click();
+  await expect(page.locator('#campaign-radar')).toBeVisible();
+  await expect(page.locator('#campaign-radar [data-objective]')).toHaveCount(0);
+});
+test('selects Hijack, moves in the real map and returns without campaign progress', async ({ page }) => {
+  await page.goto('/'); await registerTestAccount(page);
+  await page.locator('#custom-map').selectOption('hijack');
+  await expect(page.locator('#custom-map-preview svg')).toHaveAttribute('viewBox', '0 0 2874 1430');
+  await expect(page.locator('#custom-map-preview image')).toHaveAttribute('href', '/assets/reference/hijack.png');
+  await page.locator('#custom-map-preview').screenshot({ path: 'artifacts/qa/hijack-menu-preview.png' });
+  await page.locator('#custom-start').click();
+  await expect(page.locator('#mission-label')).toHaveText('失控飞机');
+  await page.waitForFunction(() => window.__strikeCampaign!.battle.frame > 10);
+  const start = await page.evaluate(() => window.__strikeCampaign!.battle.player.movement.x);
+  await page.keyboard.down('d');
+  await page.waitForFunction(x => window.__strikeCampaign!.battle.player.movement.x > x + 50, start);
+  await page.keyboard.up('d');
+  await page.screenshot({ path: 'artifacts/qa/hijack-battle.png' });
+  expect(await page.evaluate(() => window.__strikeCampaign!.battle.actors.length)).toBe(8);
+  await page.keyboard.press('Escape'); await page.locator('#pause-home').click();
+  await expect(page.locator('[data-mission="1"]')).toBeDisabled();
+});

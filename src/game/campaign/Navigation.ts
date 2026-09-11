@@ -1,6 +1,19 @@
 import type { Point } from '../combat/Ballistics';
 import type { Waypoint } from './Missions';
 
+export interface RouteState { waypoint?: Point; destination?: Point; age?: number }
+/** Keep an airborne traversal target until reached; nearest-node changes must not turn a jump around. */
+export function trackedWaypoint(nodes: readonly Waypoint[], from: Point, to: Point, state: RouteState): Point {
+  const reached = state.waypoint && Math.abs(from.x - state.waypoint.x) < 35 && Math.abs(from.y - state.waypoint.y) < 45;
+  const changed = !state.destination || Math.hypot(to.x - state.destination.x, to.y - state.destination.y) > 120;
+  if (!state.waypoint || reached || changed || (state.age ?? 0) > 180) {
+    const point = nextWaypoint(nodes, from, to);
+    state.waypoint = { x: point.x, y: point.y }; state.destination = { x: to.x, y: to.y }; state.age = 0;
+  }
+  state.age = (state.age ?? 0) + 1;
+  return state.waypoint;
+}
+
 /** Small authored graph, Dijkstra shortest route; no teleports or direct position control. */
 export function nextWaypoint(nodes: readonly Waypoint[], from: Point, to: Point): Point {
   if (!nodes.length) return to;

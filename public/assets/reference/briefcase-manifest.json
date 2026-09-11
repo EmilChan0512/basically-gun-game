@@ -1,0 +1,28 @@
+{
+  "sourceSwf": "0b8d92dfae85917dd9bc0dc87997979bb825b3211d95d92f84040ffc9a1cc989",
+  "method": "Unmodified copy of existing static FFDec PNG exports; no SWF execution",
+  "assets": [
+    {
+      "team": 1,
+      "label": "flag1",
+      "frame": 74,
+      "symbol": 375,
+      "file": "briefcase-1.png",
+      "source": "archaeology/local/curated-export/DefineSprite_375_MBFZ_fla.Guns_290/74.png",
+      "width": 112,
+      "height": 68,
+      "sha256": "527b194ae6e6d5a205daa5fbb37a45482b19f9af7d6cf9582d8b6d17c3443745"
+    },
+    {
+      "team": 2,
+      "label": "flag2",
+      "frame": 75,
+      "symbol": 375,
+      "file": "briefcase-2.png",
+      "source": "archaeology/local/curated-export/DefineSprite_375_MBFZ_fla.Guns_290/75.png",
+      "width": 112,
+      "height": 68,
+      "sha256": "acdb4139d086a1a5ba4d6c88ec3053b01bacaa65f1092ad8a3c94905094275d0"
+    }
+  ]
+}

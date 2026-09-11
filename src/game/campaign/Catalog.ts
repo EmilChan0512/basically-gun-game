@@ -21,8 +21,10 @@ export const SKILLS: Record<SkillId, { name: string; description: string; cooldo
   barrier: { name: '装甲屏障', description: '4秒内受到的伤害降低50%', cooldown: 750, duration: 120, level: 1 },
   iron: { name: '钢铁意志', description: '6秒内抵挡下一次攻击的80%伤害', cooldown: 450, duration: 180, level: 2 },
 };
-export interface CatalogWeapon { config: Readonly<WeaponConfig>; name: string; description: string; price: number; level: number; slot: 'primary' | 'secondary'; pellets: number; spread: number; length: number }
+export interface CatalogWeapon { config: Readonly<WeaponConfig>; name: string; description: string; price: number; level: number; slot: 'primary' | 'secondary'; pellets: number; spread: number; length: number; artFrame?: readonly [number, number, number, number] }
 export const WEAPONS: Record<WeaponId, CatalogWeapon> = {
+  ak47: { config: { ...M4, id: 'ak47', damage: 16, shootDelayFrames: 6, recoil: 6, reloadFrames: 42, rangeUnits: 65 }, name: 'AK 47', description: '较慢射速、较强单发伤害，后坐力更明显', price: 320, level: 2, slot: 'primary', pellets: 1, spread: 0, length: 46, artFrame: [26, 14, 57, 20] },
+  deagle: { config: { ...USP, id: 'deagle', damage: 34, magazineSize: 7, spareMagazines: 5, shootDelayFrames: 15, recoil: 7, reloadFrames: 38 }, name: 'Desert Eagle', description: '7发大威力副枪；射击间隔较长', price: 300, level: 2, slot: 'secondary', pellets: 1, spread: 0, length: 30, artFrame: [40, 12, 30, 19] },
   m4: { config: M4, name: 'M4', description: '均衡的自动步枪', price: 0, level: 1, slot: 'primary', pellets: 1, spread: 0, length: 39 },
   usp: { config: USP, name: 'USP', description: '可靠的半自动副武器', price: 0, level: 1, slot: 'secondary', pellets: 1, spread: 0, length: 26 },
   vector: { config: { ...M4, id: 'vector', damage: 8, magazineSize: 32, shootDelayFrames: 3, rangeUnits: 48, recoil: 5, reloadFrames: 30 }, name: 'Vector', description: '高射速冲锋枪，适合近距离压制', price: 200, level: 1, slot: 'primary', pellets: 1, spread: 0, length: 30 },
@@ -37,7 +39,16 @@ export const ITEMS: Record<ItemId, { name: string; description: string; price: n
   frag: { name: '破片手雷', description: '朝准星投掷，延时爆炸；每次出战2枚', price: 180, level: 2, charges: 2 },
 };
 export interface Training { vitality: number; handling: number }
-export interface Loadout { classId: ClassId; primary: WeaponId; secondary: WeaponId; skill: SkillId; item: ItemId; training: Training; level: number }
+export const SPECIAL_OFFHANDS = {
+  knife: { kind: 'melee', name: '战术刀', description: '近距离挥击；前摇与后摇期间不能切换武器', price: 0, level: 1 },
+  shield: { kind: 'shield', name: '防弹盾', description: '持攻击部署正面防御；侧后、爆炸和近战绕防', price: 0, level: 1 },
+} as const;
+export type SpecialOffhandId = keyof typeof SPECIAL_OFFHANDS;
+export type SecondaryId = WeaponId | SpecialOffhandId;
+export function isSpecialOffhand(id: unknown): id is SpecialOffhandId {
+  return typeof id === 'string' && Object.hasOwn(SPECIAL_OFFHANDS, id);
+}
+export interface Loadout { classId: ClassId; primary: WeaponId; secondary: SecondaryId; skill: SkillId; item: ItemId; training: Training; level: number }
 export const defaultLoadout = (classId: ClassId = 'medic'): Loadout => ({ classId, primary: 'm4', secondary: 'usp', skill: CLASSES[classId].skills[0], item: 'medkit', training: { vitality: 0, handling: 0 }, level: 1 });
 export function levelForXp(xp: number) { return Math.min(10, 1 + Math.floor(Math.max(0, xp) / 160)); }
 export function loadoutStats(loadout: Loadout) {

@@ -1,8 +1,30 @@
 # 架构与证据边界
 
+## 多人及内容扩展评估（2026-09-11）
+
+见 [扩展架构评估与分阶段路线](MULTIPLAYER_EXPANSION_ROADMAP.md)及[实施记录](EXPANSION_PROGRESS.md)。当前已实现按角色输入、权威WebSocket房间、可恢复模拟、地图与模式目录、雷达和刀盾配装。路线图中的验收要求仍需逐项满足；当前代码已有联机能力，但跨设备体验和最终性能尚未全部验收。
+
+### 共享模拟与会话边界
+
+`npm run check:simulation`已接入`npm run check`：独立tsconfig不载入DOM类型；esbuild以neutral平台遍历全部共享模块、Battle和LocalSession的运行时依赖，按已审查模块清单拒绝表现层、存储、外部包及未审查依赖。当前40个文件通过，报告位于artifacts/qa/simulation-boundary.json。Recoil仅包含姿态/后坐力计算和注入随机源，属于共享战斗规则。此检查约束依赖边界，不证明跨运行时确定性，也不替代Checkpoint回归。
+
+Battle以30Hz推进角色移动、生命、装备、模式和AI，不依赖Phaser、DOM或浏览器存储。LocalSession服务离线场景；MatchSession将每个连接绑定到独立角色，校验和排队输入、去重动作、确认序号、超时清空输入。Room负责8席位上限、地图/模式/装备校验、开局、观战、重连及多局生命周期；server仅接受输入和大厅操作，不接受客户端坐标、伤害或得分。
+
+Battle构造默认会生成种子和ID；需要复现的测试及权威开局显式传入seed，Checkpoint保存随机状态、输入边沿、移动/生命/枪械/副手、AI路线、波次、模式和事件。默认随机初始化不代表跨设备确定性锁步；验证的是同运行时以同状态和命令继续模拟一致。Room实例UUID属于房间身份，不是战斗伤害随机源。
+
+网络公开StateMessage与内部Checkpoint分开。服务端RevealPolicy/VisibleState按队伍裁剪角色、朝向、效果和事件；客户端只预测自身移动并插值远端状态，生命/弹药/目标由服务器裁定。子弹使用有界历史命中盒回溯，近战和盾方向按当前权威tick处理。雷达使用同一可见快照。内部Checkpoint和近战已命中集合不广播给客户端。
+
+### 地图、模式与装备扩展
+
+MapDefinition提供版本、兼容模式、碰撞、导航、出生点、目标及表现资源；飞机使用静态提取的原图和碰撞掩码。ModeRules处理TDM/DOM/合作/公文包；WaveDirector处理合作波次/预算/有限复活。合作单人自动通关按用户要求降为非阻塞诊断，基础生命周期回归保留。
+
+Catalog目前包含9种枪械、刀与盾副手。Arsenal仅构造枪械控制器；OffhandController处理特殊副手输入、互斥、前后摇/部署与恢复。DamageContext统一子弹、爆炸、近战和环境伤害。在线EquipmentLoadout仅含主枪/副手ID，独立于本地职业养成；ReferenceArt按目录载入枪械贴图和尺寸，刀盾使用专门姿态。新增规则需更新内容指纹，旧版客户端与服务器不能混用。
+
+生产客户端由package-game生成，独立服务器由package-server打成Node单文件并附ws许可。服务器包已在工作区外、无项目node_modules路径的临时目录启动验证；它不是持久化后端，停止进程会丢失活动房间。下方Phase和账号/战役段落记录历史演进，当前完成度以上述模块和实施记录为准。
+
 ## 当前扩展：账号与养成（2026-09-11）
 
-Accounts管理本机账号注册/登录和独立SaveStorage适配器；CareerProgress在原CampaignProgress上增量扩展职业、军资、解锁、训练和终局奖励，旧存档向后兼容。Catalog声明四职业、八技能、七枪械及三道具。CareerPanels渲染账号页与军械库，出战时Battle接收配装副本。
+Accounts管理本机账号注册/登录和独立SaveStorage适配器；CareerProgress在原CampaignProgress上增量扩展职业、军资、解锁、训练和终局奖励，旧存档向后兼容。Catalog声明四职业、八技能、九枪械、刀盾副手及三道具。CareerPanels渲染账号页与军械库，出战时Battle接收配装副本。
 
 Arsenal继续复用GunController/弹道，新增主副武器组合及霰弹多弹丸；Battle处理技能时长、道具次数、手雷和属性修正；CampaignScene负责E/G输入及反馈。原训练场仍只接受USP/M4，新增武器ID不会改变既有实验配置。
 

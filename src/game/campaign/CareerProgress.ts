@@ -1,5 +1,5 @@
 import { CampaignProgress, SAVE_KEY, type SaveData, type SaveStorage } from './Progress';
-import { CLASSES, SKILLS, WEAPONS, ITEMS, defaultLoadout, levelForXp, type ClassId, type ItemId, type Loadout, type SkillId } from './Catalog';
+import { CLASSES, SKILLS, WEAPONS, ITEMS, SPECIAL_OFFHANDS, isSpecialOffhand, defaultLoadout, levelForXp, type ClassId, type ItemId, type Loadout, type SkillId, type SpecialOffhandId } from './Catalog';
 import type { WeaponId } from '../combat/Combat';
 import type { Battle } from './Battle';
 import { MISSIONS } from './Missions';
@@ -34,6 +34,9 @@ export class CareerProgress extends CampaignProgress {
           const weapon = l[slot] as WeaponId;
           if (career.weapons.includes(weapon) && WEAPONS[weapon].slot === slot && WEAPONS[weapon].level <= level) current.loadout[slot] = weapon;
         }
+        // Starter offhands are freely available; legacy gun IDs keep their existing ownership checks.
+        const secondary: unknown = l.secondary;
+        if (isSpecialOffhand(secondary) && SPECIAL_OFFHANDS[secondary].level <= level) current.loadout.secondary = secondary;
         if (CLASSES[id].skills.includes(l.skill) && SKILLS[l.skill as SkillId].level <= level) current.loadout.skill = l.skill;
         if (career.items.includes(l.item) && ITEMS[l.item as ItemId].level <= level) current.loadout.item = l.item;
         current.loadout.training.vitality = Math.min(integer(l.training?.vitality, 3), level - 1);
@@ -52,6 +55,10 @@ export class CareerProgress extends CampaignProgress {
   equipWeapon(id: WeaponId) {
     const item = WEAPONS[id]; if (!item || !this.data.career.weapons.includes(id) || this.current.loadout.level < item.level) return false;
     this.current.loadout[item.slot] = id; this.data.weapon = this.current.loadout.primary; this.save(); return true;
+  }
+  equipOffhand(id: SpecialOffhandId) {
+    if (!isSpecialOffhand(id) || this.current.loadout.level < SPECIAL_OFFHANDS[id].level) return false;
+    this.current.loadout.secondary = id; this.save(); return true;
   }
   buyItem(id: ItemId) {
     const item = ITEMS[id]; if (!item || this.data.career.items.includes(id) || this.current.loadout.level < item.level || this.data.career.credits < item.price) return false;

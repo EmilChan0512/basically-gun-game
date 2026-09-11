@@ -12,6 +12,7 @@
     "preview": "vite preview --host 127.0.0.1",
     "play": "node tools/serve-game.mjs",
     "package:game": "npm run build && node tools/package-game.mjs",
+    "package:server": "node tools/package-server.mjs",
     "archaeology": "tsx tools/archaeology/cli.ts pipeline",
     "archaeology:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/archaeology/setup.ps1",
     "archaeology:acquire": "tsx tools/archaeology/acquire.ts",
@@ -22,16 +23,22 @@
     "test": "vitest run",
     "test:gameplay": "playwright test",
     "test:offline": "playwright test --config playwright.production.config.ts",
-    "check": "npm run archaeology:validate && npm run hygiene && npm run test && npm run build",
-    "hygiene": "tsx tools/archaeology/hygiene.ts"
+    "test:performance": "playwright test --config playwright.performance.config.ts",
+    "check": "npm run archaeology:validate && npm run hygiene && npm run check:simulation && npm run test && npm run build",
+    "check:simulation": "tsc --project tsconfig.simulation.json && node tools/check-simulation-boundary.mjs",
+    "hygiene": "tsx tools/archaeology/hygiene.ts",
+    "server": "tsx server/main.ts"
   },
   "dependencies": {
-    "phaser": "^3.90.0"
+    "phaser": "^3.90.0",
+    "ws": "^8.21.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
     "@types/node": "^22.18.0",
+    "@types/ws": "^8.18.1",
     "ajv": "^8.17.1",
+    "esbuild": "^0.28.2",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "vite": "^7.1.5",
