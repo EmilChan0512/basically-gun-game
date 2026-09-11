@@ -1,3 +1,4 @@
+import { registerOnline } from '../helpers/online-account';
 import { test, expect } from '@playwright/test';
 import { startServer } from '../../server/server';
 test('online knife and shield selection, authority actions and reconnect', async ({ browser }) => {
@@ -7,6 +8,7 @@ test('online knife and shield selection, authority actions and reconnect', async
   const pages = await Promise.all(contexts.map(c => c.newPage())); const errors: string[] = [];
   try {
     for (const page of pages) { page.on('pageerror', e => errors.push(e.message)); await page.goto('/?online'); await page.locator('#server').fill(`ws://127.0.0.1:${address.port}`); }
+    for (const [i, page] of pages.entries()) await registerOnline(page, `Pilot ${i}`);
     await pages[0].locator('#create').click(); await expect(pages[0].locator('#online-secondary')).toBeVisible();
     const room = [...server.rooms.values()][0];
     await pages[1].locator('#code').fill(room.id); await pages[1].locator('#join').click();

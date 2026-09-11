@@ -11,8 +11,9 @@ const clientManifest = JSON.parse(readFileSync('artifacts/project-strike-local/m
 if (!serverManifest.contentVersion || serverManifest.contentVersion !== clientManifest.contentVersion) throw Error('Package content versions differ');
 if (createHash('sha256').update(readFileSync('artifacts/project-strike-server/server.cjs')).digest('hex') !== serverManifest.sha256) throw Error('Server bundle checksum mismatch');
 copyFileSync('artifacts/project-strike-server/server.cjs', join(temporary, 'server.cjs'));
-const child = spawn(process.execPath, ['server.cjs'], { cwd: temporary,
+const launch = () => spawn(process.execPath, ['server.cjs'], { cwd: temporary,
   env: { ...process.env, PORT: '0', HOST: '127.0.0.1', NODE_PATH: '', LOG_LEVEL: 'info' }, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+let child = launch();
 let output = '', errors = '', socket, debugSocket;
 child.stdout.on('data', data => output += data); child.stderr.on('data', data => errors += data);
 const wait = async predicate => {
@@ -41,10 +42,14 @@ try {
   const mismatch = probe();
   if (mismatch.status !== 1 || !mismatch.stderr.includes('Unexpected protocol or content version')) throw Error('Deployment probe did not reject content mismatch');
   const send = message => socket.send(JSON.stringify({ protocol: welcome.protocol, content: welcome.content, ...message }));
+  send({ type: 'auth', mode: 'register', name: 'Package QA', password: 'package-test-password' });
+  await wait(() => messages.some(m => m.type === 'authenticated'));
+  send({ type: 'purchase', kind: 'weapon', id: 'vector' });
+  await wait(() => messages.some(m => m.type === 'profile' && m.profile.credits === 150));
   send({ type: 'create', name: 'Package QA' }); await wait(() => messages.some(m => m.type === 'lobby'));
   const room = messages.find(m => m.type === 'lobby').room.id;
   send({ type: 'configure', mapId: 'hijack', mode: 'coop' });
-  send({ type: 'equip', equipment: { classId: 'tank', primary: 'ak47', secondary: 'shield', skill: 'iron', item: 'frag' } });
+  send({ type: 'equip', equipment: { classId: 'tank', primary: 'm4', secondary: 'shield', skill: 'barrier', item: 'medkit' } });
   send({ type: 'ready', ready: true }); send({ type: 'start' });
   await wait(() => messages.some(m => m.type === 'state'));
   send({ type: 'input', roomId: room, round: 1, command: { sequence: 0,
@@ -71,9 +76,21 @@ try {
     if (!runtimeLogs.some(record => record.event === event && record.contentVersion === serverManifest.contentVersion)) throw Error(`Missing runtime log: ${event}`);
   }
   if (output.includes('Package QA') || messages.some(m => m.type === 'credential' && output.includes(m.token))) throw Error('Sensitive data in runtime log');
+  const savedProfile = messages.filter(m => m.type === 'profile').at(-1).profile;
+  socket.terminate(); debugSocket.terminate(); child.kill();
+  if (child.exitCode === null) await new Promise(resolve => child.once('exit', resolve));
+  output = ''; errors = ''; child = launch();
+  child.stdout.on('data', data => output += data); child.stderr.on('data', data => errors += data);
+  await wait(() => /ws:\/\/127\.0\.0\.1:\d+/.test(output));
+  socket = new WebSocket(output.match(/ws:\/\/127\.0\.0\.1:\d+/)[0]);
+  const restored = []; socket.on('message', raw => restored.push(JSON.parse(raw.toString())));
+  await wait(() => restored.some(m => m.type === 'welcome'));
+  send({ type: 'auth', mode: 'login', name: 'Package QA', password: 'package-test-password' });
+  await wait(() => restored.some(m => m.type === 'authenticated'));
+  if (JSON.stringify(restored.find(m => m.type === 'authenticated').profile) !== JSON.stringify(savedProfile)) throw Error('Bundled account progress lost after restart');
   const report = { date: new Date().toISOString(), contentVersion: welcome.content, isolatedDirectory: temporary,
     bundle: resolve('artifacts/project-strike-server/server.cjs'), passed: true,
-    checks: ['client/server/runtime content identity', 'server bundle SHA256', 'isolated bundle startup', 'deployment welcome probe', 'deployment content mismatch rejection', 'structured runtime logs', 'fatal startup log and nonzero exit', 'log privacy', 'create room', 'coop setup', 'AK47/shield loadout', 'start', 'input acknowledgement', 'deployed shield snapshot', 'permanent debug room', 'live class/katana/skill/item change', 'debug skill activation'] };
+    checks: ['client/server/runtime content identity', 'server bundle SHA256', 'isolated bundle startup', 'deployment welcome probe', 'deployment content mismatch rejection', 'structured runtime logs', 'fatal startup log and nonzero exit', 'log privacy', 'create room', 'coop setup', 'authenticated M4/shield loadout', 'account purchase and persistence across bundled process restart', 'start', 'input acknowledgement', 'deployed shield snapshot', 'permanent debug room', 'live class/katana/skill/item change', 'debug skill activation'] };
   mkdirSync('artifacts/qa', { recursive: true });
   writeFileSync('artifacts/qa/server-package.json', JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report));

@@ -1,3 +1,4 @@
+import { authorizeSocket } from '../helpers/network-account';
 import { expect, it, vi } from 'vitest';
 import { WebSocket } from 'ws';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -49,6 +50,7 @@ it.each([50, 100, 150])('eight clients preserve commands under %ims RTT, jitter 
       });
     }
     await wait(() => logs.every(log => log.some(m => m.type === 'welcome')));
+    const accounts = []; for (let i = 0; i < 8; i++) accounts.push(await authorizeSocket(server, sockets[i], `p${i}`));
     send(0, { type: 'create', name: 'p0' });
     await wait(() => logs[0].some(m => m.type === 'lobby'));
     const code = logs[0].find(m => m.type === 'lobby').room.id;

@@ -1,3 +1,4 @@
+import { authorizeSocket } from '../helpers/network-account';
 import { expect, it } from 'vitest';
 import { WebSocket } from 'ws';
 import { createLogger, requestErrorReason } from '../../server/Logger';
@@ -49,6 +50,7 @@ it('correlates real connection/room/match events, limits warnings and handles ov
   };
   try {
     const first = await connect();
+    const account = await authorizeSocket(server, first.socket, 'private-nickname');
     first.send({ type: 'create', name: 'private-nickname' });
     await wait(() => first.messages.some(m => m.type === 'credential'));
     const token = first.messages.find(m => m.type === 'credential').token;
@@ -64,7 +66,7 @@ it('correlates real connection/room/match events, limits warnings and handles ov
     first.socket.close();
     await wait(() => events('client.disconnected').length === 1);
     const second = await connect();
-    second.send({ type: 'resume', token });
+    second.send({ type: 'resume', token, authToken: account.token });
     await wait(() => events('client.resumed').length === 1);
     const original = events('client.connected')[0];
     const resumed = events('client.resumed')[0];

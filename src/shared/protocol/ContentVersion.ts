@@ -11,5 +11,5 @@ export function contentFingerprint(value: unknown) {
   for (let i = 0; i < text.length; i++) hash = BigInt.asUintN(64, (hash ^ BigInt(text.charCodeAt(i))) * 0x100000001b3n);
   return hash.toString(16).padStart(16, '0');
 }
-export const CONTENT_VERSION = contentFingerprint({ rules: 21, maps: MAPS, scenarios: PVE_SCENARIOS, weapons: WEAPONS,
+export const CONTENT_VERSION = contentFingerprint({ rules: 22, maps: MAPS, scenarios: PVE_SCENARIOS, weapons: WEAPONS,
   offhands: SPECIAL_OFFHANDS, knife: KNIFE_RULES, shield: SHIELD_RULES, classes: CLASSES, skills: SKILLS, items: ITEMS });

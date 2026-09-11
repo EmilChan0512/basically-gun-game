@@ -15,11 +15,14 @@ Environment=HOST=0.0.0.0
 Environment=PORT=4180
 Environment=LOG_LEVEL=info
 Environment=LOG_METRICS_INTERVAL_MS=60000
+Environment=ALLOW_INSECURE_ACCOUNTS=true
 Restart=always
 RestartSec=3
 TimeoutStopSec=15
 NoNewPrivileges=true
 PrivateTmp=true
+StateDirectory=project-strike
+StateDirectoryMode=0700
 ProtectSystem=strict
 ProtectHome=true
 UMask=0027

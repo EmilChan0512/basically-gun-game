@@ -1,3 +1,4 @@
+import { registerOnline } from '../helpers/online-account';
 import { test, expect } from '@playwright/test';
 import { startServer } from '../../server/server';
 
@@ -12,7 +13,7 @@ test('two isolated browsers create, join, ready, start and independently switch 
     for (const [i, page] of pages.entries()) {
       page.on('pageerror', e => errors.push(e.message));
       await page.goto('/?online'); await page.locator('#server').fill(`ws://127.0.0.1:${address.port}`);
-      await page.locator('#name').fill(`Pilot ${i}`);
+      await page.locator('#name').fill(`Pilot ${i}`); await registerOnline(page, `Pilot ${i}`);
     }
     await pages[0].locator('#create').click();
     await expect(pages[0].locator('#status')).toContainText('房间码');
@@ -27,7 +28,7 @@ test('two isolated browsers create, join, ready, start and independently switch 
     const spectator = await spectatorContext.newPage(); pages.push(spectator);
     spectator.on('pageerror', e => errors.push(e.message));
     await spectator.goto('/?online'); await spectator.locator('#server').fill(`ws://127.0.0.1:${address.port}`);
-    await spectator.locator('#name').fill('Spectator'); await spectator.locator('#code').fill(code); await spectator.locator('#join').click();
+    await registerOnline(spectator, 'Spectator'); await spectator.locator('#name').fill('Spectator'); await spectator.locator('#code').fill(code); await spectator.locator('#join').click();
     await expect(spectator.locator('#online-hud')).toContainText('观战中');
     await expect(spectator.locator('canvas')).toBeVisible();
     await spectator.locator('canvas').click(); await spectator.keyboard.press('q'); await spectator.keyboard.press('Tab');

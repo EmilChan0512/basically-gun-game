@@ -14,6 +14,8 @@
 
 **每次部署会中断现有对局，房间和重连身份不会持久化。** 客户端与服务器必须使用相同内容版本，建议从同一次 Actions 下载客户端。
 
+联机账号版本新增 `/var/lib/project-strike/accounts.json` 持久化金币、各职业经验和配装。旧服务由CI使用已有管理员 `SSH_PRIVATE_KEY` 做一次固定配置迁移（StateDirectory），后续发布跳过此步骤，日常部署用户权限不变。当前无域名，按测试要求显式启用WS账号兼容模式；后续切WSS时关闭 `ALLOW_INSECURE_ACCOUNTS`。账号数据不在发布目录，发布和回滚不得覆盖它；详见 [联机账号与进度](ONLINE_ACCOUNTS.md)。
+
 ## SSH 可用后的一次性初始化
 
 以下假设服务器运行 Ubuntu/Debian 类 Linux + systemd 245 以上（如 Ubuntu 22.04/24.04）；日志隔离使用 LogNamespace，拿到 SSH 后先确认系统。当前不要直接在 Windows 执行这些 Linux 命令。
@@ -38,7 +40,7 @@
 
 创建名为 `production` 的 Environment，可将部署 secrets/主机端口变量放在该环境中；`DEPLOY_ENABLED` 必须是仓库变量，因为 job 启动前要读取它。可限制该环境仅 main 部署。若希望每次全自动更新，不配置 required reviewers。
 
-当前部署使用 `DEPLOY_SSH_KEY` 对应的 `strike-deploy` 专用账号。已有的 `SSH_PRIVATE_KEY` 保留，但此工作流不读取它；管理员 `ubuntu` 的私钥也不用于自动部署。
+当前部署使用 `DEPLOY_SSH_KEY` 对应的 `strike-deploy` 专用账号。已有的管理员 `SSH_PRIVATE_KEY` 仅用于尚未设置StateDirectory的服务器的一次性账号存储升级；配置完成后只使用专用部署密钥。
 
 初始化完成并配置好以上内容后启用开关，Actions → Backend CI and deploy → Run workflow → main。后续 main 推送自动更新；PR 只验证。若 CI 未通过，不会替换服务器。工作流必须先提交并推送到 GitHub 才会生效。
 

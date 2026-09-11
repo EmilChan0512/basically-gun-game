@@ -22,3 +22,5 @@ tools/vendor/
 
 .tmp/
 artifacts/
+
+data/

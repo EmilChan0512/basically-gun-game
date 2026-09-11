@@ -1,3 +1,4 @@
+import { authorizeSocket } from '../helpers/network-account';
 import { expect, it } from 'vitest';
 import { WebSocket } from 'ws';
 import { startServer } from '../../server/server';
@@ -23,6 +24,7 @@ it('eight real WebSocket clients join, start and receive authoritative input res
     }
     expect(sockets[0].extensions).toContain('permessage-deflate');
     expect(sockets[1].extensions).toBe('');
+    const accounts = []; for (let i = 0; i < 9; i++) accounts.push(await authorizeSocket(server, sockets[i], `Pilot ${i}`));
     send(0, { type: 'create', name: 'Pilot 0', content: 'outdated' });
     await wait(() => logs[0].some(m => m.type === 'error' && m.message.includes('version mismatch')));
     expect(server.rooms.size).toBe(0);
@@ -61,7 +63,7 @@ it('eight real WebSocket clients join, start and receive authoritative input res
     logs[9] = []; const resumed = new WebSocket(`ws://127.0.0.1:${address.port}`); sockets.push(resumed);
     resumed.on('message', data => logs[9].push(JSON.parse(data.toString())));
     await wait(() => logs[9].some(m => m.type === 'welcome'));
-    send(9, { type: 'resume', token });
+    send(9, { type: 'resume', token, authToken: accounts[1].token });
     await wait(() => logs[9].some(m => m.type === 'state'));
     expect(logs[9].find(m => m.type === 'resumed').nextSequence).toBe(1);
     expect(logs[9].find(m => m.type === 'state').actorId).toBe(actorId);

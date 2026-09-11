@@ -1,3 +1,4 @@
+import { authorizeSocket } from '../helpers/network-account';
 import { expect, it } from 'vitest';
 import { WebSocket } from 'ws';
 import { startServer } from '../../server/server';
@@ -25,6 +26,9 @@ it('eight mixed clients through 150ms RTT resolve knife and front/rear shield da
       socket.on('message', raw => { const m = JSON.parse(raw.toString()); logs[i].push(m); if (m.type === 'probe') send(i, { type: 'probeReply', nonce: m.nonce }); });
     }
     await wait(() => logs.every(log => log.some(m => m.type === 'welcome')));
+    const accounts = []; for (let i = 0; i < 8; i++) accounts.push(await authorizeSocket(server, sockets[i], `p${i}`));
+    server.accounts.settle('fixture-unlock', [{ accountId: accounts[7].profile.id, classId: 'medic', won: true, kills: 3 }]);
+    server.accounts.buy(accounts[7].profile.id, 'weapon', 'beretta');
     send(0, { type: 'create', name: 'p0' }); await wait(() => logs[0].some(m => m.type === 'lobby'));
     const code = logs[0].find(m => m.type === 'lobby').room.id;
     // Sequential joins give stable team assignment for the controlled pairs.

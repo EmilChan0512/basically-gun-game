@@ -1,7 +1,7 @@
 import { WEAPONS, CLASSES, ITEMS, isSpecialOffhand, canEquipOffhand, type ClassId, type SecondaryId, type SkillId, type ItemId } from '../../game/campaign/Catalog';
 import type { WeaponId } from '../../game/combat/Combat';
 export interface EquipmentLoadout { primary: WeaponId; secondary: SecondaryId; classId?: ClassId; skill?: SkillId; item?: ItemId }
-/** Online equipment is independent of local career ownership, training and credits. */
+/** Structural validation. Server account ownership is checked separately; debug rooms bypass ownership only. */
 export function validateEquipment(value: unknown): EquipmentLoadout {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw Error('Invalid equipment');
   const data = value as Record<string, unknown>;

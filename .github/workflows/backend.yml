@@ -24,7 +24,7 @@ jobs:
       - name: Install browser for gameplay verification
         run: npx playwright install --with-deps chromium
       - name: Verify debug controls and online equipment
-        run: npx playwright test tests/gameplay/debug-room.spec.ts tests/gameplay/offhand-online.spec.ts tests/gameplay/offhand.spec.ts tests/gameplay/offhand-variants.spec.ts
+        run: npx playwright test tests/gameplay/online-accounts.spec.ts tests/gameplay/online.spec.ts tests/gameplay/debug-room.spec.ts tests/gameplay/offhand-online.spec.ts tests/gameplay/offhand.spec.ts tests/gameplay/offhand-variants.spec.ts
       - run: node tools/package-game.mjs
       - run: npm run package:server
       - run: node tools/verify-server-package.mjs
@@ -40,8 +40,8 @@ jobs:
           retention-days: 7
       - name: Check deployment scripts
         run: |
-          bash -n deploy/install.sh deploy/release.sh
-          shellcheck deploy/install.sh deploy/release.sh
+          bash -n deploy/install.sh deploy/release.sh deploy/enable-account-storage.sh
+          shellcheck deploy/install.sh deploy/release.sh deploy/enable-account-storage.sh
       - name: Prepare release
         run: |
           cp deploy/probe.mjs artifacts/project-strike-server/
@@ -55,6 +55,7 @@ jobs:
             backend.tar.gz
             backend.tar.gz.sha256
             deploy/release.sh
+            deploy/enable-account-storage.sh
           retention-days: 14
       - uses: actions/upload-artifact@v4
         with:
@@ -89,6 +90,21 @@ jobs:
           printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+      - name: Configure persistent accounts on older installations
+        env:
+          ADMIN_SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          [[ "$DEPLOY_HOST" =~ ^[a-zA-Z0-9.-]+$ ]]
+          [[ "$DEPLOY_PORT" =~ ^[0-9]+$ ]]
+          opts=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15)
+          configured=$(ssh "${opts[@]}" -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" 'systemctl show project-strike.service -p StateDirectory --value')
+          if [[ "$configured" == 'project-strike' ]]; then exit 0; fi
+          test -n "$ADMIN_SSH_KEY" || { echo 'Persistent storage requires the administrator SSH_PRIVATE_KEY for the one-time service upgrade.' >&2; exit 1; }
+          printf '%s\n' "$ADMIN_SSH_KEY" > ~/.ssh/account-admin
+          chmod 600 ~/.ssh/account-admin
+          trap 'rm -f ~/.ssh/account-admin' EXIT
+          ssh "${opts[@]}" -i ~/.ssh/account-admin -o IdentitiesOnly=yes -p "$DEPLOY_PORT" "ubuntu@$DEPLOY_HOST" 'sudo -n bash -s' < deploy/enable-account-storage.sh
       - name: Upload and activate verified bundle
         env:
           GH_TOKEN: ${{ github.token }}
@@ -109,4 +125,4 @@ jobs:
           ssh "${opts[@]}" -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" "bash '$remote/release.sh' '$release'"
       - name: Remove SSH credentials
         if: always()
-        run: rm -f ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+        run: rm -f ~/.ssh/id_ed25519 ~/.ssh/known_hosts ~/.ssh/account-admin

@@ -17,9 +17,10 @@ class Socket {
   receive(message: object) { this.onmessage?.({ data: JSON.stringify(message) }); }
 }
 afterEach(() => vi.unstubAllGlobals());
-function setup() {
+function setup(welcomed = true) {
   vi.stubGlobal('WebSocket', Socket);
   const session = new NetworkSession('ws://test');
+  if (welcomed) (session.socket as unknown as Socket).receive({ type: 'welcome', protocol: 1, content: CONTENT_VERSION, playerId: 'p' });
   return { session, socket: session.socket as unknown as Socket };
 }
 const lobby = (round: number, phase = 'playing') => ({ type: 'lobby', room: { id: 'room', round, phase, players: [], mapId: 'signal', mode: 'tdm' } });
@@ -60,8 +61,18 @@ it('resumes the existing round at the server sequence without reusing pending ac
   socket.receive(lobby(1)); socket.receive(state(1, 10));
   socket.receive({ type: 'credential', token: 'secret' }); session.action('swap'); socket.close();
   session.reconnect(); const resumed = session.socket as unknown as Socket;
-  resumed.onopen?.(); expect(resumed.sent.at(-1)).toMatchObject({ type: 'resume', token: 'secret' });
+  resumed.onopen?.(); expect(resumed.sent).toHaveLength(0);
+  resumed.receive({ type: 'welcome', protocol: 1, content: CONTENT_VERSION, playerId: 'new' });
+  expect(resumed.sent.at(-1)).toMatchObject({ type: 'resume', token: 'secret' });
   resumed.receive({ type: 'resumed', playerId: 'p', nextSequence: 42 });
   resumed.receive(lobby(1)); resumed.receive(state(1, 20)); session.input(idleInput());
   expect(resumed.sent.at(-1).command).toMatchObject({ sequence: 42, actions: [] });
+});
+
+it('does not send queued login credentials to an incompatible server', () => {
+  const { session, socket } = setup(false);
+  session.send({ type: 'auth', mode: 'login', name: 'Pilot', password: 'test-password' });
+  expect(socket.sent).toHaveLength(0);
+  socket.receive({ type: 'welcome', protocol: 1, content: 'old-version', allowInsecureAccounts: true });
+  expect(socket.sent).toHaveLength(0); expect(socket.readyState).toBe(Socket.CLOSED);
 });

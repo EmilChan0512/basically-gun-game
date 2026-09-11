@@ -13,11 +13,12 @@ export class Room {
   hostId: string | null = null;
   round = 0;
   constructor(readonly id: string, public mapId = 'hijack', public mode: import('./ModeRules').ModeId = 'tdm', readonly debug = false) {}
-  join(id: string, name: string) {
+  join(id: string, name: string, equipment?: EquipmentLoadout) {
+    if (equipment) equipment = validateEquipment(equipment);
     if (this.players.size >= 8) throw Error('Room is full');
     if (this.players.has(id) || !id || !name.trim() || name.length > 24) throw Error('Invalid player');
     const count = (team: number) => [...this.players.values()].filter(p => p.team === team).length;
-    this.players.set(id, { id, name: name.trim(), team: this.mode === 'coop' || count(1) <= count(2) ? 1 : 2, ready: false, connected: true, spectator: !!this.session, equipment: { classId: 'medic', primary: 'm4', secondary: 'usp' } });
+    this.players.set(id, { id, name: name.trim(), team: this.mode === 'coop' || count(1) <= count(2) ? 1 : 2, ready: false, connected: true, spectator: !!this.session, equipment: equipment ?? { classId: 'medic', primary: 'm4', secondary: 'usp' } });
     this.hostId ??= id;
     if (this.debug) {
       if (!this.session) {
@@ -29,6 +30,7 @@ export class Room {
       player.spectator = false;
       this.session.battle.addDebugPlayer(id, player.name, player.team);
       this.session.bind(id, id);
+      if (equipment) this.session.reconfigureDebugPlayer(id, equipment);
     }
   }
   configure(id: string, mapId: string, mode: import('./ModeRules').ModeId) {

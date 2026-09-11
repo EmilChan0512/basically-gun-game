@@ -29,7 +29,13 @@ Windows 双击 START.cmd，其他系统运行 node server.cjs。
 刀类仅限刺客，盾牌仅限重装兵；服务器验证职业与配装，不能在战斗中更改。
 开局后加入先观战；断线30秒内可用原页面“断线重连”恢复席位。
 超过保留期限需重新加入；服务器重启不支持恢复旧房间。
-进程内临时身份与本机战役账号独立；不保存在线养成或房间数据。
+联机账号与本机战役账号独立。先注册/登录并选择职业、技能和配装，再进入普通房间。
+金币、已购枪械/道具、各职业经验及配装保存在服务端 data/accounts.json。可用 ACCOUNT_DATA_DIR 指定固定目录；
+生产 systemd 使用 /var/lib/project-strike。升级程序时保留该目录，勿提交或发送数据库。
+单进程独占此目录；修改文件不是支持的管理接口。损坏存档会拒绝启动，不会覆盖为新档。
+公共调试房间仍允许游客并开放全部装备，不产生养成奖励。普通联机检查账号解锁进度。
+生产模式默认要求本机TLS反向代理/WSS。当前无域名测试部署显式设置 ALLOW_INSECURE_ACCOUNTS=true，
+允许公网WS账号登录；WS未加密，请使用独立测试密码。后续接入WSS后关闭此开关。
 
 公网部署另需可达主机和TLS反向代理。HTTPS客户端必须连接wss地址。
 此包不会自动设置防火墙、TLS或公开服务器；暂不含公开匹配/排位。
@@ -38,5 +44,5 @@ Windows 双击 START.cmd，其他系统运行 node server.cjs。
 `);
 writeFileSync(join(folder, 'manifest.json'), JSON.stringify({ builtAt: new Date().toISOString(), contentVersion: packageContentVersion(), node: '>=22.12',
   entry: 'server.cjs', sha256: createHash('sha256').update(readFileSync(join(folder, 'server.cjs'))).digest('hex'),
-  dependencies: 'ws bundled; optional native accelerators omitted', persistentRooms: false }, null, 2));
+  dependencies: 'ws bundled; optional native accelerators omitted', persistentRooms: false, persistentAccounts: true, accountSchema: 1 }, null, 2));
 console.log(`Server package: ${folder}`);
