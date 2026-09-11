@@ -57,4 +57,4 @@ Environment=LOG_METRICS_INTERVAL_MS=10000
 
 再执行 `sudo systemctl restart project-strike.service`（会中断对局）。本地 PowerShell 可使用 `$env:LOG_LEVEL='debug'; npm run server`。
 
-独立包运行时只向 stdout 写日志，不在应用目录产生无限增长的文件；生产的落盘、检索、保留和轮转由上述 journal 负责。尚未登录公网服务器，journal 的实际落盘与重启后保留需在服务器初始化时验收。
+独立包运行时只向 stdout 写日志，不在应用目录产生无限增长的文件；生产的落盘、检索、保留和轮转由上述 journal 负责。2026-09-11 已在 Ubuntu 24.04 服务器安装独立 journal 配置；首次发布后检查 namespace 日志及磁盘占用，实际长时间保留受磁盘预算约束。

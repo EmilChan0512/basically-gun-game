@@ -1,6 +1,6 @@
 # 公网后端 CI/CD
 
-目标服务器：`43.142.165.82`。本次只准备仓库配置，尚未登录、初始化或部署服务器。
+目标服务器：`43.142.165.82`（Ubuntu 24.04，SSH 22）。2026-09-11 已完成 Node.js 22、运行/部署用户、systemd 和独立 journal 初始化；GitHub 已配置 production 环境、专用部署密钥、固定主机公钥和部署开关。实际发布结果以 Actions 的 deploy job 为准。
 
 ## 流程
 
@@ -35,6 +35,8 @@
 | Secret | `DEPLOY_KNOWN_HOSTS` | 经核对的服务器 known_hosts 完整行 |
 
 创建名为 `production` 的 Environment，可将部署 secrets/主机端口变量放在该环境中；`DEPLOY_ENABLED` 必须是仓库变量，因为 job 启动前要读取它。可限制该环境仅 main 部署。若希望每次全自动更新，不配置 required reviewers。
+
+当前部署使用 `DEPLOY_SSH_KEY` 对应的 `strike-deploy` 专用账号。已有的 `SSH_PRIVATE_KEY` 保留，但此工作流不读取它；管理员 `ubuntu` 的私钥也不用于自动部署。
 
 初始化完成并配置好以上内容后启用开关，Actions → Backend CI and deploy → Run workflow → main。后续 main 推送自动更新；PR 只验证。若 CI 未通过，不会替换服务器。工作流必须先提交并推送到 GitHub 才会生效。
 
