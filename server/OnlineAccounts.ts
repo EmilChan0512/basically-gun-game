@@ -6,7 +6,7 @@ import type { WeaponId } from '../src/game/combat/Combat';
 import { freshOnlineProfile, starterEquipment, ownedEquipment, type OnlineProfile } from '../src/shared/content/OnlineProgress';
 
 interface Account { profile: OnlineProfile; salt: string; verifier: string; settled: string[] }
-interface AssetEntry { id: string; accountId: string; at: string; reason: 'registration' | 'purchase' | 'match' | 'migration' | 'test-grant'; creditsDelta: number; detail: string }
+interface AssetEntry { id: string; accountId: string; at: string; reason: 'registration' | 'purchase' | 'match' | 'migration' | 'test-grant' | 'admin'; creditsDelta: number; detail: string; actor?: string; before?: OnlineProfile; after?: OnlineProfile }
 interface Database { version: 2; accounts: Account[]; sessions: { hash: string; accountId: string; expires: number }[]; ledger: AssetEntry[] }
 export interface TestAccountProvision { name: string; selected: ClassId; salt: string; verifier: string }
 export interface OnlineReward { accountId: string; classId: ClassId; won: boolean; kills: number }
@@ -69,6 +69,53 @@ export class OnlineAccounts {
   }
   /** Server/admin inspection only; never includes password hashes or session tokens. */
   assets(id: string) { return { profile: this.profile(id), ledger: structuredClone(this.data.ledger.filter(e => e.accountId === id)) }; }
+  adminList(query = '', page = 1) {
+    const matches = this.data.accounts.filter(a => normalized(a.profile.name).includes(normalized(query)) || a.profile.id === query);
+    return { total: matches.length, page, users: matches.slice((page - 1) * 25, page * 25).map(a => ({
+      id: a.profile.id, name: a.profile.name, credits: a.profile.credits, selected: a.profile.selected,
+      levels: Object.fromEntries(Object.entries(a.profile.classes).map(([id, c]) => [id, levelForXp(c.xp)])),
+    })) };
+  }
+  adminDetail(id: string) {
+    const profile = this.profile(id);
+    return { profile, revision: digest(JSON.stringify(profile)), ledger: structuredClone(this.data.ledger.filter(e => e.accountId === id).slice(-100).reverse()) };
+  }
+  /** Shares the live store with gameplay: one atomic snapshot for assets and audit trail. */
+  adminUpdate(id: string, input: unknown, actor: string) {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) throw Error('无效修改');
+    const value = input as Record<string, unknown>;
+    if (Object.keys(value).some(k => !['revision', 'credits', 'levels', 'weapons', 'items', 'reason'].includes(k))) throw Error('不支持的修改字段');
+    const before = this.profile(id);
+    if (value.revision !== digest(JSON.stringify(before))) throw Error('资产已发生变化，请刷新用户后重新修改');
+    if (typeof value.reason !== 'string' || !value.reason.trim() || value.reason.length > 200) throw Error('请填写1—200字的修改原因');
+    if (!Number.isSafeInteger(value.credits) || (value.credits as number) < 0 || (value.credits as number) > 10000000) throw Error('金币需为0—10000000的整数');
+    const levels = value.levels as Record<string, unknown>;
+    if (!levels || typeof levels !== 'object' || Array.isArray(levels) || Object.keys(levels).length !== 4 || Object.keys(levels).some(k => !Object.hasOwn(CLASSES, k))) throw Error('请提供四职业等级');
+    for (const level of Object.values(levels)) if (!Number.isInteger(level) || (level as number) < 1 || (level as number) > 50) throw Error('等级需为1—50的整数');
+    for (const [key, catalog] of [['weapons', WEAPONS], ['items', ITEMS]] as const) {
+      const ids = value[key];
+      if (!Array.isArray(ids) || ids.length > Object.keys(catalog).length || ids.some(id => typeof id !== 'string' || !Object.hasOwn(catalog, id)) || new Set(ids).size !== ids.length) throw Error('无效装备清单');
+    }
+    if (STARTER_WEAPONS.some(id => !(value.weapons as string[]).includes(id)) || !(value.items as string[]).includes('medkit')) throw Error('初始装备不可移除');
+    const next = structuredClone(this.data), profile = next.accounts.find(a => a.profile.id === id)!.profile;
+    profile.credits = value.credits as number;
+    profile.weapons = [...value.weapons as WeaponId[]]; profile.items = [...value.items as ItemId[]];
+    for (const classId of Object.keys(CLASSES) as ClassId[]) {
+      const career = profile.classes[classId];
+      // Preserve partial XP if the displayed level was not changed.
+      if (levelForXp(career.xp) !== levels[classId]) career.xp = ((levels[classId] as number) - 1) * 160;
+      const old = career.equipment, repaired = starterEquipment(classId);
+      for (const slot of ['primary', 'secondary', 'skill', 'item'] as const) {
+        try { Object.assign(repaired, ownedEquipment(profile, { ...repaired, [slot]: old[slot] })); } catch { /* Revoked or under-level slot falls back to starter. */ }
+      }
+      career.equipment = repaired;
+    }
+    next.sessions = next.sessions.filter(s => s.accountId !== id);
+    next.ledger.push({ id: randomUUID(), accountId: id, at: new Date().toISOString(), reason: 'admin', actor,
+      creditsDelta: profile.credits - before.credits, detail: value.reason.trim(), before, after: structuredClone(profile) });
+    this.commit(next);
+    return this.adminDetail(id);
+  }
   /** Offline administrator CLI only. Idempotent; cannot overwrite an existing user's identity or assets. */
   provisionTests(batch: string, entries: TestAccountProvision[]) {
     if (!/^[a-zA-Z0-9_-]{8,80}$/.test(batch) || entries.length !== 4 || new Set(entries.map(e => normalized(e.name))).size !== 4) throw Error('Invalid provisioning batch');

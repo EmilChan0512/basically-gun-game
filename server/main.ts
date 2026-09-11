@@ -4,6 +4,7 @@ import { createLogger } from './Logger';
 import { CONTENT_VERSION } from '../src/shared/protocol/ContentVersion';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import type { AdminConfig } from './AdminHttp';
 let revision = 'development';
 try { revision = readFileSync(resolve('REVISION'), 'utf8').trim().slice(0, 40); } catch { /* Source checkout has no release marker. */ }
 const context = { contentVersion: CONTENT_VERSION, revision };
@@ -22,9 +23,13 @@ const port = Number(process.env.PORT ?? 4180), host = process.env.HOST ?? '127.0
 if (!Number.isInteger(port) || port < 0 || port > 65535) throw Error('PORT must be an integer from 0 to 65535');
 const metricsIntervalMs = Number(process.env.LOG_METRICS_INTERVAL_MS ?? 60000);
 if (!Number.isInteger(metricsIntervalMs) || metricsIntervalMs < 1000) throw Error('LOG_METRICS_INTERVAL_MS must be an integer >= 1000');
+const stateDirectory = resolve(process.env.ACCOUNT_DATA_DIR ?? process.env.STATE_DIRECTORY ?? 'data');
+let admin: AdminConfig | undefined;
+try { admin = JSON.parse(readFileSync(resolve(stateDirectory, 'admin.json'), 'utf8')); }
+catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
 const server = startServer(port, host, 30000, logger, metricsIntervalMs, true,
-  new OnlineAccounts(resolve(process.env.ACCOUNT_DATA_DIR ?? process.env.STATE_DIRECTORY ?? 'data', 'accounts.json')),
-  process.env.NODE_ENV === 'production' && process.env.ALLOW_INSECURE_ACCOUNTS !== 'true');
+  new OnlineAccounts(resolve(stateDirectory, 'accounts.json')),
+  process.env.NODE_ENV === 'production' && process.env.ALLOW_INSECURE_ACCOUNTS !== 'true', admin);
 server.wss.on('error', error => {
   logger.log('error', 'server.listen_error', { errorType: error.name, message: error.message, code: (error as NodeJS.ErrnoException).code });
   process.exit(1);

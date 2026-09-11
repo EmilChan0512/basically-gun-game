@@ -34,6 +34,9 @@ Windows 双击 START.cmd，其他系统运行 node server.cjs。
 金币、已购枪械/道具、各职业经验及配装保存在服务端 data/accounts.json。可用 ACCOUNT_DATA_DIR 指定固定目录；
 生产 systemd 使用 /var/lib/project-strike。升级程序时保留该目录，勿提交或发送数据库。
 单进程独占此目录；修改文件不是支持的管理接口。损坏存档会拒绝启动，不会覆盖为新档。
+管理后台：配置同目录 admin.json 后访问 http://服务器IP:4180/admin/，使用独立管理员账号。
+可调整金币、四职业等级、装备权益，查看审计记录；详见源码 docs/ADMIN_PANEL.md。
+admin.json 只保存管理员用户名、加盐哈希及允许的 origin，不包含原始密码。缺少配置时不启用后台。
 公共调试房间仍允许游客并开放全部装备，不产生养成奖励。普通联机检查账号解锁进度。
 生产模式默认要求本机TLS反向代理/WSS。当前无域名测试部署显式设置 ALLOW_INSECURE_ACCOUNTS=true，
 允许公网WS账号登录；WS未加密，请使用独立测试密码。后续接入WSS后关闭此开关。

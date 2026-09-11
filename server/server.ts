@@ -14,9 +14,13 @@ import { OnlineAccounts } from './OnlineAccounts';
 import { ownedEquipment } from '../src/shared/content/OnlineProgress';
 import { validateEquipment } from '../src/shared/content/Equipment';
 import type { ClassId } from '../src/game/campaign/Catalog';
+import { createServer } from 'node:http';
+import { createAdminHandler, type AdminConfig } from './AdminHttp';
 
-export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000, logger: Logger = silentLogger, metricsIntervalMs = 60000, enableDebugRoom = false, accounts = new OnlineAccounts(), secureAccounts = false) {
-  const wss = new WebSocketServer({ port, host, maxPayload: 8192,
+export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000, logger: Logger = silentLogger, metricsIntervalMs = 60000, enableDebugRoom = false, accounts = new OnlineAccounts(), secureAccounts = false, admin?: AdminConfig) {
+  const http = admin ? createServer(createAdminHandler(accounts, admin, id => invalidateAccount(id))) : undefined;
+  if (http) { http.requestTimeout = 10000; http.headersTimeout = 10000; http.timeout = 15000; }
+  const wss = new WebSocketServer({ ...(http ? { server: http } : { port, host }), maxPayload: 8192,
     perMessageDeflate: { threshold: 1024, serverNoContextTakeover: true, clientNoContextTakeover: true,
       concurrencyLimit: 4, zlibDeflateOptions: { level: 3 } } });
   const rooms = new Map<string, Room>();
@@ -45,6 +49,23 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
   };
   const lobby = (room: Room) => { for (const [socket, client] of clients) if (client.room === room) send(socket, { type: 'lobby', room: room.lobby() }); };
   const publishProfile = (id: string) => { for (const [socket, client] of clients) if (client.accountId === id) send(socket, { type: 'profile', profile: accounts.profile(id) }); };
+  function invalidateAccount(id: string) {
+    const changedRooms = new Set<Room>();
+    // Remove disconnected reconnect seats too, so revoked loadouts cannot be resumed.
+    for (const [token, entry] of credentials) if (entry.accountId === id) {
+      changedRooms.add(entry.room);
+      if (entry.room.session) participants.get(entry.room.session)?.delete(entry.id);
+      entry.room.disconnect(entry.id); entry.room.expire(entry.id); credentials.delete(token);
+    }
+    for (const [socket, client] of clients) if (client.accountId === id) {
+      const room = client.room;
+      if (room) { changedRooms.add(room); room.disconnect(client.id); room.expire(client.id); client.room = undefined; }
+      client.accountId = undefined; client.authToken = undefined;
+      send(socket, { type: 'error', message: '管理员已更新账号权益，请重新登录' }); socket.close(4001, 'Account assets updated');
+    }
+    for (const room of changedRooms) lobby(room);
+    logger.log('info', 'account.admin_updated', { accountId: id, actor: admin?.username });
+  }
   const settle = (room: Room) => {
     const session = room.session;
     if (!session || !session.battle.result || endedSessions.has(session)) return;
@@ -271,5 +292,6 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
       }
     }
   }, 1000 / 30);
-  return { wss, rooms, accounts, metrics: () => { const sorted = [...timings].sort((a, b) => a - b); return { samples: sorted.length, p95: sorted[Math.floor(sorted.length * 0.95)] ?? 0, p99: sorted[Math.floor(sorted.length * 0.99)] ?? 0 }; }, close: async () => { clearInterval(timer); for (const socket of clients.keys()) socket.terminate(); await new Promise<void>(resolve => wss.close(() => resolve())); } };
+  if (http) { http.on('error', error => wss.emit('error', error)); http.listen(port, host); }
+  return { wss, rooms, accounts, metrics: () => { const sorted = [...timings].sort((a, b) => a - b); return { samples: sorted.length, p95: sorted[Math.floor(sorted.length * 0.95)] ?? 0, p99: sorted[Math.floor(sorted.length * 0.99)] ?? 0 }; }, close: async () => { clearInterval(timer); for (const socket of clients.keys()) socket.terminate(); await new Promise<void>(resolve => wss.close(() => resolve())); if (http) { http.closeAllConnections(); await new Promise<void>(resolve => http.close(() => resolve())); } } };
 }
