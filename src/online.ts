@@ -63,22 +63,29 @@ export function startOnline() {
   const renderPreflight = () => {
     const profile = network?.profile ?? null, room = network?.room;
     renderOnlineLoadoutSummary(el('online-loadout-brief'), currentEquipment());
+    if (location.hash !== '#loadout' || !canEdit()) return;
     renderOnlineArmory(el('preflight-armory'), currentEquipment(), profile, !!room?.debug, equipment => {
       if (!canEdit()) return;
       if (room) network?.send({ type: 'equip', equipment });
       else { draft = equipment; if (network?.profile) network.send({ type: 'profileEquip', equipment }); renderPreflight(); }
     }, profile && !room ? (kind, id) => network?.send({ type: 'purchase', kind, id }) : undefined);
   };
+  let viewSignature = '';
   const syncView = () => {
     const wantsArmory = location.hash === '#loadout';
     if (wantsArmory && !canEdit()) historyReplace('#lobby');
     const armory = location.hash === '#loadout';
+    const nextView = `${armory}:${canEdit()}`;
+    if (viewSignature === nextView) return;
+    viewSignature = nextView;
     el('online-preflight').hidden = !armory; el('online-lobby-page').hidden = armory;
     el('online-lobby-nav').setAttribute('aria-current', armory ? 'false' : 'page');
     el('online-armory-nav').setAttribute('aria-current', armory ? 'page' : 'false');
     el('online-armory-nav').setAttribute('aria-disabled', String(!canEdit()));
     el('online-loadout-brief').hidden = !canEdit();
     document.body.classList.toggle('online-armory-open', armory);
+    if (armory) renderPreflight();
+    else el('preflight-armory').replaceChildren();
   };
   const historyReplace = (hash: string) => window.history.replaceState(null, '', hash);
   window.addEventListener('hashchange', () => {
