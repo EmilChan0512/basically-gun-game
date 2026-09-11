@@ -1,5 +1,9 @@
 # 战斗规格与证据边界
 
+## 2026-09-11 当前战斗入口
+
+默认入口为 OriginalSandboxScene：USP/M4、0.9弹药倍率、30Hz战斗与移动、枪口预行进、散布、实心地形遮挡和85HP生命周期已整合。新增常驻生命/弹药/换弹/复活HUD、3帧短暂弹道、24帧伤害/击杀反馈与跨玩家复活累计击杀。H仅隐藏调试信息；R重置整个练习状态。旧Gun Lab参数只适用于 `?rules=lab`。本次没有新增原版观测。
+
 ## Phase 3 第四批：射程、采样命中与头部伤害（2026-09-10）
 
 本批从固定SWF额外导出`Status`、`UT`的AS/P-code，串联审核`Stats_Guns → Bullet_Line_Basic → Bullet.hitTestAll → Status.damage`及`Unit.setStats`。以下为**静态源码规则切片**，不等于完整弹道或原版运行对照验收。

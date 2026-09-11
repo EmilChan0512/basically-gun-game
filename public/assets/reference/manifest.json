@@ -1,0 +1,277 @@
+{
+  "source": "SFH1 v1.2.1",
+  "swfSha256": "0b8d92dfae85917dd9bc0dc87997979bb825b3211d95d92f84040ffc9a1cc989",
+  "method": "Static FFDec export; cropped transparent margins; original scripts never executed",
+  "assets": [
+    {
+      "id": "usp",
+      "source": "DefineSprite 375 / frame 2; shotgun uses M3 artwork",
+      "crop": [
+        42,
+        12,
+        70,
+        31
+      ],
+      "size": [
+        28,
+        19
+      ],
+      "sha256": "87931baa1ed1067c4be7fd62c5da0c2267f3fbb231ea3e3e093a34db551dd41f"
+    },
+    {
+      "id": "beretta",
+      "source": "DefineSprite 375 / frame 3; shotgun uses M3 artwork",
+      "crop": [
+        43,
+        12,
+        70,
+        31
+      ],
+      "size": [
+        27,
+        19
+      ],
+      "sha256": "6137da351a2e22e1a3891c95bf4779c87a89bcb116bbf6933a1dbf0c810598ce"
+    },
+    {
+      "id": "vector",
+      "source": "DefineSprite 375 / frame 17; shotgun uses M3 artwork",
+      "crop": [
+        26,
+        14,
+        74,
+        35
+      ],
+      "size": [
+        48,
+        21
+      ],
+      "sha256": "137fb7545cd534d73173f1305d3dea86310ef76a762757cf963dcbb1a2585b29"
+    },
+    {
+      "id": "m4",
+      "source": "DefineSprite 375 / frame 20; shotgun uses M3 artwork",
+      "crop": [
+        26,
+        11,
+        83,
+        34
+      ],
+      "size": [
+        57,
+        23
+      ],
+      "sha256": "d38c186cb6b336414ff7ac449bf305f4877ad9095bb786fd942e90573ccae7e9"
+    },
+    {
+      "id": "saw",
+      "source": "DefineSprite 375 / frame 32; shotgun uses M3 artwork",
+      "crop": [
+        26,
+        6,
+        90,
+        33
+      ],
+      "size": [
+        64,
+        27
+      ],
+      "sha256": "0d5afd9ea79584fa21f05c32389c8cd858f7e0bf233fcb5e4c8044de78349231"
+    },
+    {
+      "id": "shotgun",
+      "source": "DefineSprite 375 / frame 44; shotgun uses M3 artwork",
+      "crop": [
+        27,
+        15,
+        89,
+        34
+      ],
+      "size": [
+        62,
+        19
+      ],
+      "sha256": "62ab439799cfbb2cc70c2eb68d55c064b3faa514a7807707b866bdebc5fcfe2b"
+    },
+    {
+      "id": "dragunov",
+      "source": "DefineSprite 375 / frame 52; shotgun uses M3 artwork",
+      "crop": [
+        25,
+        3,
+        111,
+        35
+      ],
+      "size": [
+        86,
+        32
+      ],
+      "sha256": "7bf6b7610db03b2580a826ea9866248df4a911d3e02923ddc48d6a9f93100074"
+    },
+    {
+      "id": "boot",
+      "source": "DefineSprite 538 / frame 1",
+      "crop": [
+        0,
+        0,
+        14,
+        14
+      ],
+      "size": [
+        14,
+        14
+      ],
+      "sha256": "0a4968e6798864bef69db537a26887fac7709f671e5558f8d749f25d492076ba"
+    },
+    {
+      "id": "leg",
+      "source": "DefineSprite 568 / frame 1",
+      "crop": [
+        1,
+        0,
+        16,
+        20
+      ],
+      "size": [
+        15,
+        20
+      ],
+      "sha256": "6dde78c437c8159402f092cbfc516f3dd2ecfd414c10b52001609ccc23193940"
+    },
+    {
+      "id": "arm",
+      "source": "DefineSprite 598 / frame 1",
+      "crop": [
+        30,
+        25,
+        48,
+        43
+      ],
+      "size": [
+        18,
+        18
+      ],
+      "sha256": "3855d9896c30ca4ce8843ca931051ca3d217d483e589e698493fb0f49664a2e2"
+    },
+    {
+      "id": "torso",
+      "source": "DefineSprite 631 / frame 1",
+      "crop": [
+        5,
+        8,
+        29,
+        35
+      ],
+      "size": [
+        24,
+        27
+      ],
+      "sha256": "ea0a7d95356107e0cd0e0332f35fa6cbe624f4ff96d2a1406d07e8a01ed7d38b"
+    },
+    {
+      "id": "head",
+      "source": "DefineSprite 666 / frame 1",
+      "crop": [
+        12,
+        3,
+        35,
+        28
+      ],
+      "size": [
+        23,
+        25
+      ],
+      "sha256": "0df9e5ae4d2bb24b70f234cb8e6c05928cd78fa089d93e99e24183851818acf0"
+    },
+    {
+      "id": "supply",
+      "source": "DefineSprite 1221 / frame 1",
+      "crop": [
+        0,
+        0,
+        70,
+        70
+      ],
+      "size": [
+        70,
+        70
+      ],
+      "sha256": "c059485fa3811b841baeaba275b09abeab6d0aafa89cee309b52f9d5dea33013"
+    },
+    {
+      "id": "flash",
+      "source": "DefineSprite 394 / frame 1",
+      "crop": [
+        0,
+        3,
+        27,
+        17
+      ],
+      "size": [
+        27,
+        14
+      ],
+      "sha256": "2652ef240186dc526564b3f8ca4b04c753b2f3c3e6a099f7515763035c57f709"
+    },
+    {
+      "id": "hills",
+      "source": "DefineBits image 839",
+      "crop": [
+        0,
+        0,
+        1300,
+        375
+      ],
+      "size": [
+        1300,
+        375
+      ],
+      "sha256": "413aeff290d79f21738e36acbb5e722c3995cf7af5caf94f010cb000ff79c0dc"
+    },
+    {
+      "id": "clouds",
+      "source": "DefineBits image 1344",
+      "crop": [
+        8,
+        0,
+        284,
+        95
+      ],
+      "size": [
+        276,
+        95
+      ],
+      "sha256": "88594aa9f99f7686a04872fc0b622f10383a53d1cad917ece161d888610e980c"
+    },
+    {
+      "id": "outpost",
+      "source": "DefineBits image 830",
+      "crop": [
+        1,
+        0,
+        446,
+        142
+      ],
+      "size": [
+        445,
+        142
+      ],
+      "sha256": "f5074c2d0f196f24a60b622475173a8898b6f1d85f025107bd88c7038cdf1772"
+    },
+    {
+      "id": "aircraft",
+      "source": "DefineBits image 852",
+      "crop": [
+        0,
+        0,
+        521,
+        265
+      ],
+      "size": [
+        521,
+        265
+      ],
+      "sha256": "a1a912c0f05297d2d570c8fa53b67a250c762f4552e454f4eab00204705cfdd3"
+    }
+  ]
+}

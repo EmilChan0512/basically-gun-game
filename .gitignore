@@ -21,3 +21,4 @@ tools/vendor/
 *.log
 
 .tmp/
+artifacts/

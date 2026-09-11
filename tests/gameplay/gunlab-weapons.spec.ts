@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('Gun Lab keyboard reload keeps magazine rounds and consumes reserve ammo', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/?rules=lab');
   await page.waitForFunction(() => window.__strike?.soldier.grounded);
   await expect(page.locator('#telemetry')).toContainText('WEAPON');
   await page.keyboard.press('q');
@@ -19,7 +19,7 @@ test('Gun Lab keyboard reload keeps magazine rounds and consumes reserve ammo', 
 });
 
 test('pause freezes combat, rejects actions and the next combat frame advances reload once', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/?rules=lab');
   await page.waitForFunction(() => window.__strike?.soldier.grounded);
   await page.keyboard.down('f');
   await page.waitForFunction(() => window.__strike!.gunLab.gun.ammo === 11);
@@ -51,7 +51,7 @@ test('pause freezes combat, rejects actions and the next combat frame advances r
 });
 
 test('switching while trigger held waits for release and retains weapon ammo', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/?rules=lab');
   await page.waitForFunction(() => window.__strike?.soldier.grounded);
   await page.keyboard.down('f');
   await page.waitForFunction(() => window.__strike!.gunLab.gun.ammo === 11);
@@ -67,7 +67,7 @@ test('switching while trigger held waits for release and retains weapon ammo', a
 });
 
 test('a USP press during cooldown retries while held and latches after the next shot', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/?rules=lab');
   await page.waitForFunction(() => window.__strike?.soldier.grounded);
   await page.keyboard.down('f');
   await page.waitForFunction(() => window.__strike!.gunLab.gun.ammo === 11);
@@ -80,7 +80,7 @@ test('a USP press during cooldown retries while held and latches after the next 
 });
 
 test('four paused physics steps advance exactly one original combat frame', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/?rules=lab');
   await page.waitForFunction(() => window.__strike?.soldier.grounded);
   await page.keyboard.press('p');
   const before = await page.evaluate(() => window.__strike!.snapshot());
@@ -95,7 +95,7 @@ test('four paused physics steps advance exactly one original combat frame', asyn
 });
 
 test('mouse trigger uses the same M4 automatic loop and stops on release', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/?rules=lab');
   await page.waitForFunction(() => window.__strike?.soldier.grounded);
   await page.keyboard.press('q');
   const canvas = await page.locator('canvas').boundingBox();

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { ReferenceArt, preloadReferenceArt } from '../campaign/ReferenceArt';
 import { OriginalSandbox, referenceTerrain } from '../combat/OriginalSandbox';
 import { COMBAT_FRAME_MS } from '../combat/Combat';
 
@@ -9,10 +10,15 @@ export class OriginalSandboxScene extends Phaser.Scene {
   debugVisible = true;
   private keys = new Set<string>();
   private mouseHeld = false;
+  private rig!: ReferenceArt;
   private art!: Phaser.GameObjects.Graphics;
   private hud!: Phaser.GameObjects.Text;
+  private combatHud!: Phaser.GameObjects.Text;
+  private hitLabel!: Phaser.GameObjects.Text;
   constructor() { super('OriginalSandboxScene'); }
+  preload() { preloadReferenceArt(this); }
   create() {
+    this.rig = new ReferenceArt(this);
     this.cameras.main.setBounds(0, 0, 2400, 760);
     const background = this.add.graphics();
     background.fillStyle(0x18252e).fillRect(0, 0, 2400, 760);
@@ -20,9 +26,11 @@ export class OriginalSandboxScene extends Phaser.Scene {
       background.fillStyle(0x354650).fillRect(terrain.x, terrain.y, terrain.width, terrain.height);
       background.lineStyle(2, 0x728a91).lineBetween(terrain.x, terrain.y, terrain.x + terrain.width, terrain.y);
     }
-    this.add.text(90, 360, 'ORIGINAL RULES\nVERIFICATION', { fontFamily: 'monospace', fontSize: '40px', color: '#3d555f' });
+    this.add.text(90, 360, 'PROJECT STRIKE\nCOMBAT SANDBOX', { fontFamily: 'monospace', fontSize: '40px', color: '#3d555f' });
     this.add.text(800, 625, '28px climb    60px wall       180px gap', { fontFamily: 'monospace', fontSize: '12px', color: '#b1c2b3' });
-    this.art = this.add.graphics();
+    this.art = this.add.graphics().setDepth(3);
+    this.combatHud = this.add.text(16, 550, '', { fontFamily: 'monospace', fontSize: '18px', color: '#ffffff', backgroundColor: '#132029dd', padding: { x: 12, y: 8 } }).setScrollFactor(0);
+    this.hitLabel = this.add.text(700, 490, '', { fontFamily: 'monospace', fontSize: '18px', color: '#ffe09b' }).setOrigin(0.5);
     this.hud = this.add.text(16, 16, '', { fontFamily: 'monospace', fontSize: '12px', color: '#d6ee67', backgroundColor: '#132029dd', padding: { x: 10, y: 9 }, lineSpacing: 5 }).setScrollFactor(0);
     const down = (event: KeyboardEvent) => {
       if ((event.target as HTMLElement)?.matches('input,textarea,select,button,a')) return;
@@ -71,26 +79,34 @@ export class OriginalSandboxScene extends Phaser.Scene {
     if (!this.paused) this.core.advance(Math.min(deltaMs, 100) * (this.slow ? 0.25 : 1), this.inputState(), this.pointer());
     const state = this.core.snapshot(), movement = this.core.movement;
     this.cameras.main.centerOn(movement.x, 390);
-    this.art.clear();
-    const fullHeight = movement.crouching ? 44 : 66;
-    if (state.life.alive) {
-      this.art.fillStyle(state.life.spawnProtectionFrames ? 0x67cfee : 0x83978b, 0.85).fillRect(movement.x - 13, movement.y - fullHeight, 26, fullHeight);
-      this.art.fillStyle(0xd6ee67).fillRect(movement.x - 13, movement.y - fullHeight, 26, movement.crouching ? 16 : 22);
-      const anchorY = movement.y - (movement.crouching ? 28 : 42);
-      this.art.lineStyle(5, 0xd5e2c9).lineBetween(movement.x, anchorY, movement.x + this.core.aimDirection.x * 40, anchorY + this.core.aimDirection.y * 40);
-    }
-    const { full, body } = this.core.guns.snapshot().targetBounds;
-    this.art.fillStyle(state.target.alive ? 0xd66e67 : 0x4b555b).fillRect(full.x, body.y, full.width, body.height);
-    this.art.fillStyle(state.target.alive ? 0xe8b36b : 0x4b555b).fillRect(full.x, full.y, full.width, body.y - full.y);
+    this.art.clear(); this.rig.begin();
+    const aim = { x: movement.x + this.core.aimDirection.x * 100, y: movement.y - (movement.crouching ? 28 : 42) + this.core.aimDirection.y * 100 };
+    this.rig.soldier(movement.x, movement.y, movement.crouching, movement.vx, movement.jumping, state.frame, aim, state.combat.weapon, 0xb7e8de, state.life.alive, state.combat.reloadFrames > 0,
+      state.combat.lastShotFrame !== null && state.combat.combatFrame - state.combat.lastShotFrame < 2);
+    const { full } = this.core.guns.snapshot().targetBounds;
+    this.rig.soldier(full.x + full.width / 2, full.y + full.height, false, 0, false, state.frame, { x: 0, y: full.y + 24 }, 'm4', 0xf1b0a0, state.target.alive);
+    this.art.fillStyle(0x18252e).fillRect(full.x - 9, full.y - 12, 44, 5);
+    this.art.fillStyle(state.target.spawnProtectionFrames ? 0x67cfee : 0xd6ee67).fillRect(full.x - 9, full.y - 12, 44 * state.target.health / 85, 5);
     const shot = this.core.guns.lastShot;
-    if (shot && this.debugVisible) this.art.lineStyle(2, shot.hit ? 0xf5ba70 : 0x67cfee).lineBetween(shot.origin.x, shot.origin.y, shot.end.x, shot.end.y);
+    const shotAge = state.combat.lastShotFrame === null ? Infinity : state.combat.combatFrame - state.combat.lastShotFrame;
+    if (shot && state.life.alive && (this.debugVisible || shotAge < 3)) this.art.lineStyle(2, shot.hit ? 0xf5ba70 : 0x67cfee).lineBetween(shot.origin.x, shot.origin.y, shot.end.x, shot.end.y);
+    const feedback = state.feedback;
+    this.hitLabel.setVisible(!!feedback && state.frame - feedback.frame < 24);
+    if (feedback) this.hitLabel.setPosition(this.core.guns.targetPoint.x, full.y - 32 - Math.min(24, state.frame - feedback.frame))
+      .setText(`${feedback.killed ? 'ELIMINATED' : feedback.head ? 'HEAD' : 'HIT'}  ${feedback.amount.toFixed(1)}`);
+    const pointer = this.pointer();
+    this.art.lineStyle(1, 0xd6ee67).strokeCircle(pointer.x, pointer.y, 5);
+    const reload = state.combat.reloadFrames > 0 ? ` / RELOADING ${(state.combat.reloadFrames / 30).toFixed(1)}s` : state.combat.ammo === 0 ? ' / EMPTY · Q SWITCH' : '';
+    this.combatHud.setText(state.life.alive
+      ? `HP ${Math.ceil(state.life.health)} / 85  |  ${state.combat.weapon.toUpperCase()} ${state.combat.ammo} + ${state.combat.reserveAmmo}${reload}\nKILLS ${state.kills}  /  DEATHS ${state.life.deaths}${state.life.spawnProtectionFrames ? '  /  SPAWN PROTECTION' : ''}`
+      : `RESPAWN IN ${((state.life.respawnFrames + 1) / 30).toFixed(1)}s\nKILLS ${state.kills}  /  DEATHS ${state.life.deaths}`);
     this.hud.setVisible(this.debugVisible).setText([
       `${this.paused ? 'PAUSED' : 'LIVE'} / 30 Hz / MEDIC LV1 / USP + M4`,
       `HP ${Math.ceil(state.life.health)} / 85   protection ${state.life.spawnProtectionFrames}f   respawn ${state.life.respawnFrames}f`,
       `${state.combat.weapon.toUpperCase()} ${state.combat.ammo} + ${state.combat.reserveAmmo}   reload ${state.combat.reloadFrames}f`,
       `feet ${state.x.toFixed(1)},${state.y.toFixed(1)}   velocity ${state.vx.toFixed(2)},${state.vy.toFixed(2)} px/frame`,
       `recoil ${state.recoil.dynamic.toFixed(2)} / ${state.recoil.upper.toFixed(2)}   target ${state.target.health.toFixed(2)} HP`,
-      'Graybox fixtures / moving arm pose and frame dispatch under review',
+      'Project Strike / reference-informed mechanics / reference texture pass',
     ]);
     window.dispatchEvent(new CustomEvent('strike-original-telemetry', { detail: this.snapshot() }));
   }

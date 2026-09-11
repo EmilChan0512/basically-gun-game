@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 test('Gun Lab actual input consumes ammo once while a semiautomatic trigger is held', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/?rules=lab');
   await page.waitForFunction(() => window.__strike?.soldier.grounded);
   await page.keyboard.down('f');
   await page.waitForFunction(() => window.__strike!.gunLab.gun.ammo === 11);

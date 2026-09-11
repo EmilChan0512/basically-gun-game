@@ -45,3 +45,31 @@ test('player death freezes input and a 151st dead frame restores the original lo
   await page.waitForFunction(() => window.__originalStrike!.core.life.alive, undefined, { timeout: 8000 });
   expect(await page.evaluate(() => window.__originalStrike!.snapshot())).toMatchObject({ life: { health: 85 }, combat: { weapon: 'm4', ammo: 30, reserveAmmo: 78 } });
 });
+
+test('default sandbox keeps combat HUD with debug off and mouse fire produces a persistent kill', async ({ page }) => {
+  await page.keyboard.press('h');
+  const canvas = await page.locator('canvas').boundingBox();
+  const camera = await page.evaluate(() => {
+    const c = window.__originalStrike!.cameras.main;
+    return { x: c.scrollX, y: c.scrollY };
+  });
+  await page.mouse.move(canvas!.x + (700 - camera.x) * canvas!.width / 1120, canvas!.y + (558 - camera.y) * canvas!.height / 620);
+  await page.waitForTimeout(250);
+  await page.mouse.down();
+  await page.waitForFunction(() => window.__originalStrike!.snapshot().kills === 1);
+  await page.mouse.up();
+  await page.keyboard.press('p');
+  const result = await page.evaluate(() => {
+    const scene = window.__originalStrike!;
+    return { state: scene.snapshot(), debug: scene.debugVisible, labels: scene.children.list
+      .filter(child => child.type === 'Text')
+      .map(child => { const label = child as unknown as { text: string; visible: boolean }; return { text: label.text, visible: label.visible }; }) };
+  });
+  expect(result.debug).toBe(false);
+  expect(result.state.feedback).toMatchObject({ killed: true });
+  expect(result.labels.some(label => label.visible && label.text.includes('KILLS 1'))).toBe(true);
+  expect(result.labels.some(label => label.visible && label.text.includes('ELIMINATED'))).toBe(true);
+  await page.screenshot({ path: 'test-results/phase3-combat.png', fullPage: true });
+  await page.keyboard.press('r');
+  expect(await page.evaluate(() => window.__originalStrike!.snapshot().kills)).toBe(0);
+});

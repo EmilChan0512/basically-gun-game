@@ -56,7 +56,7 @@ export class OriginalLife {
   tick() {
     if (!this.alive) {
       if (this.respawnFrames > 0) this.respawnFrames--;
-      else { this.alive = true; this.health = this.maxHealth; this.spawnProtectionFrames = 75; return true; }
+      else { this.alive = true; this.health = this.maxHealth; this.spawnProtectionFrames = 75; this.regenDelay = 0; return true; }
     } else {
       if (this.spawnProtectionFrames > 0) this.spawnProtectionFrames--;
       if (this.regenDelay > 0) this.regenDelay--;

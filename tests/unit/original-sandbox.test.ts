@@ -3,6 +3,25 @@ import { OriginalSandbox } from '../../src/game/combat/OriginalSandbox';
 const idle = { left: false, right: false, crouch: false };
 const aim = { x: 700, y: 560 };
 describe('original rules integrated sandbox', () => {
+  it('reports a kill once, respawns the target, and keeps kills through player respawn', () => {
+    const sandbox = new OriginalSandbox(() => 0.5);
+    sandbox.aim = { x: 700, y: 557.5 };
+    sandbox.setTrigger(true);
+    for (let i = 0; i < 45; i++) sandbox.tick(idle, sandbox.aim);
+    expect(sandbox.snapshot()).toMatchObject({ kills: 1, target: { alive: false }, feedback: { killed: true } });
+    sandbox.setTrigger(false);
+    for (let i = 0; i < 151; i++) sandbox.tick(idle, sandbox.aim);
+    expect(sandbox.snapshot()).toMatchObject({ kills: 1, target: { alive: true, health: 85 } });
+    sandbox.lethalFixture();
+    for (let i = 0; i < 151; i++) sandbox.tick(idle, sandbox.aim);
+    expect(sandbox.snapshot()).toMatchObject({ kills: 1, life: { alive: true, deaths: 1, regenDelay: 0 } });
+  });
+  it('starts respawn promptly after falling below our arena', () => {
+    const sandbox = new OriginalSandbox(() => 0.5);
+    sandbox.movement.reset(1290, 841);
+    sandbox.tick(idle, aim);
+    expect(sandbox.snapshot().life).toMatchObject({ alive: false, deaths: 1, respawnFrames: 150 });
+  });
   it('uses Medic L1 ammunition, ordinary M4, recoil and muzzle pre-travel', () => {
     const sandbox = new OriginalSandbox(() => 0.5);
     expect(sandbox.snapshot().combat).toMatchObject({ weapon: 'm4', ammo: 30, reserveAmmo: 78 });

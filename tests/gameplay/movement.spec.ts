@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/?rules=lab');
   await page.waitForFunction(() => window.__strike?.soldier.grounded);
 });
 test('loads a playable course, keyboard motion, pause, single step and reset', async ({ page }) => {

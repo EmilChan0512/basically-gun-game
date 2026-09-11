@@ -1,5 +1,19 @@
 # 架构与证据边界
 
+## 当前扩展：账号与养成（2026-09-11）
+
+Accounts管理本机账号注册/登录和独立SaveStorage适配器；CareerProgress在原CampaignProgress上增量扩展职业、军资、解锁、训练和终局奖励，旧存档向后兼容。Catalog声明四职业、八技能、七枪械及三道具。CareerPanels渲染账号页与军械库，出战时Battle接收配装副本。
+
+Arsenal继续复用GunController/弹道，新增主副武器组合及霰弹多弹丸；Battle处理技能时长、道具次数、手雷和属性修正；CampaignScene负责E/G输入及反馈。原训练场仍只接受USP/M4，新增武器ID不会改变既有实验配置。
+
+## 当前扩展：单人战役（2026-09-11）
+
+`main.ts`根据URL分流：默认 `campaign.ts`启动战役；`?rules=original`/`?rules=lab`启动原训练场。`campaign.ts`管理菜单、简报、暂停、结算和结局DOM；`CampaignScene`只负责输入、相机、矢量表现与音效。
+
+`campaign/Missions.ts`声明四套原创关卡；`Battle.ts`是可离线测试的30Hz多角色规则核心；`Navigation.ts`处理小图路线和视线；`Arsenal.ts`复用既有武器计时、后坐力与弹道，适配多个队伍目标；`Progress.ts`处理版本化本地进度和存储失败；`Audio.ts`合成本地提示音。完整通关测试以普通输入驱动核心，浏览器另测实际控制。
+
+`tools/serve-game.mjs`仅提供dist文件，监听127.0.0.1；`package-game.mjs`生成可复制离线目录。生产包不暴露 `window.__strikeCampaign`，不包含测试策略或研究材料。
+
 2026-09-10 当前增量：GunLab持有两个持续存在的武器状态和一个共享射击冷却，GunController持有弹匣/备用弹药与可取消换弹；场景在固定仿真步中推进战斗，输入转为开火意图。原版SWF浏览器观测服务器位于tools/archaeology/reference-browser.mjs，独立于Vite生产入口。下文Phase 0/1范围为初始架构历史。
 
 依据开发计划第 3、10、11、15 节，当前交付限定 Phase 0 和 Phase 1。Phaser 3 + Arcade Physics 承担运行时；Vite/TypeScript 承担开发和构建。Node 考古工具不被运行时导入。OpenGame 是可选开发参考，不是运行时依赖；本切片直接实现可控的最小结构。

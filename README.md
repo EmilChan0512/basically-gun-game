@@ -1,64 +1,59 @@
-# Project Strike
+# Project Strike · 破晓行动
 
-2026-09-10：Phase 3 已完成第三批静态规则推进。除 M4、30Hz 射击计数和扳机锁外，本轮直接解析原版 SWF 的 `arm_gun_316` 时间线并交叉核对 FFDec 反编译源码，将 USP/M4 换弹改为 28/34 个动画帧推进。本次 43 个单元测试、14 个 Chromium 测试通过。详见 [原版行为对照表](docs/ORIGINAL_BEHAVIOR_MATRIX.md) 和 [复刻对照报告](docs/REPLICA_COMPARISON.md)。
+可单人单机游玩的四关原创短篇战役。在经典横版小队射击机制基础上制作，沿用已建立的30Hz移动、USP/M4、换弹与复活节奏。包括任务地图、简报、敌我AI、战斗、胜负结算、重试、逐关解锁、本地存档和结局。
 
-实验室已加入有限备用弹药和空弹匣自动换弹；Q 切枪保留弹药与共享射击计数并取消换弹；L 手动换弹需等射击计数归零。USP 与 M4 的基础配置及换弹动画跨度来自原版静态证据，当前实验角色仍使用显式弹药倍率 1；瞄准、射程、弹道和完成帧跨事件排序仍待校准。
+现已加入本机账号、4个职业、8种技能、7种枪械、3种道具，以及经验/军资/训练升级。推荐流程：创建账号 → 职业与军械库选择配装 → 出战 → 结算领取奖励 → 升级和购买装备 → 挑战下一关。账号互不串档，首次注册继承已有匿名战役进度。详情见 [账号与养成验收](docs/CAREER_ACCEPTANCE.md)。
 
-按照 `Project_Strike_Codex_Development_Plan.docx` 第 15 节，已交付 **Phase 0 可执行考古工具链 + Phase 1 Movement Lab + Phase 2 Gun Lab 灰盒闭环**，并进入 Phase 3 原版对照。当前 Gun Lab 包含 USP、M4、射线、弹药、换弹、伤害和复活闭环；3v3、机器人和进度系统属于后续阶段。
+## 直接游玩
 
-已从原发行门户 Not Doppler 获取并校验 2012 原作 SFH1 v1.2.1，完成 FFDec 脚本/资源提取及首批代码事实核对。官方便携 FFDec、Temurin Java 和 Ruffle 位于 gitignored 的 `tools/vendor/`。现有实验室移动值仍标为 `TUNED`；原版运行观测和手感校准尚未完成。来源与已知事实见 [REFERENCE_FINDINGS.md](docs/REFERENCE_FINDINGS.md)。
-
-## 在本机运行
-
-要求 Node.js 20.19+ 或 22.12+（当前已使用 22.19 验证）、npm、Git。
+当前工作区已生成生产包，可运行：
 
 ```powershell
-cd C:\Users\10722\Documents\Codex\2026-09-09\git\project-strike
-npm ci
-npm run dev
+npm run play
 ```
 
-打开终端给出的地址，默认为 http://127.0.0.1:5173 。依赖已在本机安装，当前可直接执行 `npm run dev`。只监听本机地址。
+打开 http://127.0.0.1:4175/ 。关闭命令窗口或Ctrl+C停止。需要本机已有Node.js 20+，无需联网或运行老游戏。注册本机账号可保存成长；临时试玩不保存。账号仅限当前浏览器使用，没有云同步。
+
+可复制的离线包位于 `artifacts/project-strike-local/`，Windows双击其中的 `PLAY.cmd` 后打开上述地址。这个目录包含生产资源、本地服务脚本和第三方许可，不需要项目源代码或 `node_modules`。更换浏览器、主机名或端口会使用另一份本地进度。
+
+开发运行使用 `npm run dev`；重新生成离线包使用 `npm run package:game`。首次开发安装需 `npm ci`。不要直接双击HTML：浏览器需要本地HTTP服务加载模块。
+
+## 关卡
+
+| 关卡 | 模式 | 目标 |
+| --- | --- | --- |
+| 失联信号 · 沿岸研究站 | 1对1团队交火 | 先获4次击杀 |
+| 炉心回声 · 废弃铸造厂 | 2对2团队交火 | 先获8次击杀 |
+| 静默频段 · 山顶中继站 | 2对2据点争夺 | 先获35控制分 |
+| 破晓行动 · 撤离平台 | 3对3团队交火 | 先获12次击杀 |
+
+击杀模式计算全队分数；据点模式仅在无敌人争夺时每秒加1分。时限到达时领先者获胜，平局判任务未完成。阵亡可复活，失败可重试或回地图调整难度。三档难度改变AI反应和瞄准误差，不暗改伤害。
 
 | 操作 | 输入 |
 | --- | --- |
-| 左右移动 | A / D 或 ← / → |
-| 跳跃 | W / ↑ / Space |
-| 瞄准朝向与射击 | 鼠标 |
-| 穿透单向平台 | S / ↓ |
-| 重置当前测试站，清空速度/输入 | R |
-| 切换四个测试站 | 1 / 2 / 3 / 4 |
-| 暂停 / 继续 | P |
-| 暂停并前进一步，1/120 秒 | . |
-| 0.25 倍慢速 | T |
-| 碰撞体、速度、台阶辅助范围、瞄准线、HUD | H |
+| 移动 / 跳跃 / 蹲伏 | A/D或左右方向键 / W、↑、Space / S、↓ |
+| 瞄准 / 射击 | 鼠标 / 左键或F |
+| 切枪 / 换弹 | Q / R或L |
+| 职业技能 / 战术道具 | E / G |
+| 暂停和恢复 | Esc或P |
 
-F 开火，Q 切换 USP/M4，按住 F 时 M4 自动连射，L 换弹。右侧滑块实时调参。完成起跳和落地后，底部显示高度、顶点时间、总滞空和水平距离；可以导出 JSON。失去窗口焦点清空输入，掉入缺口自动重置。平台只允许从上方落脚；地形中的 28 px 台阶超过默认辅助高度，需要跳跃。
+青色为友军、橙色为敌军，玩家服装颜色随职业变化。出生保护约2.5秒，死亡后约5秒复活。两把枪弹药独立；回出生区补给箱可补备用弹药，每10秒一次。若复活时一直按着射击，先松开再按。胜负结算自动保存奖励，胜利解锁后续关卡；切换职业不会丢失原职业成长。道具每次出战2份，复活不补充。
 
-## 原版研究
+## 训练与验证
 
-本机可直接运行 `npm run archaeology -- --require-reference`。新环境依次运行 `npm run archaeology:acquire`、`npm run archaeology:setup`、`npm run archaeology`，分别获取固定哈希的参考文件、校验安装官方便携工具、提取并索引。日常导出保留每个 sprite 首帧，`--full-sprites` 可请求全动画帧。完整说明见 [ARCHAEOLOGY.md](docs/ARCHAEOLOGY.md)。
-
-生成物位于 gitignored 的 `archaeology/exported/` 和 `archaeology/local/`。人工审核事实存于 [证据库](archaeology/reverse_engineering_db.json)，区分原版 `EXTRACTED`、单位换算 `INFERRED` 与实验配置 `TUNED`。不将反编译输出作为生产源代码。
-
-## 验证与构建
+`?rules=original`为30Hz基础训练场，`?rules=lab`为旧120Hz调参实验室。训练场R仍为重置，战役R为换弹；实验功能不参与战役胜负。
 
 ```powershell
 npm run check
-npx playwright install chromium
 npm run test:gameplay
-npm run preview
+npm run package:game
+npm run test:offline
 ```
 
-`check` 执行证据校验、研究资产隔离检查、规则单测、TypeScript 检查和生产构建。浏览器测试覆盖真实 Phaser Arcade 跳跃、台阶、单向平台、缺口复位、键盘操作及固定步长行为。生产包在 `dist/`，`preview` 默认 http://127.0.0.1:4173 。通过 HTTP 提供运行，不直接双击 HTML。
+本轮133个单元测试、25个游戏浏览器用例、3个生产离线包用例全部通过。覆盖账号、养成、全部职业技能/枪械/道具、原有四关战役和训练场。详情见 [账号与养成验收](docs/CAREER_ACCEPTANCE.md)；之前的战役交付记录见 [完整游戏流程验收](docs/CAMPAIGN_ACCEPTANCE.md)。
 
-## 结构与后续
+## 范围与参考
 
-- `src/game/config`：类型化运动参数和测试场几何。
-- `src/game/scenes`：BootScene 和 MovementLabScene，仅两场景。
-- `src/game/characters`、`movement`、`debug`：组合式士兵、移动/台阶规则与测量。
-- `tools/archaeology`、`archaeology`：研究工具、证据和私有输入接口。
-- `tools/measurements`：原版人工测量模板。
-- `docs`：架构、证据边界、调参和验收状态。
+这是有开头和结局的四关短篇，采用原创简易矢量士兵、工业场景与合成音效。任务结构参考SFH1单人任务中的小队交火、据点、得分和复活玩法；剧情、地图、AI和目标分数属于本项目设计，没有声称还原原作全部关卡、职业、武器或影片。个人对手感的评价仍可用于后续调参。
 
-详细状态见 [ACCEPTANCE.md](docs/ACCEPTANCE.md)，重要取舍见 [DECISIONS.md](docs/DECISIONS.md)。Phase 2 第一切片及增量已有验收记录；下一阶段见 [Phase 3 原版 SWF 驱动的移动与战斗复刻](docs/PHASE_3_COMBAT_SANDBOX.md)：以本地 SFH1 v1.2.1 反编译脚本、P-code 核对及原版运行观测建立行为基线，再修正实验实现。原版对照是阶段验收门槛，不能只凭实验室测试通过宣称复刻完成。阶段名称尚待与原始开发计划核对。没有创建远端仓库或上传研究资料。
+本轮按需查看已有 `Stats_Classes.as`、`Stats_Skills.as`、`Stats_Guns.as` 静态资料，没有启动老游戏或逐帧分析，没有复制原作素材进入产品。基础机制沿用已有参考实现；新技能和成长节奏为项目设计。既有63条证据分类保持不变，特别必要的老游戏运行分析仍先询问用户。

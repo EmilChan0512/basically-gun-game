@@ -20,7 +20,7 @@ async function fireOne(page: Page) {
 }
 
 test('pointer and keyboard hit the displayed body/head rectangles with fractional head damage', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/?rules=lab');
   await page.waitForFunction(() => window.__strike?.soldier.grounded);
   await aimAtWorld(page, { x: 700, y: 560 });
   await fireOne(page);
@@ -43,7 +43,7 @@ test('pointer and keyboard hit the displayed body/head rectangles with fractiona
 });
 
 test('a shot towards a target beyond the extracted maximum range spends ammo and reports a sampled miss', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/?rules=lab');
   await page.waitForFunction(() => window.__strike?.soldier.grounded);
   await page.evaluate(() => { window.__strike!.gunLab.targetPoint.x = 1100; });
   await aimAtWorld(page, { x: 1000, y: 540 });

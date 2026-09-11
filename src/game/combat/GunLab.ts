@@ -1,9 +1,9 @@
-import { M4, GunController, applyDamage, respawn, USP, type Combatant, type DamageEvent, type WeaponConfig, type WeaponId, type ShotClock } from './Combat';
+import { M4, GunController, applyDamage, respawn, USP, type Combatant, type DamageEvent, type WeaponConfig, type LabWeaponId, type WeaponId, type ShotClock } from './Combat';
 import { traceBulletLine, unitHitRects, type BulletTrace, type Point, type RandomSource, type UnitHitbox } from './Ballistics';
 import { Recoil, type ShootingPose } from './Recoil';
 export class GunLab {
   private readonly shotClock: ShotClock = { remainingFrames: 0, phaseMs: 0 };
-  private readonly guns: Record<WeaponId, GunController>;
+  private readonly guns: Record<LabWeaponId, GunController>;
   private triggerHeld = false;
   private shotPressed = false;
   combatFrame = 0;
@@ -26,6 +26,7 @@ export class GunLab {
     if (!held) this.shotPressed = false;
   }
   select(id: WeaponId) {
+    if (id !== 'usp' && id !== 'm4') throw new RangeError('Weapon is not available in this laboratory');
     if (id === this.weapon.id) return;
     this.gun.cancelReload();
     this.gun = this.guns[id];

@@ -10,6 +10,8 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
+    "play": "node tools/serve-game.mjs",
+    "package:game": "npm run build && node tools/package-game.mjs",
     "archaeology": "tsx tools/archaeology/cli.ts pipeline",
     "archaeology:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/archaeology/setup.ps1",
     "archaeology:acquire": "tsx tools/archaeology/acquire.ts",
@@ -19,6 +21,7 @@
     "reference": "tsx tools/archaeology/cli.ts reference",
     "test": "vitest run",
     "test:gameplay": "playwright test",
+    "test:offline": "playwright test --config playwright.production.config.ts",
     "check": "npm run archaeology:validate && npm run hygiene && npm run test && npm run build",
     "hygiene": "tsx tools/archaeology/hygiene.ts"
   },

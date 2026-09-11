@@ -28,6 +28,8 @@ export class OriginalSandbox {
   private held = false;
   aim: Point = { x: 380, y: 550 };
   aimDirection: Point = { x: 1, y: 0 };
+  /** Product feedback uses simulation frames so pause and slow motion remain coherent. */
+  feedback: { frame: number; amount: number; head: boolean; killed: boolean } | null = null;
   constructor(private readonly random: RandomSource = Math.random) {
     this.guns = this.makeGuns();
     this.targetLife.spawnProtectionFrames = 0;
@@ -87,7 +89,11 @@ export class OriginalSandbox {
       const shots = this.guns.shotsFired;
       this.guns.tick(COMBAT_FRAME_MS, this.frame * COMBAT_FRAME_MS, origin, shotAim, () => { this.life.tick(); });
       if (this.guns.shotsFired !== shots && this.guns.lastEvent) {
-        this.targetLife.damage(this.guns.lastEvent.amount);
+        const killed = this.targetLife.damage(this.guns.lastEvent.amount);
+        if (this.guns.lastEvent.amount > 0) this.feedback = {
+          frame: this.frame, amount: this.guns.lastEvent.amount,
+          head: !!this.guns.lastShot?.headMarked, killed,
+        };
         this.guns.target.respawnAtMs = null;
       }
       this.movement.tick(input);
@@ -95,7 +101,8 @@ export class OriginalSandbox {
       const dy = this.aim.y - (this.movement.y - (this.movement.crouching ? 28 : 42));
       const distance = Math.hypot(dx, dy) || 1;
       this.aimDirection = { x: dx / distance, y: dy / distance };
-      if (this.movement.x < 0 || this.movement.y < 0 || this.movement.x > 2880 || this.movement.y > 2880) this.lethalFixture();
+      // Our graybox ends at 2400 × 760; do not leave the player falling offscreen for seconds.
+      if (this.movement.x < 0 || this.movement.x > 2400 || this.movement.y > 840) this.lethalFixture();
     }
     this.targetLife.tick();
     this.guns.target.health = this.targetLife.health;
@@ -105,6 +112,7 @@ export class OriginalSandbox {
     return { frame: this.frame, time: this.frame / 30, x: this.movement.x, y: this.movement.y,
       vx: this.movement.vx, vy: this.movement.vy, jumping: this.movement.jumping, crouching: this.movement.crouching,
       climb: this.movement.climb, life: this.life.snapshot(), target: this.targetLife.snapshot(),
-      combat: this.guns.snapshot(), recoil: { dynamic: this.guns.recoil.dynamic, upper: this.guns.recoil.upper, spread: this.guns.lastSpreadDegrees } };
+      combat: this.guns.snapshot(), kills: this.targetLife.deaths, feedback: this.feedback,
+      recoil: { dynamic: this.guns.recoil.dynamic, upper: this.guns.recoil.upper, spread: this.guns.lastSpreadDegrees } };
   }
 }
