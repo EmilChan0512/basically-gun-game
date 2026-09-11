@@ -3,6 +3,9 @@ import { test, expect } from '@playwright/test';
 import { startServer } from '../../server/server';
 
 test('two isolated browsers create, join, ready, start and independently switch weapons', async ({ browser }) => {
+  // Three software-rendered clients, authentication and two complete rounds
+  // exceed the default 30s budget on the CI runner; assertions keep their own timeouts.
+  test.setTimeout(60000);
   const server = startServer(0);
   await new Promise<void>(resolve => server.wss.once('listening', resolve));
   const address = server.wss.address(); if (!address || typeof address === 'string') throw Error('No port');
@@ -68,5 +71,5 @@ test('two isolated browsers create, join, ready, start and independently switch 
     expect([...server.wss.clients].every(socket => socket.extensions.includes('permessage-deflate'))).toBe(true);
     await pages[1].screenshot({ path: 'artifacts/qa/online-two-clients.png' });
     expect(errors).toEqual([]);
-  } finally { await Promise.all(contexts.map(c => c.close())); await server.close(); }
+  } finally { await Promise.allSettled(contexts.map(c => c.close())); await server.close(); }
 });
