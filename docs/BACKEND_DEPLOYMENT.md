@@ -14,7 +14,7 @@
 
 ## SSH 可用后的一次性初始化
 
-以下假设服务器运行 Ubuntu/Debian 类 Linux + systemd；拿到 SSH 后先确认系统。当前不要直接在 Windows 执行这些 Linux 命令。
+以下假设服务器运行 Ubuntu/Debian 类 Linux + systemd 245 以上（如 Ubuntu 22.04/24.04）；日志隔离使用 LogNamespace，拿到 SSH 后先确认系统。当前不要直接在 Windows 执行这些 Linux 命令。
 
 1. 在服务器安装 Node.js 22 LTS（至少 22.12），确保系统级 `/usr/bin/node` 可用，不使用仅登录用户可见的 nvm 路径。还需要 bash、sudo、tar、coreutils 和 util-linux（flock）。
 2. 把仓库 `deploy/` 目录传到服务器，管理员执行 `sudo bash deploy/install.sh`。该脚本创建隔离的运行用户 `strike` 和部署用户 `strike-deploy`，安装服务及有限的 sudo 权限，仅允许部署用户 restart/stop 此服务。首次部署前服务尚未启动。
@@ -48,11 +48,13 @@
 
 ```bash
 sudo systemctl status project-strike.service
-sudo journalctl -u project-strike.service -n 100 --no-pager
+sudo journalctl --namespace=project-strike -u project-strike.service -n 100 -o cat --no-pager
 cat /opt/project-strike/current/REVISION
 node /opt/project-strike/current/probe.mjs
 ```
 
 部署后的本机探测不代表公网防火墙已连通；第一次发布后还需从玩家设备完成建房、加入和开局验收。
+
+日志格式、筛选命令、级别与保留策略见 [服务端日志](SERVER_LOGGING.md)。初始化会安装独立 journal 配置；以后修改 service 或日志保留配置，需要管理员重新运行初始化脚本并重启游戏服务，普通 CI 发布仅替换应用包。
 
 手动回退优先在 Git 中 revert 问题改动后推送 main，让 CI 发布修复后的最新提交。需要立即恢复时，先关闭 `DEPLOY_ENABLED`，待正在执行的部署结束，管理员把 `current` 切到已验证的旧 release，重启并探测；同时切换对应客户端。保留当前和准备回退的发布目录。

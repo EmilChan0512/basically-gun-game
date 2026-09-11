@@ -2,6 +2,8 @@
 # One-time setup; run as root on a Linux systemd host after installing Node 22.
 set -euo pipefail
 [[ $EUID -eq 0 ]] || { echo 'Run with sudo.' >&2; exit 1; }
+systemd_version=$(systemctl --version | head -n 1 | cut -d ' ' -f 2)
+[[ "$systemd_version" =~ ^[0-9]+$ && "$systemd_version" -ge 245 ]] || { echo 'systemd 245+ is required for isolated persistent logs.' >&2; exit 1; }
 /usr/bin/node -e 'const [major, minor] = process.versions.node.split(".").map(Number); if (major < 22 || (major === 22 && minor < 12)) process.exit(1)'
 command -v flock >/dev/null
 command -v sudo >/dev/null
@@ -11,6 +13,8 @@ install -d -o strike-deploy -g strike-deploy -m 755 /opt/project-strike /opt/pro
 install -d -o strike-deploy -g strike-deploy -m 700 /home/strike-deploy/.ssh
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 install -o root -g root -m 644 "$script_dir/project-strike.service" /etc/systemd/system/project-strike.service
+install -d -o root -g root -m 755 /etc/systemd/journald@project-strike.conf.d
+install -o root -g root -m 644 "$script_dir/journald.conf" /etc/systemd/journald@project-strike.conf.d/retention.conf
 systemctl_path=$(command -v systemctl)
 sudoers=$(mktemp)
 trap 'rm -f "$sudoers"' EXIT
@@ -18,5 +22,6 @@ printf 'strike-deploy ALL=(root) NOPASSWD: %s restart project-strike.service, %s
 visudo -cf "$sudoers"
 install -o root -g root -m 440 "$sudoers" /etc/sudoers.d/project-strike
 systemctl daemon-reload
+systemctl try-restart systemd-journald@project-strike.service
 systemctl enable project-strike.service
 echo 'Setup complete. Add the deployment public key to /home/strike-deploy/.ssh/authorized_keys (owner strike-deploy, mode 600). First deployment starts the service.'

@@ -13,6 +13,8 @@ ExecStart=/usr/bin/node /opt/project-strike/current/server.cjs
 Environment=NODE_ENV=production
 Environment=HOST=0.0.0.0
 Environment=PORT=4180
+Environment=LOG_LEVEL=info
+Environment=LOG_METRICS_INTERVAL_MS=60000
 Restart=always
 RestartSec=3
 TimeoutStopSec=15
@@ -23,6 +25,8 @@ ProtectHome=true
 UMask=0027
 StandardOutput=journal
 StandardError=journal
+SyslogIdentifier=project-strike
+LogNamespace=project-strike
 
 [Install]
 WantedBy=multi-user.target

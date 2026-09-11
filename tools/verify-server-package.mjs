@@ -12,7 +12,7 @@ if (!serverManifest.contentVersion || serverManifest.contentVersion !== clientMa
 if (createHash('sha256').update(readFileSync('artifacts/project-strike-server/server.cjs')).digest('hex') !== serverManifest.sha256) throw Error('Server bundle checksum mismatch');
 copyFileSync('artifacts/project-strike-server/server.cjs', join(temporary, 'server.cjs'));
 const child = spawn(process.execPath, ['server.cjs'], { cwd: temporary,
-  env: { ...process.env, PORT: '0', HOST: '127.0.0.1', NODE_PATH: '' }, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+  env: { ...process.env, PORT: '0', HOST: '127.0.0.1', NODE_PATH: '', LOG_LEVEL: 'info' }, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
 let output = '', errors = '', socket;
 child.stdout.on('data', data => output += data); child.stderr.on('data', data => errors += data);
 const wait = async predicate => {
@@ -21,6 +21,11 @@ const wait = async predicate => {
 };
 try {
   await wait(() => /ws:\/\/127\.0\.0\.1:\d+/.test(output));
+  const failure = spawnSync(process.execPath, ['server.cjs'], { cwd: temporary,
+    env: { ...process.env, PORT: '-1', LOG_LEVEL: 'info' }, encoding: 'utf8', windowsHide: true, timeout: 8000 });
+  if (failure.status !== 1 || !failure.stdout.trim().split('\n').some(line => JSON.parse(line).event === 'process.fatal')) {
+    throw Error('Invalid startup did not produce fatal JSON log and exit 1');
+  }
   socket = new WebSocket(output.match(/ws:\/\/127\.0\.0\.1:\d+/)[0]);
   const messages = []; socket.on('message', raw => messages.push(JSON.parse(raw.toString())));
   await wait(() => messages.some(m => m.type === 'welcome'));
@@ -47,9 +52,14 @@ try {
   await wait(() => messages.some(m => m.type === 'state' && m.ack === 0 && m.state.actors.find(a => a.id === m.actorId)?.offhand?.deployed));
   const rejected = messages.filter(m => m.type === 'error' || m.type === 'rejected');
   if (rejected.length || errors) throw Error(JSON.stringify({ rejected, errors }));
+  const runtimeLogs = output.trim().split('\n').map(line => JSON.parse(line));
+  for (const event of ['server.started', 'client.connected', 'room.created', 'match.started']) {
+    if (!runtimeLogs.some(record => record.event === event && record.contentVersion === serverManifest.contentVersion)) throw Error(`Missing runtime log: ${event}`);
+  }
+  if (output.includes('Package QA') || messages.some(m => m.type === 'credential' && output.includes(m.token))) throw Error('Sensitive data in runtime log');
   const report = { date: new Date().toISOString(), contentVersion: welcome.content, isolatedDirectory: temporary,
     bundle: resolve('artifacts/project-strike-server/server.cjs'), passed: true,
-    checks: ['client/server/runtime content identity', 'server bundle SHA256', 'isolated bundle startup', 'deployment welcome probe', 'deployment content mismatch rejection', 'create room', 'coop setup', 'AK47/shield loadout', 'start', 'input acknowledgement', 'deployed shield snapshot'] };
+    checks: ['client/server/runtime content identity', 'server bundle SHA256', 'isolated bundle startup', 'deployment welcome probe', 'deployment content mismatch rejection', 'structured runtime logs', 'fatal startup log and nonzero exit', 'log privacy', 'create room', 'coop setup', 'AK47/shield loadout', 'start', 'input acknowledgement', 'deployed shield snapshot'] };
   mkdirSync('artifacts/qa', { recursive: true });
   writeFileSync('artifacts/qa/server-package.json', JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report));
