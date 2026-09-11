@@ -62,3 +62,25 @@ it('returns to lobby and starts a new round with fresh input state', () => {
   expect(room.session!.battle.mission.mode).toBe('dom');
   expect(room.session!.nextSequence('a')).toBe(0);
 });
+
+it('public debug room starts solo, admits live players, never ends and reuses expired seats', () => {
+  const room = new Room('debug', 'hijack', 'tdm', true);
+  room.join('a', 'Solo');
+  expect(room.lobby()).toMatchObject({ debug: true, phase: 'playing' });
+  const session = room.session!;
+  expect(room.command('a', { sequence: 0, input: idleInput(), actions: ['swap'] })).toBe(true);
+  session.tick(); expect(session.battle.player.arsenal.selected).toBe('usp');
+  session.battle.frame = 100000; session.battle.scores[0] = 10000;
+  session.tick(); expect(session.battle.result).toBeNull();
+  for (let i = 0; i < 12; i++) {
+    const id = `guest${i}`; room.join(id, id);
+    expect(room.players.get(id)?.spectator).toBe(false);
+    expect(session.actorId(id)).toBe(id);
+    room.disconnect(id); room.expire(id);
+    expect(session.actorId(id)).toBeNull();
+    expect(session.battle.result).toBeNull();
+  }
+  room.disconnect('a'); room.expire('a');
+  expect(room.players.size).toBe(0); expect(room.session).toBeNull();
+  room.join('new', 'New'); expect(room.session?.actorId('new')).toBe('new');
+});

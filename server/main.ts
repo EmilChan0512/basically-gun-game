@@ -21,7 +21,7 @@ const port = Number(process.env.PORT ?? 4180), host = process.env.HOST ?? '127.0
 if (!Number.isInteger(port) || port < 0 || port > 65535) throw Error('PORT must be an integer from 0 to 65535');
 const metricsIntervalMs = Number(process.env.LOG_METRICS_INTERVAL_MS ?? 60000);
 if (!Number.isInteger(metricsIntervalMs) || metricsIntervalMs < 1000) throw Error('LOG_METRICS_INTERVAL_MS must be an integer >= 1000');
-const server = startServer(port, host, 30000, logger, metricsIntervalMs);
+const server = startServer(port, host, 30000, logger, metricsIntervalMs, true);
 server.wss.on('error', error => {
   logger.log('error', 'server.listen_error', { errorType: error.name, message: error.message, code: (error as NodeJS.ErrnoException).code });
   process.exit(1);

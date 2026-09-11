@@ -149,6 +149,11 @@ export class Battle {
     this.phase = winner === 1 ? 'won' : 'lost'; this.reason = reason;
     this.journal.emit({ tick: this.frame, kind: 'result' }); this.releaseInput();
   }
+  /** Server-owned public debug room admission; IDs come from authenticated connections. */
+  addDebugPlayer(id: string, name: string, team: 1 | 2) {
+    if (!this.mission.debug || this.actors.some(a => a.id === id)) throw Error('Invalid debug admission');
+    this.addActor(id, name, team, true, this.actors.filter(a => a.team === team).length);
+  }
   private addActor(id: string, name: string, team: 1 | 2, human: boolean, index: number, location?: Point) {
     const spawn = location ?? this.mission.spawns[team - 1][index % this.mission.spawns[team - 1].length];
     const movement = new OriginalMovement(this.wall); movement.reset(spawn.x, spawn.y);
@@ -204,6 +209,7 @@ export class Battle {
     actor.itemCharges--; actor.itemCooldown = 30;
     this.say(`${ITEMS[item].name}已使用`); return true;
   }
+  forgetActorInput(id: string) { this.jumpHeld.delete(id); }
   releaseInput() { for (const actor of this.actors) { actor.arsenal.setTrigger(false); actor.offhand?.releaseTrigger(); } this.jumpHeld.clear(); }
   private hitboxes(): HistoricalHitbox[] {
     return this.actors.map(a => ({ id: a.id, team: a.team, position: { x: a.movement.x, y: a.movement.y }, alive: a.life.alive,

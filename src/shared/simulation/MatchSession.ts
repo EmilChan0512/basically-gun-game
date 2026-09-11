@@ -63,6 +63,7 @@ export class MatchSession {
     controller.input = { ...idleInput(), aim: { ...controller.input.aim } };
     this.battle.actors.find(a => a.id === controller.actorId)?.arsenal.setTrigger(false);
   }
+  unbind(playerId: string) { this.controllers.delete(playerId); }
   acknowledgements() { return Object.fromEntries([...this.controllers].map(([id, c]) => [id, c.processed])); }
   actorId(playerId: string) { return this.controllers.get(playerId)?.actorId ?? null; }
   nextSequence(playerId: string) { return (this.controllers.get(playerId)?.received ?? -1) + 1; }

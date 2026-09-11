@@ -11,18 +11,19 @@ import { RevealPolicy } from '../src/shared/simulation/RevealPolicy';
 import { visibleState } from '../src/shared/protocol/VisibleState';
 import type { MatchSession } from '../src/shared/simulation/MatchSession';
 
-export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000, logger: Logger = silentLogger, metricsIntervalMs = 60000) {
+export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000, logger: Logger = silentLogger, metricsIntervalMs = 60000, enableDebugRoom = false) {
   const wss = new WebSocketServer({ port, host, maxPayload: 8192,
     perMessageDeflate: { threshold: 1024, serverNoContextTakeover: true, clientNoContextTakeover: true,
       concurrencyLimit: 4, zlibDeflateOptions: { level: 3 } } });
   const rooms = new Map<string, Room>();
+  if (enableDebugRoom) { rooms.set('debug', new Room('debug', 'hijack', 'tdm', true)); logger.log('info', 'room.debug_created', { roomId: 'debug' }); }
   const endedSessions = new WeakSet<MatchSession>();
   const counters = { connections: 0, disconnections: 0, requestErrors: 0, rejectedCommands: 0, skippedSends: 0 };
   let lastMetrics = performance.now();
   const roomFields = (room: Room) => ({ roomId: room.id, round: room.round, mapId: room.mapId, mode: room.mode });
   const removeRoom = (id: string) => {
     const room = rooms.get(id);
-    if (room) { rooms.delete(id); logger.log('info', 'room.closed', roomFields(room)); }
+    if (room && !room.debug) { rooms.delete(id); logger.log('info', 'room.closed', roomFields(room)); }
   };
   const timings: number[] = [];
   const revealPolicies = new WeakMap<MatchSession, RevealPolicy>();
@@ -66,10 +67,10 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
           entry.expires = Infinity;
           logger.log('info', 'client.resumed', { connectionId: client.connectionId, playerId: client.id, ...roomFields(entry.room) });
           send(socket, { type: 'resumed', playerId: client.id, nextSequence: entry.room.session!.nextSequence(client.id) }); lobby(entry.room);
-        } else if (message.type === 'create' || message.type === 'join') {
+        } else if (message.type === 'create' || message.type === 'join' || message.type === 'joinDebug') {
           if (client.room) throw Error('Already in room');
           if (typeof message.name !== 'string') throw Error('Name required');
-          const code = message.type === 'create' ? randomBytes(4).toString('hex') : message.code;
+          const code = message.type === 'create' ? randomBytes(4).toString('hex') : message.type === 'joinDebug' ? 'debug' : message.code;
           if (typeof code !== 'string') throw Error('Room code required');
           const room = message.type === 'create' ? new Room(code) : rooms.get(code);
           if (!room) throw Error('Room not found');

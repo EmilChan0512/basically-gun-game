@@ -7,7 +7,7 @@ export type { Terrain, Waypoint } from '../../shared/content/MapTypes';
 export interface Mission extends MapGeometry {
   scenario?: PvEScenario;
   id: string; title: string; location: string; brief: string; debrief: string;
-  mode: import('../../shared/simulation/ModeRules').ModeId; goal: number; seconds: number; allies: number; enemies: number;
+  mode: import('../../shared/simulation/ModeRules').ModeId; goal: number; seconds: number; debug?: boolean; allies: number; enemies: number;
 }
 const geometry = (id: string) => structuredClone(MAPS.find(map => map.id === id)!.geometry);
 

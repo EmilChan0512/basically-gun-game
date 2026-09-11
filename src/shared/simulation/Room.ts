@@ -12,13 +12,24 @@ export class Room {
   session: MatchSession | null = null;
   hostId: string | null = null;
   round = 0;
-  constructor(readonly id: string, public mapId = 'hijack', public mode: import('./ModeRules').ModeId = 'tdm') {}
+  constructor(readonly id: string, public mapId = 'hijack', public mode: import('./ModeRules').ModeId = 'tdm', readonly debug = false) {}
   join(id: string, name: string) {
     if (this.players.size >= 8) throw Error('Room is full');
     if (this.players.has(id) || !id || !name.trim() || name.length > 24) throw Error('Invalid player');
     const count = (team: number) => [...this.players.values()].filter(p => p.team === team).length;
     this.players.set(id, { id, name: name.trim(), team: this.mode === 'coop' || count(1) <= count(2) ? 1 : 2, ready: false, connected: true, spectator: !!this.session, equipment: { primary: 'm4', secondary: 'usp' } });
     this.hostId ??= id;
+    if (this.debug) {
+      if (!this.session) {
+        const battle = new Battle({ ...customMatch(this.mapId, this.mode), debug: true, allies: 0, enemies: 0 }, 'normal', 'm4', seededRandom(1), null, `${this.id}:${++this.round}`);
+        battle.actors = [];
+        this.session = new MatchSession(battle);
+      }
+      const player = this.players.get(id)!;
+      player.spectator = false;
+      this.session.battle.addDebugPlayer(id, player.name, player.team);
+      this.session.bind(id, id);
+    }
   }
   configure(id: string, mapId: string, mode: import('./ModeRules').ModeId) {
     if (id !== this.hostId || this.session) throw Error('Only lobby host can configure');
@@ -61,21 +72,23 @@ export class Room {
   expire(id: string) {
     const player = this.players.get(id); if (!player || player.connected) return;
     const actorId = this.session?.actorId(id);
-    if (actorId) this.session?.battle.releaseObjective(actorId);
+    if (actorId) { this.session?.battle.releaseObjective(actorId); this.session?.battle.forgetActorInput(actorId); }
     if (this.session) {
       this.session.battle.actors = this.session.battle.actors.filter(a => a.id !== actorId);
       this.session.battle.grenades = this.session.battle.grenades.filter(g => g.source.id !== actorId);
     }
+    this.session?.unbind(id);
     this.players.delete(id);
+    if (this.debug && !this.players.size) this.session = null;
     if (this.hostId === id) this.hostId = this.players.keys().next().value ?? null;
     const teams = new Set([...this.players.values()].filter(p => !p.spectator).map(p => p.team));
-    if (this.session && this.mode !== 'coop' && teams.size < 2) this.session.battle.endMatch(teams.size ? [...teams][0] : null, '对方队伍已全部离场');
-    if (this.session && this.mode === 'coop' && !teams.size) this.session.battle.endMatch(2, '合作队伍已全部离场');
+    if (!this.debug && this.session && this.mode !== 'coop' && teams.size < 2) this.session.battle.endMatch(teams.size ? [...teams][0] : null, '对方队伍已全部离场');
+    if (!this.debug && this.session && this.mode === 'coop' && !teams.size) this.session.battle.endMatch(2, '合作队伍已全部离场');
   }
   returnToLobby(id: string) {
     if (id !== this.hostId || !this.session?.battle.result) throw Error('Only host can return after match');
     for (const [key, player] of this.players) { if (!player.connected) this.players.delete(key); else { player.ready = false; player.spectator = false; } }
     this.session = null;
   }
-  lobby() { return { id: this.id, instanceId: this.instanceId, round: this.round, hostId: this.hostId, mapId: this.mapId, mode: this.mode, phase: this.session ? 'playing' : 'lobby', players: [...this.players.values()].map(p => ({ ...p, equipment: { ...p.equipment } })) }; }
+  lobby() { return { id: this.id, debug: this.debug, instanceId: this.instanceId, round: this.round, hostId: this.hostId, mapId: this.mapId, mode: this.mode, phase: this.session ? 'playing' : 'lobby', players: [...this.players.values()].map(p => ({ ...p, equipment: { ...p.equipment } })) }; }
 }

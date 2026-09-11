@@ -22,7 +22,7 @@ function equipmentText(actor: { weapon: string; ammo: number; reserve: number; o
 }
 
 export function startOnline() {
-  document.body.innerHTML = `<main style="max-width:1120px;margin:24px auto"><h1>联机对战</h1><a href="/">返回单人游戏</a><div class="loadout"><label>服务器<input id="server" value="ws://43.142.165.82:4180"></label><label>昵称<input id="name" value="玩家" maxlength="24"></label><label>房间码<input id="code"></label><button id="create">创建房间</button><button id="join">加入房间</button><button id="reconnect">断线重连</button></div><p id="status">连接服务器后可创建或加入房间。</p><div id="lobby"></div><p id="online-hud" aria-live="off"></p><div id="online-game"></div><p>A/D移动 · 空格跳跃 · S蹲伏 · 鼠标射击 · Q切枪 · R换弹</p></main>`;
+  document.body.innerHTML = `<main style="max-width:1120px;margin:24px auto"><h1>联机对战</h1><a href="/">返回单人游戏</a><div class="loadout"><label>服务器<input id="server" value="ws://43.142.165.82:4180"></label><label>昵称<input id="name" value="玩家" maxlength="24"></label><label>房间码<input id="code"></label><button id="join-debug">加入公共调试房间</button><button id="create">创建房间</button><button id="join">加入房间</button><button id="reconnect">断线重连</button></div><p id="status">连接服务器后可创建或加入房间。</p><div id="lobby"></div><p id="online-hud" aria-live="off"></p><div id="online-game"></div><p>A/D移动 · 空格跳跃 · S蹲伏 · 鼠标射击 · Q切枪 · R换弹</p></main>`;
   const el = (id: string) => document.getElementById(id)!;
   el('online-game').style.position = 'relative';
   const radar = document.createElement('div'); radar.id = 'online-radar'; radar.hidden = true;
@@ -43,7 +43,7 @@ export function startOnline() {
   };
   renderHistory();
   let network: NetworkSession | undefined, game: Phaser.Game | undefined;
-  const connect = (create: boolean) => {
+  const connect = (action: 'create' | 'join' | 'joinDebug') => {
     network?.close(); game?.destroy(true); game = undefined;
     try { network = new NetworkSession((el('server') as HTMLInputElement).value); }
     catch { el('status').textContent = '服务器地址无效'; return; }
@@ -56,12 +56,12 @@ export function startOnline() {
       radar.hidden = !current.state;
       if (current.state) radar.innerHTML = radarSvg(MAPS.find(m => m.id === current.state!.mapId)!.geometry,
         current.state, room.players.find(p => p.id === current.playerId)?.team ?? 1);
-      if (current.socket.readyState === WebSocket.OPEN) el('status').textContent = `房间码 ${room.id} · ${room.players.length}/8`;
+      if (current.socket.readyState === WebSocket.OPEN) el('status').textContent = `${room.debug ? '公共调试房间 · 无时限' : `房间码 ${room.id}`} · ${room.players.length}/8`;
       if (room.phase === 'lobby' && game) { game.destroy(true); game = undefined; el('online-hud').textContent = ''; }
       const key = JSON.stringify(room);
       if (key !== signature) {
         signature = key;
-        el('status').textContent = `房间码 ${room.id} · ${room.players.length}/8`;
+        el('status').textContent = `${room.debug ? '公共调试房间 · 无时限' : `房间码 ${room.id}`} · ${room.players.length}/8`;
         el('lobby').replaceChildren();
         for (const player of room.players) { const line = document.createElement('p'); line.textContent = `${player.team === 1 ? '蓝队' : '红队'} · ${player.name} · ${player.spectator ? '观战（下局参战）' : player.ready ? '已准备' : '未准备'}`; el('lobby').append(line); }
         if (room.phase === 'lobby') {
@@ -127,10 +127,11 @@ export function startOnline() {
         }
       }
     };
-    current.send({ type: create ? 'create' : 'join', code: (el('code') as HTMLInputElement).value.trim(), name: (el('name') as HTMLInputElement).value });
+    current.send({ type: action, code: (el('code') as HTMLInputElement).value.trim(), name: (el('name') as HTMLInputElement).value });
   };
+  el('join-debug').onclick = () => connect('joinDebug');
   el('reconnect').onclick = () => network?.reconnect();
-  el('create').onclick = () => connect(true); el('join').onclick = () => connect(false);
+  el('create').onclick = () => connect('create'); el('join').onclick = () => connect('join');
 }
 
 class OnlineScene extends Phaser.Scene {
@@ -209,7 +210,7 @@ class OnlineScene extends Phaser.Scene {
       .map(a => ({ id: a.id, ...(positions.get(a.id) ?? a) })));
     const wave = message.state.waves;
     const heading = wave ? `第${wave.wave}/${wave.scenario.waves.length}波 · 待增援${wave.remaining} · 团队复活${wave.revives} · ${wave.spawnBlocked ? '增援入口受阻，请离开入口' : wave.phase === 'intermission' ? '休整中' : '战斗中'}` : message.state.scores.join(' : ');
-    this.hud.setText(`${message.mode === 'ctf' ? '公文包 · 先交付3次获胜 · ' : ''}${heading}  |  ${message.state.seconds}s\n${self ? `HP ${Math.ceil(self.life.health)}  ${equipmentText(self)}` : `观战：${message.poses.find(p => p.id === followed?.id)?.name ?? '等待角色'} · Tab切换`}`);
+    this.hud.setText(`${message.mode === 'ctf' ? '公文包 · 先交付3次获胜 · ' : ''}${heading}  |  ${this.network.room?.debug ? '公共调试 · 无时限' : `${message.state.seconds}s`}\n${self ? `HP ${Math.ceil(self.life.health)}  ${equipmentText(self)}` : `观战：${message.poses.find(p => p.id === followed?.id)?.name ?? '等待角色'} · Tab切换`}`);
     if (now - this.network.lastStateAt > 500) this.hud.setText(this.hud.text + '\n网络停顿，等待服务器更新…');
   }
 }

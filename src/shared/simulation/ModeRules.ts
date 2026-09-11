@@ -8,7 +8,7 @@ export interface ModeActor { id?: string; team: 1 | 2; life: { alive: boolean };
 export interface ModeContext {
   frame: number; scores: [number, number]; objective: 'neutral' | 'blue' | 'red' | 'contested';
   actors: ModeActor[];
-  mission: { goal: number; seconds: number; objective: Point; mode?: ModeId; deliveryBases?: [Point, Point]; killY?: number };
+  mission: { goal: number; seconds: number; debug?: boolean; objective: Point; mode?: ModeId; deliveryBases?: [Point, Point]; killY?: number };
 }
 export interface ModeRules {
   readonly id: ModeId;
@@ -82,7 +82,7 @@ export function createMode(id: ModeRules['id'], bases?: [Point, Point]): ModeRul
   return id === 'ctf' ? new CaptureDelivery(bases) : id === 'coop' ? new Cooperative() : id === 'dom' ? new Domination() : new TeamDeathmatch();
 }
 export function resolveResult(context: ModeContext): MatchResult | null {
-  if (context.mission.mode === 'coop') return null;
+  if (context.mission.debug || context.mission.mode === 'coop') return null;
   const reached = context.scores.some(score => score >= context.mission.goal);
   if (!reached && context.frame < context.mission.seconds * 30) return null;
   const draw = context.scores[0] === context.scores[1];
