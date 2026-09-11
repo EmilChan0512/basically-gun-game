@@ -24,8 +24,16 @@ test('admin searches users, previews and saves grants, handles conflicts, revoke
     await page.getByRole('button', { name: '预览并保存修改' }).click();
     await expect(page.locator('#summary')).toContainText('金币：350 → 9999');
     expect(store.profile(account.profile.id).credits).toBe(350);
+    let resumeRefresh!: () => void;
+    const refreshGate = new Promise<void>(resolve => { resumeRefresh = resolve; });
+    await page.route('**/admin/api/users?*', async route => { await refreshGate; await route.continue(); });
     await page.getByRole('button', { name: '确认保存', exact: true }).click();
+    await expect(page.locator('#confirm')).not.toBeVisible();
+    await expect(page.locator('#review')).toBeDisabled();
+    resumeRefresh();
     await expect(page.locator('#notice')).toContainText('已保存到服务器');
+    await expect(page.locator('#review')).toBeEnabled();
+    await page.unroute('**/admin/api/users?*');
     expect(store.profile(account.profile.id).weapons).toHaveLength(54);
     expect(store.profile(account.profile.id).classes.tank.xp).toBe(7840);
     await expect(page.locator('#audit')).toContainText('管理员修改');
