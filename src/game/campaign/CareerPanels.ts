@@ -1,6 +1,6 @@
 import { Accounts } from './Accounts';
 import { CareerProgress } from './CareerProgress';
-import { CLASSES, SKILLS, WEAPONS, ITEMS, SPECIAL_OFFHANDS, loadoutStats, type ClassId, type ItemId, type SkillId, type SpecialOffhandId } from './Catalog';
+import { CLASSES, SKILLS, WEAPONS, ITEMS, SPECIAL_OFFHANDS, canEquipOffhand, loadoutStats, type ClassId, type ItemId, type SkillId, type SpecialOffhandId } from './Catalog';
 import type { WeaponId } from '../combat/Combat';
 
 export const escapeHtml = (value: string) => value.replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]!);
@@ -41,10 +41,10 @@ export function renderArmory(root: HTMLElement, progress: CareerProgress, onBack
     }).join('')}</div><h3>枪械 <small>永久解锁，全职业共享；装备仍需职业等级</small></h3><div class="weapon-grid">${(Object.keys(WEAPONS) as WeaponId[]).map(id => {
       const w = WEAPONS[id], owned = c.weapons.includes(id), equipped = l[w.slot] === id, locked = l.level < w.level;
       return `<article class="gear-card ${equipped ? 'equipped' : ''}"><div class="weapon-art"><img src="/assets/reference/${id}.png" alt="${w.name}" /></div><strong>${w.name} <small>Lv.${w.level} · ${w.slot === 'primary' ? '主武器' : '副武器'}</small></strong><p>${w.description}</p><span>伤害 ${w.config.damage}${w.pellets > 1 ? '×' + w.pellets : ''} · 弹匣 ${w.config.magazineSize} · 射程≈${w.config.rangeUnits * 10}</span><button data-weapon="${id}" ${equipped || locked || !owned && c.credits < w.price ? 'disabled' : ''}>${ownedLabel(owned, equipped, locked, w.price)}</button></article>`;
-    }).join('')}</div><h3>特殊副手 <small>替换副枪 · Q切换 · 基础装备免费</small></h3><div class="item-grid">${(Object.keys(SPECIAL_OFFHANDS) as SpecialOffhandId[]).map(id => {
-      const item = SPECIAL_OFFHANDS[id], equipped = l.secondary === id;
-      return `<article class="gear-card ${equipped ? 'equipped' : ''}"><img src="/assets/reference/${id}.png" width="112" height="68" alt="${item.name}" /><strong>${item.name}</strong><p>${item.description}</p><button data-offhand="${id}" ${equipped ? 'disabled' : ''}>${equipped ? '已装备' : '装备副手'}</button></article>`;
-    }).join('')}</div><h3>战术道具 <small>G 使用 · 许可证永久，每次出战补充2份</small></h3><div class="item-grid">${(Object.keys(ITEMS) as ItemId[]).map(id => {
+    }).join('')}</div><h3>特殊副手 <small>替换副枪 · Q切换 · 按职业等级免费解锁</small></h3><div class="item-grid">${(Object.keys(SPECIAL_OFFHANDS) as SpecialOffhandId[]).filter(id => canEquipOffhand(c.selected, id)).map(id => {
+      const item = SPECIAL_OFFHANDS[id], equipped = l.secondary === id, locked = l.level < item.level;
+      return `<article class="gear-card ${equipped ? 'equipped' : ''}"><img src="/assets/reference/${id}.png" width="112" height="68" alt="${item.name}" /><strong>${item.name} <small>Lv.${item.level}</small></strong><p>${item.description}</p><button data-offhand="${id}" ${equipped || locked ? 'disabled' : ''}>${equipped ? '已装备' : locked ? `职业Lv.${item.level}解锁` : '装备副手'}</button></article>`;
+    }).join('') || '<p class="brief-tip">刀类仅限刺客，盾牌仅限重装兵；当前职业可装备上方副枪。</p>'}</div><h3>战术道具 <small>G 使用 · 许可证永久，每次出战补充2份</small></h3><div class="item-grid">${(Object.keys(ITEMS) as ItemId[]).map(id => {
       const item = ITEMS[id], owned = c.items.includes(id), equipped = l.item === id, locked = l.level < item.level;
       return `<article class="gear-card"><strong>${item.name} <small>Lv.${item.level}</small></strong><p>${item.description}</p><button data-item="${id}" ${equipped || locked || !owned && c.credits < item.price ? 'disabled' : ''}>${ownedLabel(owned, equipped, locked, item.price)}</button></article>`;
     }).join('')}</div><p class="brief-tip">完成任务与击杀可获得经验、军资；失败也有少量奖励。每个职业独立升级，每级获得1个训练点。训练点不跨职业共享。</p></div>`;

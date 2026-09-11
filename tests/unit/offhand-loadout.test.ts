@@ -11,6 +11,7 @@ function memory(): SaveStorage {
 
 it.each(['knife', 'shield'] as const)('persists %s as a real secondary and creates only the primary gun', id => {
   const storage = memory(), progress = new CareerProgress(storage);
+  progress.selectClass(id === 'knife' ? 'assassin' : 'tank');
   expect(progress.equipOffhand(id)).toBe(true);
   const restored = new CareerProgress(storage);
   expect(restored.loadout.secondary).toBe(id);

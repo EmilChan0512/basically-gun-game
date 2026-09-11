@@ -9,13 +9,13 @@ it('rejects unknown, wrong-slot and client-owned damage fields without altering 
     expect(() => room.equip('a', equipment)).toThrow();
     expect(room.players.get('a')!.ready).toBe(true);
   }
-  expect(validateEquipment({ primary: 'saw', secondary: 'shield' })).toEqual({ primary: 'saw', secondary: 'shield' });
+  expect(validateEquipment({ classId: 'tank', primary: 'saw', secondary: 'shield' })).toEqual({ classId: 'tank', primary: 'saw', secondary: 'shield' });
 });
 it('binds different equipment, persists through respawn and forbids in-match refills', () => {
   const room = new Room('equipment', 'signal'); room.join('a', 'A'); room.join('b', 'B');
-  room.ready('a', true); room.equip('a', { primary: 'vector', secondary: 'knife' });
+  room.ready('a', true); room.equip('a', { classId: 'assassin', primary: 'vector', secondary: 'knife' });
   expect(room.players.get('a')!.ready).toBe(false);
-  room.equip('b', { primary: 'saw', secondary: 'shield' });
+  room.equip('b', { classId: 'tank', primary: 'saw', secondary: 'shield' });
   room.ready('a', true); room.ready('b', true); room.start('a', 7);
   const battle = room.session!.battle;
   expect(battle.actors.map(a => a.offhand!.kind)).toEqual(['melee', 'shield']);

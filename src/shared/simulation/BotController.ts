@@ -5,7 +5,6 @@ import { clearSight, nextWaypoint, trackedWaypoint } from '../../game/campaign/N
 import type { ModeRules } from './ModeRules';
 import type { PlayerAction } from '../protocol/Commands';
 import { traversalJump } from './Traversal';
-import { KNIFE_RULES } from './Melee';
 interface BotContext {
   actors: Actor[]; frame: number; difficulty: Difficulty; mission: Mission;
   mode: ModeRules; random: RandomSource; wall: (x: number, y: number) => boolean;
@@ -28,7 +27,7 @@ export function botInput(context: BotContext, actor: Actor): BotDecision {
     const actions: PlayerAction[] = [];
     const wantSpecial = !!special && (carrying || (special.kind === 'melee'
       ? !!target && (distance < 90 || actor.arsenal.empty)
-      : !!target && special.shield.durability > 0 && actor.life.health <= actor.life.maxHealth * 0.5 && context.frame % 120 < 60));
+      : !!target && actor.life.health <= actor.life.maxHealth * 0.5 && context.frame % 120 < 60));
     if (special && !carrying && special.equipped !== wantSpecial && special.canSwitch) actions.push('swap');
     const usingSpecial = !!special && (actions.includes('swap') ? wantSpecial : special.equipped);
     const usingKnife = usingSpecial && special?.kind === 'melee';
@@ -38,7 +37,7 @@ export function botInput(context: BotContext, actor: Actor): BotDecision {
     const destination = resupplying ? context.mission.spawns[actor.team - 1][0] : goal.destination;
     const waypoint = context.mission.collisionMask ? trackedWaypoint(context.mission.navigation, m, destination, brain.route ??= {}) : nextWaypoint(context.mission.navigation, m, destination);
     const controlling = goal.hold && Math.abs(m.x - destination.x) < 45 && Math.abs(m.y - destination.y) < 70;
-    const inRange = !!target && (usingKnife ? distance < KNIFE_RULES.reach - 14 : Math.abs(target.movement.x - m.x) < 350);
+    const inRange = !!target && (usingKnife ? distance < special!.reach - 14 : Math.abs(target.movement.x - m.x) < 350);
     // Keep traversing until grounded; braking over a gap just because an enemy
     // entered firing range can make an otherwise valid jump fall short.
     const stop = !m.jumping && !resupplying && (controlling || (goal.stopToFight && inRange && !usingShield));
@@ -49,8 +48,8 @@ export function botInput(context: BotContext, actor: Actor): BotDecision {
     const jump = !stop && !m.jumping && (traversalJump(m, waypoint, context.wall) || brain.stuck > 12);
     const aim = target ? { x: target.movement.x, y: target.movement.y - (usingSpecial ? target.movement.crouching ? 28 : 42 : 33) + (usingSpecial ? 0 : brain.offset) } : { x: m.x + direction * 300, y: m.y - 42 };
     // Bursts give visible recovery windows; semi-auto alternates releases.
-    const fire = usingKnife ? ready && distance < KNIFE_RULES.reach - 8 && !special!.triggerHeld && special!.canSwitch
-      : usingShield ? ready && special!.shield.durability > 0
+    const fire = usingKnife ? ready && distance < special!.reach - 8 && !special!.triggerHeld && special!.canSwitch
+      : usingShield ? ready
       : !resupplying && ready && context.frame % 54 < 32 && (actor.arsenal.selected === 'm4' || context.frame % 10 === 0);
     if (!special && !resupplying && !actor.arsenal.gun.ammo && !actor.arsenal.gun.reserveAmmo) actions.push('swap');
     if (!usingSpecial && !target && actor.arsenal.gun.ammo < 10) actions.push('reload');

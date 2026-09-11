@@ -61,6 +61,7 @@ export class NetworkSession {
     if (this.socket.readyState === WebSocket.CONNECTING) { this.queued.push(message); return; }
     if (this.socket.readyState === WebSocket.OPEN) this.socket.send(JSON.stringify({ protocol: 1, content: CONTENT_VERSION, ...message }));
   }
+  clearActions() { this.actions.clear(); }
   action(action: PlayerAction) { if (this.state?.actorId) this.actions.add(action); }
   reconnect() {
     if (!this.token || this.socket.readyState !== WebSocket.CLOSED) { this.onError('仅已断开的战斗连接可重连'); return; }

@@ -24,7 +24,7 @@ it('blocks switching during a swing and preserves recovery through forced stow a
   expect(controller.select(false, true)).toBe(false);
   expect(controller.select(false, true, true)).toBe(true);
   const restored = OffhandController.restore(controller.checkpoint());
-  for (let i = 1; i < 19; i++) {
+  for (let i = 1; i < 12; i++) {
     expect(restored.permitsGunfire).toBe(false);
     expect(restored.tick(frame)).toEqual(controller.tick(frame));
     expect(restored.checkpoint()).toEqual(controller.checkpoint());
@@ -33,7 +33,7 @@ it('blocks switching during a swing and preserves recovery through forced stow a
   expect(restored.canSwitch).toBe(true);
 });
 
-it('requires continuous shield deployment and retains damaged durability across stow', () => {
+it('requires continuous shield deployment and retains reusable defense across stow', () => {
   const controller = new OffhandController('shield'); controller.select(true, false);
   for (let i = 0; i < SHIELD_RULES.deployTicks - 1; i++) controller.tick(frame);
   expect(controller.shield.deployed).toBe(false);
@@ -42,20 +42,20 @@ it('requires continuous shield deployment and retains damaged durability across 
   interceptShield(restored.shield, frame.origin, frame.aim,
     { kind: 'bullet', amount: 30, sourceId: 'enemy', origin: frame.aim, hitPoint: frame.origin });
   restored.select(false, true); restored.select(true, true);
-  expect(restored.shield).toEqual({ durability: 90, deployed: false });
+  expect(restored.shield).toEqual({ durability: 120, deployed: false });
   restored.tick(frame); restored.tick({ ...frame, fire: false }); restored.tick(frame);
   expect(restored.shield.deployed).toBe(false);
   restored.tick({ ...frame, alive: false });
   expect(restored.checkpoint().deployAge).toBe(0);
 });
 
-it('does not allow a broken shield to redeploy and rejects impossible restored defense', () => {
+it('keeps a shield reusable after heavy hits and rejects impossible restored defense', () => {
   const controller = new OffhandController('shield'); controller.select(true, false);
   for (let i = 0; i < 6; i++) controller.tick(frame);
   interceptShield(controller.shield, frame.origin, frame.aim,
     { kind: 'bullet', amount: 140, sourceId: 'enemy', origin: frame.aim, hitPoint: frame.origin });
   const restored = OffhandController.restore(controller.checkpoint());
   for (let i = 0; i < 12; i++) restored.tick(frame);
-  expect(restored.shield).toEqual({ durability: 0, deployed: false });
-  expect(() => OffhandController.restore({ ...restored.checkpoint(), shield: { durability: 0, deployed: true } })).toThrow();
+  expect(restored.shield).toEqual({ durability: 120, deployed: true });
+  expect(() => OffhandController.restore({ ...restored.checkpoint(), selected: false })).toThrow();
 });

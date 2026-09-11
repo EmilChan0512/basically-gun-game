@@ -1,7 +1,7 @@
 import { OriginalMovement } from '../movement/OriginalMovement';
 import { OriginalLife } from '../combat/OriginalLife';
 import { COMBAT_FRAME_MS, type WeaponId } from '../combat/Combat';
-import type { BulletTrace, Point, RandomSource } from '../combat/Ballistics';
+import { traceBulletLine, type BulletTrace, type Point, type RandomSource } from '../combat/Ballistics';
 import { Arsenal } from './Arsenal';
 import { botInput } from '../../shared/simulation/BotController';
 import { EventJournal } from '../../shared/simulation/Events';
@@ -18,7 +18,7 @@ import { validateEquipment, type EquipmentLoadout } from '../../shared/content/E
 import { clearSight } from './Navigation';
 import type { RouteState } from './Navigation';
 import { wallFor, type Mission } from './Missions';
-import { CLASSES, SKILLS, ITEMS, SPECIAL_OFFHANDS, isSpecialOffhand, defaultLoadout, loadoutStats, type Loadout } from './Catalog';
+import { CLASSES, SKILLS, ITEMS, SPECIAL_OFFHANDS, isSpecialOffhand, canEquipOffhand, defaultLoadout, loadoutStats, type Loadout } from './Catalog';
 
 export type Difficulty = 'easy' | 'normal' | 'hard';
 export interface BattleInput { left: boolean; right: boolean; crouch: boolean; jump: boolean; fire: boolean; aim: Point }
@@ -35,7 +35,7 @@ export interface Actor {
   brain: { target: string | null; acquired: number; offset: number; lastX: number; stuck: number; state: string; route?: RouteState };
 }
 export interface BattleEvent { frame: number; text: string; team: number }
-export interface ShotEffect { frame: number; actorId?: string; trace: BulletTrace; team: number; damage: number; killed: boolean }
+export interface ShotEffect { reflected?: boolean; frame: number; actorId?: string; trace: BulletTrace; team: number; damage: number; killed: boolean }
 export interface Grenade { source: Actor; x: number; y: number; vx: number; vy: number; fuse: number }
 
 export function seededRandom(seed: number): RandomSource {
@@ -76,10 +76,30 @@ export class Battle {
   /** Trusted lobby setup only; never permits in-match replacement or refilling. */
   equipActor(actor: Actor, value: EquipmentLoadout) {
     if (this.frame !== 0 || this.phase !== 'running' || !this.actors.includes(actor)) throw Error('Cannot change equipment during battle');
-    const equipment = validateEquipment(value);
+    this.installEquipment(actor, validateEquipment(value));
+  }
+  /** Explicit debug-only reset; validation precedes every mutation. Keeps position and score. */
+  reconfigureDebugActor(actor: Actor, value: EquipmentLoadout) {
+    if (!this.mission.debug || this.phase !== 'running' || !this.actors.includes(actor)) throw Error('Only debug rooms allow live equipment changes');
+    const equipment = validateEquipment(value), deaths = actor.life.deaths, wasAlive = actor.life.alive;
+    this.releaseObjective(actor.id);
+    this.forgetActorInput(actor.id);
+    this.grenades = this.grenades.filter(grenade => grenade.source.id !== actor.id);
+    this.installEquipment(actor, equipment);
+    actor.life.deaths = deaths;
+    if (!wasAlive) this.spawn(actor);
+  }
+  private installEquipment(actor: Actor, equipment: EquipmentLoadout) {
     actor.equipment = equipment;
+    actor.kit = { ...defaultLoadout(equipment.classId ?? 'medic'), primary: equipment.primary, secondary: equipment.secondary };
+    actor.kit.skill = equipment.skill ?? actor.kit.skill;
+    actor.kit.item = equipment.item ?? actor.kit.item;
+    actor.life = new OriginalLife(loadoutStats(actor.kit).health);
+    actor.skillFrames = 0; actor.skillCooldown = 0; actor.itemCooldown = 0;
+    actor.itemCharges = ITEMS[actor.kit.item].charges;
+    actor.shield = undefined;
     actor.arsenal = new Arsenal(equipment.primary, equipment.primary, isSpecialOffhand(equipment.secondary) ? equipment.primary : equipment.secondary);
-    actor.offhand = isSpecialOffhand(equipment.secondary) ? new OffhandController(SPECIAL_OFFHANDS[equipment.secondary].kind) : undefined;
+    actor.offhand = isSpecialOffhand(equipment.secondary) ? new OffhandController(SPECIAL_OFFHANDS[equipment.secondary].kind, equipment.secondary) : undefined;
   }
   /** Internal trusted checkpoint, separate from the public rendering snapshot. */
   checkpoint() {
@@ -153,15 +173,17 @@ export class Battle {
   addDebugPlayer(id: string, name: string, team: 1 | 2) {
     if (!this.mission.debug || this.actors.some(a => a.id === id)) throw Error('Invalid debug admission');
     this.addActor(id, name, team, true, this.actors.filter(a => a.team === team).length);
+    this.reconfigureDebugActor(this.actors.find(a => a.id === id)!, { classId: 'medic', primary: 'm4', secondary: 'usp' });
   }
   private addActor(id: string, name: string, team: 1 | 2, human: boolean, index: number, location?: Point) {
     const spawn = location ?? this.mission.spawns[team - 1][index % this.mission.spawns[team - 1].length];
     const movement = new OriginalMovement(this.wall); movement.reset(spawn.x, spawn.y);
     const kit = human && this.loadout ? structuredClone(this.loadout) : null;
+    if (kit && isSpecialOffhand(kit.secondary) && !canEquipOffhand(kit.classId, kit.secondary)) throw Error('Offhand is not allowed for this class');
     const stats = kit ? loadoutStats(kit) : { health: 85, aim: 0.7, ammo: 0.9 };
     this.actors.push({ id, name, team, human, movement, life: new OriginalLife(stats.health),
       arsenal: kit ? new Arsenal(kit.primary, kit.primary, isSpecialOffhand(kit.secondary) ? kit.primary : kit.secondary, stats.ammo) : new Arsenal(human ? this.startingWeapon : 'm4'),
-      offhand: kit && isSpecialOffhand(kit.secondary) ? new OffhandController(SPECIAL_OFFHANDS[kit.secondary].kind) : undefined,
+      offhand: kit && isSpecialOffhand(kit.secondary) ? new OffhandController(SPECIAL_OFFHANDS[kit.secondary].kind, kit.secondary) : undefined,
       kit, skillCooldown: 0, skillFrames: 0, itemCharges: kit ? ITEMS[kit.item].charges : 0, itemCooldown: 0,
       aim: { x: spawn.x + (team === 1 ? 300 : -300), y: spawn.y - 42 }, kills: 0, supplyReady: 0,
       brain: { target: null, acquired: 0, offset: 0, lastX: spawn.x, stuck: 0, state: 'advance' } });
@@ -227,7 +249,7 @@ export class Battle {
       actor.arsenal = new Arsenal(e.primary, e.primary, isSpecialOffhand(e.secondary) ? e.primary : e.secondary);
     }
     actor.skillFrames = 0;
-    if (actor.offhand) actor.offhand = new OffhandController(actor.offhand.kind);
+    if (actor.offhand) actor.offhand = new OffhandController(actor.offhand.kind, actor.offhand.id);
     actor.aim = { x: spawn.x + (actor.team === 1 ? 300 : -300), y: spawn.y - 42 };
     actor.brain.target = null; actor.brain.stuck = 0;
     actor.brain.route = undefined;
@@ -237,6 +259,24 @@ export class Battle {
     return this.applyDamage(target, { kind: source ? explosive ? 'explosion' : 'bullet' : 'environment', amount,
       sourceId: source?.id, origin: source ? { x: source.movement.x, y: source.movement.y } : undefined,
       hitPoint: { x: target.movement.x, y: target.movement.y } });
+  }
+  private reflectShot(defender: Actor, damage: DamageContext) {
+    const center = { x: defender.movement.x, y: defender.movement.y - (defender.movement.crouching ? 28 : 42) };
+    const normalAngle = Math.atan2(defender.aim.y - center.y, defender.aim.x - center.x);
+    const incomingAngle = Math.atan2(center.y - damage.origin!.y, center.x - damage.origin!.x);
+    // Reflect about the shield normal, with the original +/-10 degree scatter.
+    const angle = 2 * normalAngle - incomingAngle + Math.PI + (this.random() * 20 - 10) * Math.PI / 180;
+    const origin = { ...damage.hitPoint! };
+    const trace = traceBulletLine({ origin, aim: { x: origin.x + Math.cos(angle) * 100, y: origin.y + Math.sin(angle) * 100 },
+      source: defender.id, sourceTeam: defender.team, units: this.hitboxes(),
+      rangeUnits: this.actors.find(a => a.id === damage.sourceId)?.arsenal.gun.weapon.rangeUnits ?? 60, random: this.random,
+      isOpaqueWall: point => this.wall(point.x, point.y) });
+    const hit = trace.hit;
+    const victim = hit?.type === 'unit' ? this.actors.find(a => a.id === hit.target) : undefined;
+    const before = victim?.life.health ?? 0;
+    const killed = victim ? this.applyDamage(victim, { ...damage, sourceId: defender.id, origin, hitPoint: trace.end, reflected: true }) : false;
+    // Preserve source identity for visibility filtering; render from the impact.
+    this.effects.push({ frame: this.frame, actorId: defender.id, reflected: true, team: defender.team, trace, damage: before - (victim?.life.health ?? 0), killed });
   }
   applyDamage(target: Actor, context: DamageContext) {
     if (this.phase !== 'running') return false;
@@ -248,7 +288,12 @@ export class Battle {
     if (this.phase !== 'running' || (source && source.team === target.team)) return false;
     const shield = target.offhand?.kind === 'shield' ? target.offhand.shield : target.shield;
     if (shield && target.life.alive && !target.life.spawnProtectionFrames) {
-      amount = interceptShield(shield, { x: target.movement.x, y: target.movement.y - (target.movement.crouching ? 28 : 42) }, target.aim, context).amount;
+      const definition = target.offhand?.definition;
+      const defense = interceptShield(shield, { x: target.movement.x, y: target.movement.y - (target.movement.crouching ? 28 : 42) }, target.aim, context,
+        definition?.kind === 'shield' ? definition : undefined, this.random);
+      amount = defense.amount;
+      if (defense.blocked > 0) this.bursts.push({ ...context.hitPoint!, frame: this.frame, radius: 12, color: 0xb9eaff });
+      if (defense.reflected) this.reflectShot(target, context);
     }
     if (source && target.life.alive && !target.life.spawnProtectionFrames && target.kit) {
       if (explosive && target.kit.classId === 'tank') amount *= 0.7;

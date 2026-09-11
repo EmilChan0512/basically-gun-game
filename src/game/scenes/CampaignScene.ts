@@ -105,7 +105,7 @@ export class CampaignScene extends Phaser.Scene {
     const g = this.art, m = actor.movement, x = m.x, y = m.y;
     const color = actor.kit ? CLASSES[actor.kit.classId].color : actor.team === 1 ? 0xb7e8de : 0xf1b0a0;
     this.rig.soldier(x, y, m.crouching, m.vx, m.jumping, this.battle.frame, actor.aim, actor.arsenal.selected, color, actor.life.alive,
-      actor.arsenal.gun.reloadFrames > 0, this.battle.effects.some(e => Math.abs(e.trace.origin.x - x) < 1 && Math.abs(e.trace.origin.y - (y - (m.crouching ? 28 : 42))) < 1 && this.battle.frame - e.frame < 2), actor.offhand?.view());
+      actor.arsenal.gun.reloadFrames, this.battle.effects.some(e => !e.reflected && e.actorId === actor.id && this.battle.frame - e.frame < 2), actor.offhand?.view(), actor.kit?.classId ?? 'medic', actor.id);
     if (!actor.life.alive) return;
     const h = m.crouching ? 44 : 66;
     g.fillStyle(0x09171d, 0.3).fillEllipse(x, y + 2, 36, 5);
@@ -141,7 +141,7 @@ export class CampaignScene extends Phaser.Scene {
     if (b.mission.mode === 'ctf') this.rig.delivery(b.snapshot().deliveryTargets, new Map(b.actors.map(a => [a.id, a.movement])), this.art);
     for (const effect of b.effects) {
       const age = b.frame - effect.frame;
-      if (age < 3) this.art.lineStyle(2, effect.team === 1 ? 0xf0df9b : 0xf4a18a, 1 - age / 3).lineBetween(effect.trace.origin.x, effect.trace.origin.y, effect.trace.end.x, effect.trace.end.y);
+      this.rig.tracer(this.art, effect.trace, effect.reflected ? undefined : effect.actorId, age, b.actors.find(a => a.id === effect.actorId)?.arsenal.selected);
       if (effect.damage > 0 && effect.team === 1) this.label(label++, effect.killed ? '击败' : `${Math.round(effect.damage)}`, effect.trace.end.x, effect.trace.end.y - 24 - age, effect.killed ? '#efff91' : '#ffffff');
     }
     for (const grenade of b.grenades) this.art.fillStyle(0xeec17a).fillCircle(grenade.x, grenade.y, 5);

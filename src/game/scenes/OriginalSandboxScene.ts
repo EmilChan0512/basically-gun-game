@@ -81,15 +81,15 @@ export class OriginalSandboxScene extends Phaser.Scene {
     this.cameras.main.centerOn(movement.x, 390);
     this.art.clear(); this.rig.begin();
     const aim = { x: movement.x + this.core.aimDirection.x * 100, y: movement.y - (movement.crouching ? 28 : 42) + this.core.aimDirection.y * 100 };
-    this.rig.soldier(movement.x, movement.y, movement.crouching, movement.vx, movement.jumping, state.frame, aim, state.combat.weapon, 0xb7e8de, state.life.alive, state.combat.reloadFrames > 0,
+    this.rig.soldier(movement.x, movement.y, movement.crouching, movement.vx, movement.jumping, state.frame, aim, state.combat.weapon, 0xb7e8de, state.life.alive, state.combat.reloadFrames,
       state.combat.lastShotFrame !== null && state.combat.combatFrame - state.combat.lastShotFrame < 2);
     const { full } = this.core.guns.snapshot().targetBounds;
-    this.rig.soldier(full.x + full.width / 2, full.y + full.height, false, 0, false, state.frame, { x: 0, y: full.y + 24 }, 'm4', 0xf1b0a0, state.target.alive);
+    this.rig.soldier(full.x + full.width / 2, full.y + full.height, false, 0, false, state.frame, { x: 0, y: full.y + 24 }, 'm4', 0xf1b0a0, state.target.alive, 0, false, undefined, 'commando', 'target');
     this.art.fillStyle(0x18252e).fillRect(full.x - 9, full.y - 12, 44, 5);
     this.art.fillStyle(state.target.spawnProtectionFrames ? 0x67cfee : 0xd6ee67).fillRect(full.x - 9, full.y - 12, 44 * state.target.health / 85, 5);
     const shot = this.core.guns.lastShot;
     const shotAge = state.combat.lastShotFrame === null ? Infinity : state.combat.combatFrame - state.combat.lastShotFrame;
-    if (shot && state.life.alive && (this.debugVisible || shotAge < 3)) this.art.lineStyle(2, shot.hit ? 0xf5ba70 : 0x67cfee).lineBetween(shot.origin.x, shot.origin.y, shot.end.x, shot.end.y);
+    if (shot && state.life.alive && (this.debugVisible || shotAge < 3)) this.rig.tracer(this.art, shot, 'player', this.debugVisible ? 0 : shotAge, state.combat.weapon);
     const feedback = state.feedback;
     this.hitLabel.setVisible(!!feedback && state.frame - feedback.frame < 24);
     if (feedback) this.hitLabel.setPosition(this.core.guns.targetPoint.x, full.y - 32 - Math.min(24, state.frame - feedback.frame))

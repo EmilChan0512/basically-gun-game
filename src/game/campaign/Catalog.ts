@@ -39,15 +39,10 @@ export const ITEMS: Record<ItemId, { name: string; description: string; price: n
   frag: { name: '破片手雷', description: '朝准星投掷，延时爆炸；每次出战2枚', price: 180, level: 2, charges: 2 },
 };
 export interface Training { vitality: number; handling: number }
-export const SPECIAL_OFFHANDS = {
-  knife: { kind: 'melee', name: '战术刀', description: '近距离挥击；前摇与后摇期间不能切换武器', price: 0, level: 1 },
-  shield: { kind: 'shield', name: '防弹盾', description: '持攻击部署正面防御；侧后、爆炸和近战绕防', price: 0, level: 1 },
-} as const;
-export type SpecialOffhandId = keyof typeof SPECIAL_OFFHANDS;
+export { SPECIAL_OFFHANDS, isSpecialOffhand, canEquipOffhand } from '../../shared/content/Offhands';
+import type { SpecialOffhandId } from '../../shared/content/Offhands';
+export type { SpecialOffhandId };
 export type SecondaryId = WeaponId | SpecialOffhandId;
-export function isSpecialOffhand(id: unknown): id is SpecialOffhandId {
-  return typeof id === 'string' && Object.hasOwn(SPECIAL_OFFHANDS, id);
-}
 export interface Loadout { classId: ClassId; primary: WeaponId; secondary: SecondaryId; skill: SkillId; item: ItemId; training: Training; level: number }
 export const defaultLoadout = (classId: ClassId = 'medic'): Loadout => ({ classId, primary: 'm4', secondary: 'usp', skill: CLASSES[classId].skills[0], item: 'medkit', training: { vitality: 0, handling: 0 }, level: 1 });
 export function levelForXp(xp: number) { return Math.min(10, 1 + Math.floor(Math.max(0, xp) / 160)); }

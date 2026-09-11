@@ -63,6 +63,16 @@ export class MatchSession {
     controller.input = { ...idleInput(), aim: { ...controller.input.aim } };
     this.battle.actors.find(a => a.id === controller.actorId)?.arsenal.setTrigger(false);
   }
+  reconfigureDebugPlayer(playerId: string, equipment: import('../content/Equipment').EquipmentLoadout) {
+    const controller = this.controllers.get(playerId);
+    const actor = this.battle.actors.find(a => a.id === controller?.actorId);
+    if (!controller || !actor) throw Error('Player does not control an actor');
+    this.battle.reconfigureDebugActor(actor, equipment);
+    this.disconnect(playerId);
+    // Dropped old-kit commands are acknowledged so prediction cannot replay them.
+    controller.processed = controller.received;
+    controller.lastTick = this.battle.frame;
+  }
   unbind(playerId: string) { this.controllers.delete(playerId); }
   acknowledgements() { return Object.fromEntries([...this.controllers].map(([id, c]) => [id, c.processed])); }
   actorId(playerId: string) { return this.controllers.get(playerId)?.actorId ?? null; }

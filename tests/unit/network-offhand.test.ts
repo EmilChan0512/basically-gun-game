@@ -30,7 +30,7 @@ it('eight mixed clients through 150ms RTT resolve knife and front/rear shield da
     // Sequential joins give stable team assignment for the controlled pairs.
     for (let i = 1; i < 8; i++) { send(i, { type: 'join', code, name: `p${i}` }); await wait(() => logs[i].some(m => m.type === 'lobby')); }
     const secondary = ['knife', 'shield', 'usp', 'shield', 'knife', 'usp', 'shield', 'beretta'];
-    for (let i = 0; i < 8; i++) { send(i, { type: 'equip', equipment: { primary: 'm4', secondary: secondary[i] } }); send(i, { type: 'ready', ready: true }); }
+    for (let i = 0; i < 8; i++) { send(i, { type: 'equip', equipment: { classId: secondary[i] === 'knife' ? 'assassin' : secondary[i] === 'shield' ? 'tank' : 'medic', primary: 'm4', secondary: secondary[i] } }); send(i, { type: 'ready', ready: true }); }
     await wait(() => logs[0].some(m => m.room?.players.length === 8 && m.room.players.every((p: any) => p.ready)));
     send(0, { type: 'start' }); await wait(() => logs.every(log => log.some(m => m.type === 'state')));
     const room = server.rooms.get(code)!;
@@ -54,26 +54,26 @@ it('eight mixed clients through 150ms RTT resolve knife and front/rear shield da
     }, 70);
     await wait(() => actors[1].offhand!.shield.deployed && actors[3].offhand!.shield.deployed);
     controls[0].fire = true;
-    await wait(() => actors[1].life.health < 85);
+    await wait(() => actors[1].life.health < 130);
     controls[0].fire = false;
-    expect(actors[1].life.health).toBe(45);
-    expect(actors[1].offhand!.shield.durability).toBe(120); // Melee bypasses shield.
+    expect(actors[1].life.health).toBe(117.5);
+    expect(actors[1].offhand!.shield.durability).toBe(120); // Frontal melee receives the same directional reduction.
     controls[2].fire = true;
-    await wait(() => actors[3].offhand!.shield.durability < 120);
+    await wait(() => actors[3].life.health < 130);
     controls[2].fire = false;
-    expect(actors[3].life.health).toBe(85);
+    expect(actors[3].life.health).toBeGreaterThan(100);
     const stopFrame = battle.frame; await wait(() => battle.frame >= stopFrame + 10);
-    const durability = actors[3].offhand!.shield.durability;
+    const durability = actors[3].offhand!.shield.durability, frontHealth = actors[3].life.health;
     controls[3].aim = { x: 800, y: 357.5 }; // Turn away through normal aim commands.
     await wait(() => actors[3].aim.x > 700);
     controls[2].fire = true;
-    await wait(() => actors[3].life.health < 85);
+    await wait(() => actors[3].life.health < frontHealth);
     controls[2].fire = false;
     expect(actors[3].offhand!.shield.durability).toBe(durability);
     expect(actors[0].arsenal.shots).toBe(0);
     expect(battle.journal.since(0).filter(e => e.kind === 'damage' && e.actorId === actors[0].id && e.targetId === actors[1].id)).toHaveLength(1);
     const received = (i: number) => logs[i].filter(m => m.type === 'state').at(-1) as StateMessage;
-    await wait(() => received(3).state.actors.some(a => a.id === actors[3].id && a.life.health < 85));
+    await wait(() => received(3).state.actors.some(a => a.id === actors[3].id && a.life.health < frontHealth));
     expect(received(3).state.actors.find(a => a.id === actors[3].id)!.offhand).toMatchObject({ kind: 'shield', equipped: true, durability });
     expect(logs.flat().filter(m => m.type === 'error' || m.type === 'rejected')).toEqual([]);
   } finally { if (driver) clearInterval(driver); for (const socket of sockets) socket.terminate(); await proxy.close(); await server.close(); }

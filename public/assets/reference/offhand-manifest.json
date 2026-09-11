@@ -14,6 +14,61 @@
       "sha256": "5b6c7eab190a977aa1fd9fe9dd58436f306e99dc03fec0096d3639f667f32bd5"
     },
     {
+      "id": "bat",
+      "label": "Bat",
+      "frame": 65,
+      "symbol": 375,
+      "source": "archaeology/local/curated-export/DefineSprite_375_MBFZ_fla.Guns_290/65.png",
+      "file": "bat.png",
+      "width": 112,
+      "height": 68,
+      "sha256": "68deb5d2d54a05db89547212dd637d3f4921ec3eebf7d9b38b4057f5479abc92"
+    },
+    {
+      "id": "baton",
+      "label": "Baton",
+      "frame": 66,
+      "symbol": 375,
+      "source": "archaeology/local/curated-export/DefineSprite_375_MBFZ_fla.Guns_290/66.png",
+      "file": "baton.png",
+      "width": 112,
+      "height": 68,
+      "sha256": "6b31844f353922fc464c33ef653ad9a03b0d2c711d3592d31f437bc13d3b69dc"
+    },
+    {
+      "id": "nine-iron",
+      "label": "Nine Iron",
+      "frame": 67,
+      "symbol": 375,
+      "source": "archaeology/local/curated-export/DefineSprite_375_MBFZ_fla.Guns_290/67.png",
+      "file": "nine-iron.png",
+      "width": 112,
+      "height": 68,
+      "sha256": "ba5365ba8fcca9c27740dfa6988163d34415520e895c9c3041241968c8962fa2"
+    },
+    {
+      "id": "machete",
+      "label": "Machete",
+      "frame": 64,
+      "symbol": 375,
+      "source": "archaeology/local/curated-export/DefineSprite_375_MBFZ_fla.Guns_290/64.png",
+      "file": "machete.png",
+      "width": 112,
+      "height": 68,
+      "sha256": "53eb0f1650d22bdbece7f05c61f63b3c02eb3cdba80e78bda4039bf27c957b16"
+    },
+    {
+      "id": "katana",
+      "label": "Katana",
+      "frame": 62,
+      "symbol": 375,
+      "source": "archaeology/local/curated-export/DefineSprite_375_MBFZ_fla.Guns_290/62.png",
+      "file": "katana.png",
+      "width": 112,
+      "height": 68,
+      "sha256": "020f03dba4b3e436e086eb4b8100ab48faf32703ffff108dfcc91ac5756a1cf9"
+    },
+    {
       "id": "shield",
       "label": "Riot",
       "frame": 56,
@@ -34,6 +89,116 @@
       "width": 112,
       "height": 68,
       "sha256": "3d8f7c4503913cb45b1cf7102e0ef2939aafb9daf454515969ac32d0f3cb1bb2"
+    },
+    {
+      "id": "police-shield",
+      "label": "Police",
+      "frame": 58,
+      "symbol": 375,
+      "source": "archaeology/local/curated-export/DefineSprite_375_MBFZ_fla.Guns_290/58.png",
+      "file": "police-shield.png",
+      "width": 112,
+      "height": 68,
+      "sha256": "27ae28675f4924fd566ff72697bc0112b0b8dffe43b305c22cd3f897d2fd305d"
+    },
+    {
+      "id": "police-shield-back",
+      "label": "Policeb",
+      "frame": 70,
+      "symbol": 375,
+      "source": "archaeology/local/curated-export/DefineSprite_375_MBFZ_fla.Guns_290/70.png",
+      "file": "police-shield-back.png",
+      "width": 112,
+      "height": 68,
+      "sha256": "ad98148520391cb578a1a082bbbbfbb5a0267ca99638699d40b088ef017cd49a"
+    },
+    {
+      "id": "blast-shield",
+      "label": "Blast",
+      "frame": 57,
+      "symbol": 375,
+      "source": "archaeology/local/curated-export/DefineSprite_375_MBFZ_fla.Guns_290/57.png",
+      "file": "blast-shield.png",
+      "width": 112,
+      "height": 68,
+      "sha256": "8702bf04ddf86dccf72dc222b161785ff68046b505feb94a8719a70eccbfdd7d"
+    },
+    {
+      "id": "blast-shield-back",
+      "label": "Blastb",
+      "frame": 69,
+      "symbol": 375,
+      "source": "archaeology/local/curated-export/DefineSprite_375_MBFZ_fla.Guns_290/69.png",
+      "file": "blast-shield-back.png",
+      "width": 112,
+      "height": 68,
+      "sha256": "6fd4577da35c15caea96ac6f5483fc78be9d93125cf8c4a47d3e320fca86e76e"
+    },
+    {
+      "id": "buckler",
+      "label": "Pointy",
+      "frame": 60,
+      "symbol": 375,
+      "source": "archaeology/local/curated-export/DefineSprite_375_MBFZ_fla.Guns_290/60.png",
+      "file": "buckler.png",
+      "width": 112,
+      "height": 68,
+      "sha256": "548bc953cab1abbec6c260592efda128953bf626c5868fc69c5426c7231b5d82"
+    },
+    {
+      "id": "buckler-back",
+      "label": "Pointyb",
+      "frame": 72,
+      "symbol": 375,
+      "source": "archaeology/local/curated-export/DefineSprite_375_MBFZ_fla.Guns_290/72.png",
+      "file": "buckler-back.png",
+      "width": 112,
+      "height": 68,
+      "sha256": "305ca732382c68a77d92e55f553735b866eb0c74d6ba83f77a88745effdb21fd"
+    },
+    {
+      "id": "meat-shield",
+      "label": "Meat",
+      "frame": 59,
+      "symbol": 375,
+      "source": "archaeology/local/curated-export/DefineSprite_375_MBFZ_fla.Guns_290/59.png",
+      "file": "meat-shield.png",
+      "width": 112,
+      "height": 68,
+      "sha256": "f0e76bad7933698d2765986b9780805bcddd6c54b7c2ad2bd1184fa99645f6df"
+    },
+    {
+      "id": "meat-shield-back",
+      "label": "Meatb",
+      "frame": 71,
+      "symbol": 375,
+      "source": "archaeology/local/curated-export/DefineSprite_375_MBFZ_fla.Guns_290/71.png",
+      "file": "meat-shield-back.png",
+      "width": 112,
+      "height": 68,
+      "sha256": "4407f557f7a7e0ccb2cb83f491e7486efc74cf31f6b4614233c657cea1234bf5"
+    },
+    {
+      "id": "siegius",
+      "label": "Siegius",
+      "frame": 61,
+      "symbol": 375,
+      "source": "archaeology/local/curated-export/DefineSprite_375_MBFZ_fla.Guns_290/61.png",
+      "file": "siegius.png",
+      "width": 112,
+      "height": 68,
+      "sha256": "59d2e68aee654044a62035da790692a80faf30c9f4fbb724891a1d0981944b8a"
+    },
+    {
+      "id": "siegius-back",
+      "label": "Siegiusb",
+      "frame": 73,
+      "symbol": 375,
+      "source": "archaeology/local/curated-export/DefineSprite_375_MBFZ_fla.Guns_290/73.png",
+      "file": "siegius-back.png",
+      "width": 112,
+      "height": 68,
+      "sha256": "ae616ae888238c08cd55727da9d3066799a02443943fb447e1934b3f491b1173"
     }
   ]
 }

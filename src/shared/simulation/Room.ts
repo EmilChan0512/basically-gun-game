@@ -17,7 +17,7 @@ export class Room {
     if (this.players.size >= 8) throw Error('Room is full');
     if (this.players.has(id) || !id || !name.trim() || name.length > 24) throw Error('Invalid player');
     const count = (team: number) => [...this.players.values()].filter(p => p.team === team).length;
-    this.players.set(id, { id, name: name.trim(), team: this.mode === 'coop' || count(1) <= count(2) ? 1 : 2, ready: false, connected: true, spectator: !!this.session, equipment: { primary: 'm4', secondary: 'usp' } });
+    this.players.set(id, { id, name: name.trim(), team: this.mode === 'coop' || count(1) <= count(2) ? 1 : 2, ready: false, connected: true, spectator: !!this.session, equipment: { classId: 'medic', primary: 'm4', secondary: 'usp' } });
     this.hostId ??= id;
     if (this.debug) {
       if (!this.session) {
@@ -43,8 +43,9 @@ export class Room {
   }
   equip(id: string, value: unknown) {
     const player = this.players.get(id);
-    if (!player || !player.connected || this.session) throw Error('Cannot change equipment');
+    if (!player || !player.connected || this.session && !this.debug) throw Error('Cannot change equipment');
     const equipment = validateEquipment(value);
+    if (this.session) this.session.reconfigureDebugPlayer(id, equipment);
     player.equipment = equipment; player.ready = false;
   }
   start(id: string, seed: number) {

@@ -1,11 +1,13 @@
 import type { Point } from '../../game/combat/Ballistics';
 import { MeleeSwing, type MeleeState, type MeleeTarget } from './Melee';
 import type { ShieldState } from './Shield';
+import { SPECIAL_OFFHANDS, isSpecialOffhand, type SpecialOffhandId } from '../content/Offhands';
 
 export type OffhandKind = 'firearm' | 'melee' | 'shield';
-export interface OffhandView { kind: OffhandKind; equipped: boolean; age: number; facing: Point; durability: number; deployed: boolean }
+export interface OffhandView { id?: SpecialOffhandId; kind: OffhandKind; equipped: boolean; age: number; facing: Point; durability: number; deployed: boolean }
 export const SHIELD_RULES = { durability: 120, deployTicks: 6 } as const;
 export interface OffhandCheckpoint {
+  id?: SpecialOffhandId;
   kind: OffhandKind;
   selected: boolean;
   held: boolean;
@@ -30,11 +32,17 @@ export class OffhandController {
   private selected = false;
   private held = false;
   private deployAge = 0;
-  private melee = new MeleeSwing();
+  private melee: MeleeSwing;
   readonly shield: ShieldState = { durability: SHIELD_RULES.durability, deployed: false };
-  constructor(readonly kind: OffhandKind) {}
+  constructor(readonly kind: OffhandKind, readonly id: SpecialOffhandId = kind === 'shield' ? 'shield' : 'knife') {
+    if (!isSpecialOffhand(id) || kind !== 'firearm' && SPECIAL_OFFHANDS[id].kind !== kind) throw Error('Invalid offhand variant');
+    const definition = SPECIAL_OFFHANDS[id];
+    this.melee = new MeleeSwing(definition.kind === 'melee' ? definition : undefined);
+  }
+  get definition() { return SPECIAL_OFFHANDS[this.id]; }
+  get reach() { return this.definition.kind === 'melee' ? this.definition.reach : 0; }
   get equipped() { return this.selected; }
-  view(): OffhandView { const swing = this.melee.checkpoint(); return { kind: this.kind, equipped: this.selected,
+  view(): OffhandView { const swing = this.melee.checkpoint(); return { id: this.id, kind: this.kind, equipped: this.selected,
     age: swing.age, facing: swing.facing, durability: this.shield.durability, deployed: this.shield.deployed }; }
   get triggerHeld() { return this.held; }
   get attackSerial() { return this.melee.checkpoint().serial; }
@@ -62,7 +70,7 @@ export class OffhandController {
     // A forced stow cancels further hits while the original recovery keeps running.
     const hits = this.melee.tick(frame.sourceId, frame.team, frame.origin,
       active && this.kind === 'melee' ? frame.targets : [], frame.wall);
-    if (active && this.kind === 'shield' && frame.fire && this.shield.durability > 0) {
+    if (active && this.kind === 'shield' && frame.fire) {
       this.deployAge = Math.min(SHIELD_RULES.deployTicks, this.deployAge + 1);
       this.shield.deployed = this.deployAge === SHIELD_RULES.deployTicks;
     } else {
@@ -73,7 +81,7 @@ export class OffhandController {
   }
 
   checkpoint(): OffhandCheckpoint {
-    return { kind: this.kind, selected: this.selected, held: this.held,
+    return { id: this.id, kind: this.kind, selected: this.selected, held: this.held,
       deployAge: this.deployAge, shield: { ...this.shield }, melee: this.melee.checkpoint() };
   }
   static restore(state: OffhandCheckpoint) {
@@ -83,9 +91,9 @@ export class OffhandController {
       || !Number.isFinite(state.shield.durability) || state.shield.durability < 0 || state.shield.durability > SHIELD_RULES.durability
       || typeof state.shield.deployed !== 'boolean'
       || (state.kind !== 'shield' && (state.deployAge !== 0 || state.shield.deployed))
-      || (state.shield.deployed && (!state.selected || !state.held || state.deployAge !== SHIELD_RULES.deployTicks || state.shield.durability === 0))
+      || (state.shield.deployed && (!state.selected || !state.held || state.deployAge !== SHIELD_RULES.deployTicks))
       || (state.kind !== 'melee' && state.melee.age !== -1)) throw Error('Invalid offhand checkpoint');
-    const controller = new OffhandController(state.kind);
+    const controller = new OffhandController(state.kind, state.id);
     controller.melee.restore(state.melee);
     controller.selected = state.selected;
     controller.held = state.held;

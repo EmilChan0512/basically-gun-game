@@ -9,7 +9,7 @@ function fixture(secondary: 'knife' | 'shield') {
     terrain: [{ x: 0, y: 500, width: 1800, height: 200 }], collisionMask: undefined,
     navigation: [{ x: 100, y: 499, links: [1] }, { x: 500, y: 499, links: [0] }] }, 'normal', 'm4', seededRandom(9));
   battle.player.human = false; battle.actors[1].human = true;
-  battle.equipActor(battle.player, { primary: 'm4', secondary });
+  battle.equipActor(battle.player, { classId: secondary === 'knife' ? 'assassin' : 'tank', primary: 'm4', secondary });
   battle.actors.forEach((a, i) => { a.movement.reset(200 + i * 80, 499); a.life.spawnProtectionFrames = 0; });
   battle.player.aim = { x: 280, y: 457 };
   return battle;
@@ -22,7 +22,7 @@ it('closes knife distance and attacks repeatedly through ordinary AI inputs with
   expect(battle.player.arsenal.shots).toBe(0);
   expect(target.life.health).toBeLessThan(45);
 });
-it('leaves timed defense and stows a broken shield rather than getting stuck holding it', () => {
+it('leaves timed defense and resumes defense in the next tactical window', () => {
   const battle = fixture('shield'); battle.player.life.health = 30; battle.player.life.regenDelay = 999;
   for (let i = 0; i < 30; i++) battle.tickPlayers(new Map());
   expect(battle.player.offhand!.shield.deployed).toBe(true);
@@ -32,7 +32,7 @@ it('leaves timed defense and stows a broken shield rather than getting stuck hol
   expect(restored.checkpoint()).toEqual(battle.checkpoint());
   expect(battle.player.offhand!.equipped).toBe(false);
   battle.frame = 121; battle.player.offhand!.select(true, false); battle.player.offhand!.shield.durability = 0;
-  battle.tickPlayers(new Map()); expect(battle.player.offhand!.equipped).toBe(false);
+  battle.tickPlayers(new Map()); expect(battle.player.offhand!.equipped).toBe(true);
 });
 it('keeps delivery navigation while a carrier must use a special offhand', () => {
   const battle = fixture('shield'), actor = battle.player;

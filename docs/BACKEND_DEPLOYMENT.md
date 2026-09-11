@@ -6,6 +6,8 @@
 
 `.github/workflows/backend.yml` 在 PR 和 main 推送时运行 `npm ci`、`npm run check`，打包客户端和服务端，并用独立目录里的真实 WebSocket 会话验证服务端。Actions 保存以提交 SHA 命名的 backend/client 两份产物，保留 14 天。
 
+发布门槛还包括 Chromium 中的公共调试配装、技能/道具、刀盾和重连测试，以及生产离线包验证。失败时上传浏览器测试记录与QA截图，保留7天。独立服务端包探测覆盖实时职业/装备/技能切换，客户端与服务端必须具有一致的内容指纹。
+
 只有 main 且仓库变量 `DEPLOY_ENABLED=true` 时才进入 production 部署；也可以在 Actions 手动运行 main。部署通过专用 SSH 用户上传打包结果，服务器无需 Git、npm install 或 GitHub 凭据。部署串行执行，不中断进行中的部署；排队后已不是最新 main 的提交跳过部署。
 
 每次发布写入 `/opt/project-strike/releases/<SHA>-<run>-<attempt>`，校验归档及服务端 SHA256，原子切换 `current` 链接，重启 systemd，检查 WebSocket welcome 的协议和内容版本。启动失败恢复旧链接并重启旧版本，首次部署失败则停止服务。所有发布目录保留，需定期查看磁盘用量。进程崩溃由 systemd 自动重启；开机自启。

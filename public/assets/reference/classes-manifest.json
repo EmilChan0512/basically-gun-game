@@ -1,0 +1,327 @@
+{
+  "source": "SFH1 v1.2.1",
+  "swfSha256": "0b8d92dfae85917dd9bc0dc87997979bb825b3211d95d92f84040ffc9a1cc989",
+  "method": "Static FFDec sprite export; Stats_Classes.startFrame + skin 1; UnitMC.setSkin",
+  "assets": [
+    {
+      "id": "assassin-boot",
+      "symbol": 538,
+      "frame": 1,
+      "crop": [
+        0,
+        0,
+        14,
+        14
+      ],
+      "size": [
+        14,
+        14
+      ],
+      "sha256": "0a4968e6798864bef69db537a26887fac7709f671e5558f8d749f25d492076ba"
+    },
+    {
+      "id": "assassin-leg",
+      "symbol": 568,
+      "frame": 1,
+      "crop": [
+        1,
+        0,
+        16,
+        20
+      ],
+      "size": [
+        15,
+        20
+      ],
+      "sha256": "6dde78c437c8159402f092cbfc516f3dd2ecfd414c10b52001609ccc23193940"
+    },
+    {
+      "id": "assassin-arm",
+      "symbol": 598,
+      "frame": 1,
+      "crop": [
+        30,
+        25,
+        48,
+        43
+      ],
+      "size": [
+        18,
+        18
+      ],
+      "sha256": "3855d9896c30ca4ce8843ca931051ca3d217d483e589e698493fb0f49664a2e2"
+    },
+    {
+      "id": "assassin-torso",
+      "symbol": 631,
+      "frame": 1,
+      "crop": [
+        5,
+        8,
+        29,
+        35
+      ],
+      "size": [
+        24,
+        27
+      ],
+      "sha256": "ea0a7d95356107e0cd0e0332f35fa6cbe624f4ff96d2a1406d07e8a01ed7d38b"
+    },
+    {
+      "id": "assassin-head",
+      "symbol": 666,
+      "frame": 1,
+      "crop": [
+        12,
+        3,
+        35,
+        28
+      ],
+      "size": [
+        23,
+        25
+      ],
+      "sha256": "0df9e5ae4d2bb24b70f234cb8e6c05928cd78fa089d93e99e24183851818acf0"
+    },
+    {
+      "id": "medic-boot",
+      "symbol": 538,
+      "frame": 51,
+      "crop": [
+        0,
+        0,
+        14,
+        14
+      ],
+      "size": [
+        14,
+        14
+      ],
+      "sha256": "0a4968e6798864bef69db537a26887fac7709f671e5558f8d749f25d492076ba"
+    },
+    {
+      "id": "medic-leg",
+      "symbol": 568,
+      "frame": 51,
+      "crop": [
+        1,
+        0,
+        16,
+        20
+      ],
+      "size": [
+        15,
+        20
+      ],
+      "sha256": "20014cb9310dfb1b0c0db4802388c202c62ededc6a8614aac61e1eed4fee86ee"
+    },
+    {
+      "id": "medic-arm",
+      "symbol": 598,
+      "frame": 51,
+      "crop": [
+        18,
+        12,
+        62,
+        56
+      ],
+      "size": [
+        44,
+        44
+      ],
+      "sha256": "204bfbd287dbf8e65a94eae45ba2a91ec5d21515e0df5dac014a2e1ef99309ee"
+    },
+    {
+      "id": "medic-torso",
+      "symbol": 631,
+      "frame": 51,
+      "crop": [
+        0,
+        4,
+        30,
+        34
+      ],
+      "size": [
+        30,
+        30
+      ],
+      "sha256": "27ceddcb8a32e512b9cb9f75908edc564f1c9ecb16b860822aa401358dd153fd"
+    },
+    {
+      "id": "medic-head",
+      "symbol": 666,
+      "frame": 51,
+      "crop": [
+        10,
+        2,
+        35,
+        24
+      ],
+      "size": [
+        25,
+        22
+      ],
+      "sha256": "295a7248f7b75a9656680b61c0dbc26c7be5bd27417eb6b8a37c1394f9e090da"
+    },
+    {
+      "id": "tank-boot",
+      "symbol": 538,
+      "frame": 101,
+      "crop": [
+        0,
+        0,
+        14,
+        14
+      ],
+      "size": [
+        14,
+        14
+      ],
+      "sha256": "0a4968e6798864bef69db537a26887fac7709f671e5558f8d749f25d492076ba"
+    },
+    {
+      "id": "tank-leg",
+      "symbol": 568,
+      "frame": 101,
+      "crop": [
+        2,
+        0,
+        17,
+        18
+      ],
+      "size": [
+        15,
+        18
+      ],
+      "sha256": "7d14023434c7d52d4853e128a4337d40245cc899d5acdb30cc40137845f0ee44"
+    },
+    {
+      "id": "tank-arm",
+      "symbol": 598,
+      "frame": 101,
+      "crop": [
+        23,
+        18,
+        56,
+        51
+      ],
+      "size": [
+        33,
+        33
+      ],
+      "sha256": "1f88847a72d2ff0e4fcc9303ecda37a63aa4b3f60c2dc24a67c40978330e1eee"
+    },
+    {
+      "id": "tank-torso",
+      "symbol": 631,
+      "frame": 101,
+      "crop": [
+        1,
+        6,
+        37,
+        42
+      ],
+      "size": [
+        36,
+        36
+      ],
+      "sha256": "ee57e3ae49d2881b87ec88926cbd9bc7851db94055eedff3c55973b8852a98d0"
+    },
+    {
+      "id": "tank-head",
+      "symbol": 666,
+      "frame": 101,
+      "crop": [
+        9,
+        2,
+        35,
+        26
+      ],
+      "size": [
+        26,
+        24
+      ],
+      "sha256": "fc60ab6ae9aa40f6933b50743c2a9f83d6fa0e85f2c2a300de445ee0fa077f28"
+    },
+    {
+      "id": "commando-boot",
+      "symbol": 538,
+      "frame": 151,
+      "crop": [
+        0,
+        0,
+        14,
+        14
+      ],
+      "size": [
+        14,
+        14
+      ],
+      "sha256": "0a4968e6798864bef69db537a26887fac7709f671e5558f8d749f25d492076ba"
+    },
+    {
+      "id": "commando-leg",
+      "symbol": 568,
+      "frame": 151,
+      "crop": [
+        2,
+        0,
+        16,
+        17
+      ],
+      "size": [
+        14,
+        17
+      ],
+      "sha256": "fc84f407d8506f70463401e9de53f7de6328a7c7e6a87d6e35e84f2fb3d967cc"
+    },
+    {
+      "id": "commando-arm",
+      "symbol": 598,
+      "frame": 151,
+      "crop": [
+        21,
+        25,
+        48,
+        50
+      ],
+      "size": [
+        27,
+        25
+      ],
+      "sha256": "bd6a8e9441b8da0b4abb1c073f9f3bdc172129390075874c587ce7987e1cf9f5"
+    },
+    {
+      "id": "commando-torso",
+      "symbol": 631,
+      "frame": 151,
+      "crop": [
+        3,
+        4,
+        30,
+        37
+      ],
+      "size": [
+        27,
+        33
+      ],
+      "sha256": "866dd25c5254fb19409abb418d517c958f49d59172b0455c1a76a2b2a4ab806e"
+    },
+    {
+      "id": "commando-head",
+      "symbol": 666,
+      "frame": 151,
+      "crop": [
+        9,
+        2,
+        35,
+        26
+      ],
+      "size": [
+        26,
+        24
+      ],
+      "sha256": "ce7778d945248fabbeac1df3c82d0bf67c814ae4371179bb48349159dffabae4"
+    }
+  ]
+}

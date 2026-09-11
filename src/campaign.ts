@@ -9,7 +9,7 @@ import { Battle } from './game/campaign/Battle';
 import { MISSIONS } from './game/campaign/Missions';
 import { CareerProgress, type Reward } from './game/campaign/CareerProgress';
 import { Accounts } from './game/campaign/Accounts';
-import { CLASSES, SKILLS, ITEMS, WEAPONS } from './game/campaign/Catalog';
+import { CLASSES, SKILLS, ITEMS, WEAPONS, SPECIAL_OFFHANDS } from './game/campaign/Catalog';
 import { renderAccounts, renderArmory } from './game/campaign/CareerPanels';
 import './campaign.css';
 
@@ -161,8 +161,8 @@ export function startCampaign() {
       $('player-health').textContent = p.life.alive ? `生命 ${Math.ceil(p.life.health)} / ${p.life.maxHealth}` : `阵亡 · ${((p.life.respawnFrames + 1) / 30).toFixed(1)} 秒后复活`;
       const offhand = p.offhand?.view();
       $('player-ammo').textContent = offhand?.equipped && offhand.kind !== 'firearm'
-        ? offhand.kind === 'melee' ? `战术刀 · ${offhand.age < 0 ? '点击攻击挥刀' : '挥击中'} · Q切换`
-          : `防弹盾 · 耐久 ${Math.ceil(offhand.durability)} / 120 · ${offhand.deployed ? '防御中' : '按住攻击部署'} · Q切换`
+        ? offhand.kind === 'melee' ? `${SPECIAL_OFFHANDS[offhand.id ?? 'knife'].name} · ${offhand.age < 0 ? '点击攻击挥刀' : '挥击中'} · Q切换`
+          : `${SPECIAL_OFFHANDS[offhand.id ?? 'shield'].name} · ${offhand.deployed ? '防御中' : '按住攻击部署'} · Q切换`
         : `${p.arsenal.selected.toUpperCase()}  ${gun.ammo} / ${gun.reserveAmmo}${gun.reloadFrames ? ` · 换弹 ${(gun.reloadFrames / 30).toFixed(1)}s` : gun.ammo === 0 ? ' · Q切枪 / 返回出生区补给' : ''}`;
       $('abilities').textContent = p.kit ? `${CLASSES[p.kit.classId].name} Lv.${p.kit.level}  |  E ${SKILLS[p.kit.skill].name}：${p.skillFrames ? '生效中' : p.skillCooldown ? (p.skillCooldown / 30).toFixed(1) + 's' : '就绪'}  |  G ${ITEMS[p.kit.item].name} ×${p.itemCharges}` : '';
       $('battle-message').textContent = b.mission.mode === 'dom' ? `据点：${{ blue: '我方控制 +1/秒', red: '敌方控制 +1/秒', contested: '争夺中 · 暂停计分', neutral: '无人占领' }[b.objective]}` : p.life.spawnProtectionFrames && p.life.alive ? '出生保护中 · 向前推进' : '击败敌人为小队得分 · 阵亡后可复活';

@@ -10,6 +10,8 @@ test('online knife and shield selection, authority actions and reconnect', async
     await pages[0].locator('#create').click(); await expect(pages[0].locator('#online-secondary')).toBeVisible();
     const room = [...server.rooms.values()][0];
     await pages[1].locator('#code').fill(room.id); await pages[1].locator('#join').click();
+    await pages[0].locator('#online-class').selectOption('assassin');
+    await pages[1].locator('#online-class').selectOption('tank');
     await pages[0].locator('#online-secondary').selectOption('knife');
     await pages[1].locator('#online-secondary').selectOption('shield');
     for (const page of pages) await page.locator('#online-ready').click();

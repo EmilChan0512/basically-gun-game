@@ -4,6 +4,7 @@ import { registerTestAccount } from '../helpers/account-ui';
 for (const id of ['knife', 'shield'] as const) test(`equips and uses ${id} from the real armory`, async ({ page }) => {
   await page.goto('/'); await registerTestAccount(page);
   await page.locator('#edit-loadout').click();
+  await page.locator(`[data-class="${id === 'knife' ? 'assassin' : 'tank'}"]`).click();
   await page.locator(`[data-offhand="${id}"]`).click();
   await expect(page.locator(`[data-offhand="${id}"]`)).toBeDisabled();
   await page.locator('#armory-back').click();
