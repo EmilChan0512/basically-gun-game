@@ -1,4 +1,4 @@
-import { renderOnlineArmory } from './client/presentation/OnlineArmory';
+import { renderOnlineArmory, renderOnlineLoadoutSummary } from './client/presentation/OnlineArmory';
 import { starterEquipment } from './shared/content/OnlineProgress';
 import type { EquipmentLoadout } from './shared/content/Equipment';
 import Phaser from 'phaser';
@@ -11,6 +11,7 @@ import { radarSvg } from './client/presentation/Radar';
 import { SPECIAL_OFFHANDS, CLASSES, SKILLS, ITEMS, type SkillId, type ItemId } from './game/campaign/Catalog';
 import type { OffhandView } from './shared/simulation/Offhand';
 import './campaign.css';
+import './client/presentation/OnlineArmory.css';
 import { VisionOverlay } from './client/presentation/VisionOverlay';
 import { CollisionWorld } from './shared/content/CollisionWorld';
 import { NETWORK_TICK_MS } from './shared/protocol/Timing';
@@ -29,7 +30,7 @@ function equipmentText(actor: { weapon: string; ammo: number; reserve: number; o
 }
 
 export function startOnline() {
-  document.body.innerHTML = `<main class="online-app" style="max-width:1120px;margin:24px auto"><h1>联机对战</h1><a href="/">返回单人游戏</a><div class="loadout"><label>服务器<input id="server" value="ws://43.142.165.82:4180"></label><label>昵称<input id="name" value="玩家" maxlength="24"></label><label>房间码<input id="code"></label><button id="join-debug">加入公共调试房间</button><button id="create">创建房间</button><button id="join">加入房间</button><button id="reconnect">断线重连</button></div><p id="status">连接服务器后可创建或加入房间。</p><section id="online-account"><h2>联机账号</h2><p>联机进度保存在当前服务器，与本机单人存档独立。</p><div class="loadout" id="account-login"><label>账号<input id="account-name" autocomplete="username" maxlength="24"></label><label>密码<input id="account-password" type="password" autocomplete="current-password" minlength="8" maxlength="128"></label><button id="account-register">注册联机账号</button><button id="account-signin">登录</button></div><p id="account-status" role="status">普通联机需登录；公共调试房间可直接试玩。</p><button id="account-logout" hidden>退出账号</button><button id="online-leave" hidden>离开房间 / 返回配装</button></section><section id="online-preflight"><h2>出战配装</h2><div id="preflight-armory"></div><p>先选择职业、技能与武器，再创建或加入房间。普通对局满30秒并参与操作后结算金币和职业经验。</p></section><div id="lobby"></div><p id="online-hud" aria-live="off"></p><div id="online-game"></div><p>A/D移动 · 空格跳跃 · S蹲伏 · 鼠标射击 · Q切枪 · R换弹 · E技能 · G道具</p></main>`;
+  document.body.innerHTML = `<main class="online-app"><header class="online-header"><a class="online-brand" href="/"><span class="online-mark">S</span><span>PROJECT STRIKE<small>ONLINE OPERATIONS</small></span></a><nav aria-label="联机主导航"><a id="online-lobby-nav" href="#lobby">联机大厅</a><a id="online-armory-nav" href="#loadout">出战配装</a></nav><span id="online-profile-chip">游客档案</span></header><p id="status" role="status">连接服务器后可创建或加入房间。</p><div id="online-lobby-page"><div class="online-lobby-title"><p class="arsenal-eyebrow">MULTIPLAYER / BRIEFING</p><h1>联机大厅</h1><p>整备你的装备，和队友一起出发。</p></div><section id="online-account"><h2>联机账号</h2><p>联机进度保存在当前服务器，与本机单人存档独立。</p><div class="loadout" id="account-login"><label>账号<input id="account-name" autocomplete="username" maxlength="24"></label><label>密码<input id="account-password" type="password" autocomplete="current-password" minlength="8" maxlength="128"></label><button id="account-register">注册联机账号</button><button id="account-signin">登录</button></div><p id="account-status" role="status">普通联机需登录；公共调试房间可直接试玩。</p><button id="account-logout" hidden>退出账号</button><button id="online-leave" hidden>离开房间 / 返回配装</button></section><div id="online-loadout-brief"></div><section id="online-connection"><h2>加入行动</h2><div class="loadout"><label>服务器<input id="server" value="ws://43.142.165.82:4180"></label><label>调试昵称<input id="name" value="玩家" maxlength="24"></label><label>房间码<input id="code"></label></div><div class="online-room-actions"><button id="create">创建房间</button><button id="join">加入房间</button><button id="join-debug">加入公共调试房间</button><button id="reconnect">断线重连</button></div></section><div id="lobby"></div><p id="online-hud" aria-live="off"></p><div id="online-game"></div><p class="online-keys">A/D移动 · 空格跳跃 · S蹲伏 · 鼠标射击 · Q切枪 · R换弹 · E技能 · G道具</p></div><section id="online-preflight" hidden><div id="preflight-armory"></div></section></main>`;
   const el = (id: string) => document.getElementById(id)!;
   el('online-game').style.position = 'relative';
   const radar = document.createElement('div'); radar.id = 'online-radar'; radar.hidden = true;
@@ -40,7 +41,7 @@ export function startOnline() {
   const transportNote = document.createElement('p'); transportNote.id = 'account-transport';
   el('online-account').append(transportNote);
   const history = document.createElement('details'); history.id = 'coop-history';
-  document.querySelector('main')!.append(history);
+  el('online-lobby-page').append(history);
   const renderHistory = () => {
     history.replaceChildren(); const title = document.createElement('summary'); title.textContent = '本机合作记录（最近50局）'; history.append(title);
     const note = document.createElement('p'); note.textContent = records.persistent ? '保存在当前浏览器，不计入战役军资或等级。' : '浏览器存储不可用，结果仅保留到此页面关闭。'; history.append(note);
@@ -56,15 +57,38 @@ export function startOnline() {
   const sessionKey = (url: string) => `strike-online-session:${url}`;
   const readToken = (url: string) => { try { return sessionStorage.getItem(sessionKey(url)); } catch { return null; } };
   const writeToken = (url: string, token: string) => { try { if (token) sessionStorage.setItem(sessionKey(url), token); else sessionStorage.removeItem(sessionKey(url)); } catch { /* Session remains usable in memory. */ } };
+  let armorySignature = '';
+  const canEdit = () => !network?.room || network.room.debug || network.room.phase === 'lobby';
+  const currentEquipment = () => network?.room?.players.find(p => p.id === network?.playerId)?.equipment ?? draft;
   const renderPreflight = () => {
-    const profile = network?.profile ?? null;
-    renderOnlineArmory(el('preflight-armory'), draft, profile, false, equipment => {
-      draft = equipment;
-      if (network?.profile) network.send({ type: 'profileEquip', equipment });
-      renderPreflight();
-    }, profile ? (kind, id) => network?.send({ type: 'purchase', kind, id }) : undefined);
+    const profile = network?.profile ?? null, room = network?.room;
+    renderOnlineLoadoutSummary(el('online-loadout-brief'), currentEquipment());
+    renderOnlineArmory(el('preflight-armory'), currentEquipment(), profile, !!room?.debug, equipment => {
+      if (!canEdit()) return;
+      if (room) network?.send({ type: 'equip', equipment });
+      else { draft = equipment; if (network?.profile) network.send({ type: 'profileEquip', equipment }); renderPreflight(); }
+    }, profile && !room ? (kind, id) => network?.send({ type: 'purchase', kind, id }) : undefined);
   };
-  renderPreflight();
+  const syncView = () => {
+    const wantsArmory = location.hash === '#loadout';
+    if (wantsArmory && !canEdit()) historyReplace('#lobby');
+    const armory = location.hash === '#loadout';
+    el('online-preflight').hidden = !armory; el('online-lobby-page').hidden = armory;
+    el('online-lobby-nav').setAttribute('aria-current', armory ? 'false' : 'page');
+    el('online-armory-nav').setAttribute('aria-current', armory ? 'page' : 'false');
+    el('online-armory-nav').setAttribute('aria-disabled', String(!canEdit()));
+    el('online-loadout-brief').hidden = !canEdit();
+    document.body.classList.toggle('online-armory-open', armory);
+  };
+  const historyReplace = (hash: string) => window.history.replaceState(null, '', hash);
+  window.addEventListener('hashchange', () => {
+    syncView(); network?.clearActions(); window.dispatchEvent(new Event('online-view-change'));
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    const heading = el(location.hash === '#loadout' ? 'preflight-armory' : 'online-lobby-page').querySelector('h1');
+    if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
+  });
+  el('online-armory-nav').onclick = event => { if (!canEdit()) event.preventDefault(); };
+  renderPreflight(); syncView();
   const connect = () => {
     const url = (el('server') as HTMLInputElement).value.trim();
     if (network && serverUrl === url && network.socket.readyState <= WebSocket.OPEN) return network;
@@ -73,14 +97,15 @@ export function startOnline() {
     try { network = new NetworkSession((el('server') as HTMLInputElement).value); }
     catch { el('status').textContent = '服务器地址无效'; return; }
     const current = network;
-    current.onError = message => { if (network === current) { el('status').textContent = message; if (!current.room) el('account-status').textContent = message; } };
+    current.onError = message => { if (network === current) { if (current.profile && !current.room) draft = current.profile.classes[current.profile.selected].equipment; renderPreflight(); el('status').textContent = message; if (!current.room) el('account-status').textContent = message; } };
     let signature = '';
     current.onChange = () => {
       if (network !== current) return;
       const profile = current.profile, room = current.room;
       transportNote.textContent = current.allowInsecureAccounts && serverUrl.startsWith('ws:')
         ? '当前为 WS 测试兼容模式，请使用独立测试密码。联机进度仍保存在服务器。' : '';
-      el('online-preflight').hidden = !!room;
+      syncView();
+      el('online-profile-chip').textContent = profile ? `${profile.name} · ${profile.credits} 金币` : room?.debug ? '游客 · 调试模式' : '游客档案';
       el('online-leave').hidden = !room;
       el('account-login').hidden = !!profile;
       el('account-logout').hidden = !profile;
@@ -91,9 +116,9 @@ export function startOnline() {
         if (current.authToken) writeToken(serverUrl, current.authToken);
       }
       const nextProfile = JSON.stringify(profile);
-      if (nextProfile !== profileSignature) { profileSignature = nextProfile; if (profile) draft = profile.classes[profile.selected].equipment; renderPreflight(); }
-      if (room) el('preflight-armory').replaceChildren();
-      else if (!el('preflight-armory').childElementCount) renderPreflight();
+      if (nextProfile !== profileSignature) { profileSignature = nextProfile; if (profile) draft = profile.classes[profile.selected].equipment; }
+      const nextArmory = JSON.stringify([currentEquipment(), profile, room?.id, room?.phase]);
+      if (nextArmory !== armorySignature) { armorySignature = nextArmory; renderPreflight(); }
       if (!room) {
         if (game) { game.destroy(true); game = undefined; }
         el('lobby').replaceChildren(); el('online-hud').textContent = ''; radar.hidden = true; signature = '';
@@ -112,13 +137,6 @@ export function startOnline() {
         el('lobby').replaceChildren();
         for (const player of room.players) { const line = document.createElement('p'); line.textContent = `${player.team === 1 ? '蓝队' : '红队'} · ${player.name} · ${CLASSES[player.equipment.classId ?? 'medic'].name} · ${room.debug ? '调试中' : player.spectator ? '观战（下局参战）' : player.ready ? '已准备' : '未准备'}`; el('lobby').append(line); }
         if (room.phase === 'lobby' || room.debug) {
-          const own = room.players.find(p => p.id === current.playerId);
-          if (own) {
-            const armory = document.createElement('div');
-            renderOnlineArmory(armory, own.equipment, current.profile, room.debug,
-              equipment => current.send({ type: 'equip', equipment }));
-            el('lobby').append(armory);
-          }
           if (!room.debug) {
             const preview = document.createElement('div'); preview.id = 'online-map-preview';
             preview.innerHTML = mapPreviewSvg(MAPS.find(m => m.id === room.mapId)!); el('lobby').append(preview);
@@ -171,6 +189,7 @@ export function startOnline() {
   const enter = (action: 'create' | 'join' | 'joinDebug') => {
     const current = connect(); if (!current) return;
     if (action !== 'joinDebug' && !current.profile) { el('status').textContent = '请先注册或登录联机账号，然后选择出战配装。'; return; }
+    historyReplace('#lobby'); syncView();
     current.send({ type: action, code: (el('code') as HTMLInputElement).value.trim(), name: (el('name') as HTMLInputElement).value, equipment: draft });
   };
   const authenticate = (mode: 'register' | 'login') => {
@@ -185,12 +204,12 @@ export function startOnline() {
     writeToken(serverUrl, ''); network?.send({ type: 'logout' }); network?.close(); network = undefined;
     game?.destroy(true); game = undefined; draft = starterEquipment(); profileSignature = '';
     el('account-login').hidden = false; el('account-logout').hidden = true; el('online-leave').hidden = true;
-    el('online-preflight').hidden = false; el('lobby').replaceChildren(); el('online-hud').textContent = ''; radar.hidden = true;
+    historyReplace('#lobby'); syncView(); el('online-profile-chip').textContent = '游客档案'; el('lobby').replaceChildren(); el('online-hud').textContent = ''; radar.hidden = true;
     el('account-status').textContent = '已退出联机账号'; el('status').textContent = '请登录或加入公共调试房间。';
     for (const id of ['create', 'join', 'join-debug', 'server', 'account-signin', 'account-register']) (el(id) as HTMLButtonElement).disabled = false;
     renderPreflight();
   };
-  el('online-leave').onclick = () => network?.send({ type: 'leave' });
+  el('online-leave').onclick = () => { network?.send({ type: 'leave' }); };
   el('join-debug').onclick = () => enter('joinDebug');
   el('reconnect').onclick = () => network?.reconnect();
   el('create').onclick = () => enter('create'); el('join').onclick = () => enter('join');
@@ -235,7 +254,7 @@ class OnlineScene extends Phaser.Scene {
     this.rig = new ReferenceArt(this); this.graphics = this.add.graphics().setDepth(3);
     this.hud = this.add.text(16, 16, '', { fontSize: '18px', backgroundColor: '#10202dcc', padding: { x: 10, y: 10 } }).setScrollFactor(0).setDepth(10);
     const down = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement)?.matches('input,button,select')) return;
+      if (!document.getElementById('online-preflight')?.hidden || (e.target as HTMLElement)?.closest('input,button,select,a')) return;
       if (e.code === 'Tab' && !this.network.state?.actorId) { e.preventDefault(); if (!e.repeat) this.spectateIndex++; return; }
       if (e.code === 'Space') e.preventDefault(); this.keys.add(e.code);
       if (!e.repeat && e.code === 'KeyQ') this.network.action('swap');
@@ -245,22 +264,31 @@ class OnlineScene extends Phaser.Scene {
     };
     const up = (e: KeyboardEvent) => this.keys.delete(e.code);
     const blur = () => { this.keys.clear(); this.fire.clear(); this.network.clearActions(); };
+    const viewChanged = () => { blur(); if (document.getElementById('online-preflight')?.hidden) this.scale.refresh(); };
     const focus = (event: FocusEvent) => { if ((event.target as HTMLElement)?.closest('#lobby, #online-account, #online-preflight')) blur(); };
     window.addEventListener('focusin', focus);
+    window.addEventListener('online-view-change', viewChanged);
     window.addEventListener('keydown', down); window.addEventListener('keyup', up); window.addEventListener('blur', blur);
-    this.events.once('shutdown', () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', blur); window.removeEventListener('focusin', focus); });
+    this.events.once('shutdown', () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', blur); window.removeEventListener('focusin', focus); window.removeEventListener('online-view-change', viewChanged); });
   }
   update(_time: number, delta: number) {
     const message = this.network.state; if (!message) return;
     const self = message.state.actors.find(a => a.id === message.actorId);
     const followed = self ?? message.state.actors[this.spectateIndex % message.state.actors.length];
     const now = performance.now();
-    const aim = this.input.activePointer.positionToCamera(this.cameras.main) as Phaser.Math.Vector2;
+    const editing = !document.getElementById('online-preflight')?.hidden;
+    // A hidden canvas has no usable pointer transform. Keep the authoritative
+    // aim while browsing equipment and send neutral input to stop movement.
+    const pointerAim = editing ? undefined
+      : this.input.activePointer.positionToCamera(this.cameras.main) as Phaser.Math.Vector2;
+    const aim = pointerAim && Number.isFinite(pointerAim.x) && Number.isFinite(pointerAim.y) ? pointerAim
+      : message.poses.find(p => p.id === message.actorId)?.aim ?? { x: 0, y: 0 };
     this.elapsed += Math.min(delta, 100);
     this.animationFrame += Math.min(delta, 100) / NETWORK_TICK_MS;
     while (this.elapsed >= NETWORK_TICK_MS) {
       this.elapsed -= NETWORK_TICK_MS;
-      if (self) this.network.input({ left: this.keys.has('KeyA'), right: this.keys.has('KeyD'), crouch: this.keys.has('KeyS'), jump: this.keys.has('Space') || this.keys.has('KeyW'), fire: document.hasFocus() && this.fire.sample(this.input.activePointer.leftButtonDown(), now), aim: { x: aim.x, y: aim.y } });
+      if (editing) { this.keys.clear(); this.fire.clear(); this.network.clearActions(); }
+      if (self) this.network.input({ left: this.keys.has('KeyA'), right: this.keys.has('KeyD'), crouch: this.keys.has('KeyS'), jump: this.keys.has('Space') || this.keys.has('KeyW'), fire: !editing && document.hasFocus() && this.fire.sample(this.input.activePointer.leftButtonDown(), now), aim: { x: aim.x, y: aim.y } });
     }
     // Take an immutable render position AFTER input. Camera, sprite and vision
     // must all consume the same position within this render frame.

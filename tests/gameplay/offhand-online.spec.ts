@@ -1,4 +1,4 @@
-import { registerOnline } from '../helpers/online-account';
+import { registerOnline, selectOnlineClass, equipOnline, onlineLobby } from '../helpers/online-account';
 import { test, expect } from '@playwright/test';
 import { startServer } from '../../server/server';
 test('online knife and shield selection, authority actions and reconnect', async ({ browser }) => {
@@ -9,19 +9,20 @@ test('online knife and shield selection, authority actions and reconnect', async
   try {
     for (const page of pages) { page.on('pageerror', e => errors.push(e.message)); await page.goto('/?online'); await page.locator('#server').fill(`ws://127.0.0.1:${address.port}`); }
     for (const [i, page] of pages.entries()) await registerOnline(page, `Pilot ${i}`);
-    await pages[0].locator('#create').click(); await expect(pages[0].locator('#online-secondary')).toBeVisible();
+    await pages[0].locator('#create').click(); await expect(pages[0].locator('#online-loadout-brief')).toBeVisible();
     const room = [...server.rooms.values()][0];
     await pages[1].locator('#code').fill(room.id); await pages[1].locator('#join').click();
-    await pages[0].locator('#online-class').selectOption('assassin');
-    await pages[1].locator('#online-class').selectOption('tank');
-    await pages[0].locator('#online-secondary').selectOption('knife');
-    await pages[1].locator('#online-secondary').selectOption('shield');
-    for (const page of pages) await page.locator('#online-ready').click();
+    await selectOnlineClass(pages[0], 'assassin');
+    await selectOnlineClass(pages[1], 'tank');
+    await equipOnline(pages[0], 'secondary', 'knife');
+    await equipOnline(pages[1], 'secondary', 'shield');
+    for (const page of pages) { await onlineLobby(page); await page.locator('#online-ready').click(); }
     await expect(pages[0].locator('#lobby')).not.toContainText('未准备');
     await pages[0].locator('#online-start').click();
     for (const page of pages) { await expect(page.locator('#online-game')).toHaveAttribute('aria-busy', 'false'); await expect(page.locator('#online-hud')).toContainText('M4'); await page.keyboard.press('q'); }
     await expect(pages[0].locator('#online-hud')).toContainText('战术刀');
     await expect(pages[1].locator('#online-hud')).toContainText('防弹盾');
+    for (const page of pages) await page.locator('canvas').scrollIntoViewIfNeeded();
     await pages[1].mouse.move(900, 400); await pages[1].mouse.down();
     await expect(pages[1].locator('#online-hud')).toContainText('防御中');
     await pages[0].mouse.move(900, 400); await pages[0].mouse.down();
