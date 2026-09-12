@@ -16,9 +16,20 @@ import { validateEquipment } from '../src/shared/content/Equipment';
 import type { ClassId } from '../src/game/campaign/Catalog';
 import { createServer } from 'node:http';
 import { createAdminHandler, type AdminConfig } from './AdminHttp';
+import { createGameHandler } from './GameHttp';
 
-export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000, logger: Logger = silentLogger, metricsIntervalMs = 60000, enableDebugRoom = false, accounts = new OnlineAccounts(), secureAccounts = false, admin?: AdminConfig) {
-  const http = admin ? createServer(createAdminHandler(accounts, admin, id => invalidateAccount(id))) : undefined;
+export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000, logger: Logger = silentLogger, metricsIntervalMs = 60000, enableDebugRoom = false, accounts = new OnlineAccounts(), secureAccounts = false, admin?: AdminConfig, webRoot?: string) {
+  const adminHandler = admin ? createAdminHandler(accounts, admin, id => invalidateAccount(id)) : undefined;
+  const gameHandler = webRoot ? createGameHandler(webRoot) : undefined;
+  const http = adminHandler || gameHandler ? createServer((request, response) => {
+    let pathname: string;
+    try { pathname = new URL(request.url ?? '/', 'http://localhost').pathname; }
+    catch { response.writeHead(400).end('Bad request'); return; }
+    if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+      if (adminHandler) { void adminHandler(request, response); return; }
+    } else if (gameHandler) { void gameHandler(request, response); return; }
+    response.writeHead(404).end('Not found');
+  }) : undefined;
   if (http) { http.requestTimeout = 10000; http.headersTimeout = 10000; http.timeout = 15000; }
   const wss = new WebSocketServer({ ...(http ? { server: http } : { port, host }), maxPayload: 8192,
     perMessageDeflate: { threshold: 1024, serverNoContextTakeover: true, clientNoContextTakeover: true,

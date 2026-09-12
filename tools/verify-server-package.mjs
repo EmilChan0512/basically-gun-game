@@ -1,4 +1,4 @@
-import { mkdtempSync, copyFileSync, writeFileSync, mkdirSync, readFileSync } from 'node:fs';
+import { mkdtempSync, copyFileSync, writeFileSync, mkdirSync, readFileSync, cpSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -11,6 +11,7 @@ const clientManifest = JSON.parse(readFileSync('artifacts/project-strike-local/m
 if (!serverManifest.contentVersion || serverManifest.contentVersion !== clientManifest.contentVersion) throw Error('Package content versions differ');
 if (createHash('sha256').update(readFileSync('artifacts/project-strike-server/server.cjs')).digest('hex') !== serverManifest.sha256) throw Error('Server bundle checksum mismatch');
 copyFileSync('artifacts/project-strike-server/server.cjs', join(temporary, 'server.cjs'));
+cpSync('artifacts/project-strike-server/dist', join(temporary, 'dist'), { recursive: true });
 const launch = () => spawn(process.execPath, ['server.cjs'], { cwd: temporary,
   env: { ...process.env, PORT: '0', HOST: '127.0.0.1', NODE_PATH: '', LOG_LEVEL: 'info' }, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
 let child = launch();
@@ -31,6 +32,9 @@ try {
   const messages = []; socket.on('message', raw => messages.push(JSON.parse(raw.toString())));
   await wait(() => messages.some(m => m.type === 'welcome'));
   const welcome = messages.find(m => m.type === 'welcome');
+  const webUrl = socket.url.replace('ws:', 'http:');
+  const page = await fetch(webUrl);
+  if (!page.ok || !(await page.text()).includes('<html')) throw Error('Packaged web page unavailable');
   if (welcome.content !== serverManifest.contentVersion) throw Error('Runtime content differs from package manifests');
   copyFileSync('deploy/probe.mjs', join(temporary, 'probe.mjs'));
   copyFileSync('artifacts/project-strike-server/manifest.json', join(temporary, 'manifest.json'));

@@ -29,7 +29,8 @@ try { admin = JSON.parse(readFileSync(resolve(stateDirectory, 'admin.json'), 'ut
 catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
 const server = startServer(port, host, 30000, logger, metricsIntervalMs, true,
   new OnlineAccounts(resolve(stateDirectory, 'accounts.json')),
-  process.env.NODE_ENV === 'production' && process.env.ALLOW_INSECURE_ACCOUNTS !== 'true', admin);
+  process.env.NODE_ENV === 'production' && process.env.ALLOW_INSECURE_ACCOUNTS !== 'true', admin,
+  resolve(process.env.WEB_ROOT ?? 'dist'));
 server.wss.on('error', error => {
   logger.log('error', 'server.listen_error', { errorType: error.name, message: error.message, code: (error as NodeJS.ErrnoException).code });
   process.exit(1);

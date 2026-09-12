@@ -1,5 +1,5 @@
 import { build } from 'esbuild';
-import { mkdirSync, copyFileSync, writeFileSync, readFileSync } from 'node:fs';
+import { mkdirSync, copyFileSync, writeFileSync, readFileSync, cpSync, rmSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
@@ -8,6 +8,11 @@ import { packageContentVersion } from './package-content.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const folder = join(root, 'artifacts/project-strike-server');
 mkdirSync(join(folder, 'licenses'), { recursive: true });
+// Only production web assets belong in the public directory.
+readFileSync(join(root, 'dist/index.html'));
+rmSync(join(folder, 'dist'), { recursive: true, force: true });
+cpSync(join(root, 'dist'), join(folder, 'dist'), { recursive: true });
+copyFileSync(join(root, 'node_modules/phaser/LICENSE.md'), join(folder, 'licenses/phaser-MIT.txt'));
 await build({ absWorkingDir: root, entryPoints: ['server/main.ts'], outfile: join(folder, 'server.cjs'),
   bundle: true, platform: 'node', format: 'cjs', target: 'node22',
   external: ['bufferutil', 'utf-8-validate'], legalComments: 'eof' });
@@ -18,7 +23,7 @@ writeFileSync(join(folder, 'README.txt'), `Project Strike 权威服务器
 
 需要 Node.js 22.12+。无需 npm install，无需原游戏或开发源码。
 Windows 双击 START.cmd，其他系统运行 node server.cjs。
-默认 ws://127.0.0.1:4180，仅本机可连接。Ctrl+C 停止，活动房间不会保存。
+默认 http://127.0.0.1:4180，浏览器直接打开即可游玩，同端口提供 WebSocket。默认仅本机可连接。Ctrl+C 停止，活动房间不会保存。
 
 局域网：PowerShell 设置 $env:HOST='0.0.0.0' 后运行 node server.cjs。
 如需换端口：$env:PORT='4181'。按操作系统提示允许所需的网络访问。
@@ -47,6 +52,6 @@ admin.json 只保存管理员用户名、加盐哈希及允许的 origin，不�
 配套客户端见 project-strike-local；打开其页面后进入 ?online 联机入口。
 `);
 writeFileSync(join(folder, 'manifest.json'), JSON.stringify({ builtAt: new Date().toISOString(), contentVersion: packageContentVersion(), node: '>=22.12',
-  entry: 'server.cjs', sha256: createHash('sha256').update(readFileSync(join(folder, 'server.cjs'))).digest('hex'),
+  entry: 'server.cjs', webRoot: 'dist', sha256: createHash('sha256').update(readFileSync(join(folder, 'server.cjs'))).digest('hex'),
   dependencies: 'ws bundled; optional native accelerators omitted', persistentRooms: false, persistentAccounts: true, accountSchema: 2 }, null, 2));
 console.log(`Server package: ${folder}`);

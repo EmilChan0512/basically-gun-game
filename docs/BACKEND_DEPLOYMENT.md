@@ -48,7 +48,7 @@
 
 从成功发布的 Actions 下载 `client-<SHA>` 并解压，运行 `PLAY.cmd`（其他系统运行 `node tools/serve-game.mjs`），打开 `http://127.0.0.1:4175/?online`。服务器输入 `ws://43.142.165.82:4180`，两台设备分别建房/加入。
 
-现在部署的是 WebSocket 后端，不提供公网网页。上述本机 HTTP 客户端可连接 ws；如果以后把客户端发布到 HTTPS 网站，需配置域名、TLS 反向代理和 `wss://`，并把后端改为仅本机监听。当前流程不依赖域名。
+现在同端口提供公网网页和 WebSocket，浏览器打开 http://43.142.165.82:4180/ 即可。以后配置 HTTPS 时需反向代理同时转发网页与 WebSocket，并把后端改为仅本机监听。当前流程不依赖域名。
 
 服务器上排查：
 
@@ -64,3 +64,11 @@ node /opt/project-strike/current/probe.mjs
 日志格式、筛选命令、级别与保留策略见 [服务端日志](SERVER_LOGGING.md)。初始化会安装独立 journal 配置；以后修改 service 或日志保留配置，需要管理员重新运行初始化脚本并重启游戏服务，普通 CI 发布仅替换应用包。
 
 手动回退优先在 Git 中 revert 问题改动后推送 main，让 CI 发布修复后的最新提交。需要立即恢复时，先关闭 `DEPLOY_ENABLED`，待正在执行的部署结束，管理员把 `current` 切到已验证的旧 release，重启并探测；同时切换对应客户端。保留当前和准备回退的发布目录。
+
+## 浏览器直接访问（2026-09-12）
+
+服务端包现在包含生产前端 `dist/`。网页、WebSocket 和 `/admin/` 共用 4180 端口，玩家打开 http://43.142.165.82:4180/ 即可进入大厅，点击“公共调试房间”试玩，或登录后创建/加入普通房间。`/?offline` 为免登录单机入口（首次加载仍需要网络）。公网网页自动使用同源 WS/WSS，无需填写服务器地址。
+
+前端 TypeScript 仍在发布阶段通过 Vite 构建，玩家无需下载 ZIP 或安装 Node.js。执行 `npm run release` 后，按现有 release.sh 上传、校验和切换服务端包即可同时更新网页和后端；后续 GitHub Actions 也自动携带前端。部署探测同时验证网页和 WebSocket，失败恢复旧版本。`WEB_ROOT` 可覆盖静态资源路径，默认工作目录下的 dist；仅此目录公开，账号数据仍在 /var/lib/project-strike。
+
+当前入口沿用无域名 HTTP/WS 部署；配置 HTTPS 反向代理时需同时转发网页和 WebSocket。Windows 便携发行包仍按仓库要求保留，作为可选下载。
