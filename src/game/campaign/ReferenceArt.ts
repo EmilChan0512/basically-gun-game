@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { DeliveryTarget } from '../../shared/simulation/DeliveryObjectives';
 import type { OffhandView } from '../../shared/simulation/Offhand';
-import { WEAPONS, SPECIAL_OFFHANDS, type ClassId } from './Catalog';
+import { WEAPONS, type ClassId } from './Catalog';
 import offhandFrames from '../../client/presentation/offhand-frames.json';
 import type { WeaponId } from '../combat/Combat';
 import type { BulletTrace, Point } from '../combat/Ballistics';
@@ -28,9 +28,8 @@ export class ReferenceArt {
   private pool: Phaser.GameObjects.Image[] = [];
   private cursor = 0;
   private muzzles = new Map<string, Point>();
-  private trails: Phaser.GameObjects.Graphics;
-  constructor(private scene: Phaser.Scene) { this.trails = scene.add.graphics().setDepth(3); }
-  begin() { this.cursor = 0; this.trails.clear(); this.muzzles.clear(); for (const image of this.pool) image.setVisible(false); }
+  constructor(private scene: Phaser.Scene) {}
+  begin() { this.cursor = 0; this.muzzles.clear(); for (const image of this.pool) image.setVisible(false); }
   tracer(graphics: Phaser.GameObjects.Graphics, trace: BulletTrace, actorId: string | undefined, age = 0, weapon = 'm4') {
     if (age < 0 || age >= 3) return;
     const start = (actorId ? this.muzzles.get(actorId) : undefined) ?? trace.origin;
@@ -77,8 +76,12 @@ export class ReferenceArt {
     const special = !!offhand?.equipped && offhand.kind !== 'firearm';
     const selectedWeapon = Object.hasOwn(WEAPONS, weapon) ? weapon as WeaponId : 'm4';
     const pose = characterPose(role, selectedWeapon, { frame, vx, jumping, crouch, flip, reload, flash,
-      aim: { x: aim.x - x, y: aim.y - y }, bodyOnly: special });
+      aim: offhand?.equipped && offhand.kind === 'melee' && offhand.age >= 0
+        ? { x: offhand.facing.x * 10000, y: -(crouch ? 28 : 42) + offhand.facing.y * 10000 }
+        : { x: aim.x - x, y: aim.y - y }, bodyOnly: special,
+      melee: offhand?.equipped && offhand.kind === 'melee' ? { id: offhand.id ?? 'knife', age: offhand.age } : undefined });
     for (const part of pose.parts) this.actorPart(part, x, y);
+    if (offhand?.equipped && offhand.kind === 'melee') return;
     if (!special) {
       if (pose.muzzle) {
         const muzzle = { x: x + pose.muzzle.x, y: y + pose.muzzle.y }; this.muzzles.set(actorId, muzzle);
@@ -89,7 +92,6 @@ export class ReferenceArt {
     const anchorY = y - (crouch ? 28 : 42);
     if (offhand?.equipped && offhand.kind !== 'firearm') {
       const id = offhand.id ?? (offhand.kind === 'melee' ? 'knife' : 'shield');
-      const definition = SPECIAL_OFFHANDS[id];
       const direction = offhand.kind === 'melee' && offhand.age >= 0
         ? Math.atan2(offhand.facing.y, offhand.facing.x) : Math.atan2(aim.y - anchorY, aim.x - x);
       const side = Math.cos(direction) < 0 ? -1 : 1;
@@ -101,31 +103,7 @@ export class ReferenceArt {
         const rotation = direction;
         this.actorPart({ id: skin('hand'), name: 'offhand-hand', matrix: [Math.cos(rotation), Math.sin(rotation), -Math.sin(rotation), Math.cos(rotation), hand.x - 4 * Math.cos(rotation), hand.y - 4 * Math.sin(rotation)] }, 0, 0);
       };
-      if (definition.kind === 'melee') {
-        const age = Math.max(0, offhand.age - 1), { windup, active, recovery } = definition;
-        const smooth = (t: number) => { t = Phaser.Math.Clamp(t, 0, 1); return t * t * (3 - 2 * t); };
-        const attacking = offhand.age >= 0;
-        const phase = age < windup ? smooth(age / windup) : age < windup + active
-          ? 1 - 2 * smooth((age - windup + 1) / active) : -1 + smooth((age - windup - active) / recovery);
-        const swing = attacking ? phase * (definition.style === 'sword' ? -1.25 : -0.55) : -0.22;
-        const angle = direction + swing * side;
-        const thrust = attacking && age >= windup && age < windup + active ? 10 : 0;
-        const hand = { x: x + Math.cos(direction) * (22 + thrust), y: anchorY + Math.sin(direction) * (22 + thrust) };
-        arm(hand, side * (definition.style === 'sword' ? 10 : 5));
-        const bounds = offhandFrames[id as keyof typeof offhandFrames];
-        const length = definition.style === 'sword' ? 57 : Math.min(43, bounds[3]);
-        this.part(id, hand.x, hand.y, length * bounds[2] / bounds[3], length, angle - Math.PI / 2).setOrigin(0.5, 0.14);
-        if (attacking && age >= windup && age < windup + active) {
-          this.trails.lineStyle(2, 0xf4edcf, 0.45).beginPath();
-          const radius = length * 0.8;
-          for (let i = 0; i <= 8; i++) {
-            const a = angle - side * (1 - i / 8) * (definition.style === 'sword' ? 1.8 : 0.7);
-            const px = hand.x + Math.cos(a) * radius, py = hand.y + Math.sin(a) * radius;
-            if (i === 0) this.trails.moveTo(px, py); else this.trails.lineTo(px, py);
-          }
-          this.trails.strokePath();
-        }
-      } else {
+      {
         const distance = offhand.deployed ? 24 : 16;
         const hand = { x: x + Math.cos(direction) * distance, y: anchorY + Math.sin(direction) * distance + (offhand.deployed ? 0 : 10) };
         arm(hand, side * 7);

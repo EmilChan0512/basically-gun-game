@@ -25,7 +25,7 @@ for (const id of ['knife', 'shield'] as const) test(`equips and uses ${id} from 
   expect(await page.evaluate(() => window.__strikeCampaign!.battle.player.arsenal.shots)).toBe(0);
   expect(await page.evaluate(id => window.__strikeCampaign!.children.list.some(child => {
     const image = child as unknown as { visible: boolean; texture?: { key: string } };
-    return image.visible && image.texture?.key === `ref-${id}`;
+    return image.visible && image.texture?.key === `${id === 'knife' ? 'actor' : 'ref'}-${id}`;
   }), id)).toBe(true);
   await page.screenshot({ path: `artifacts/qa/offhand-${id}.png` });
   await page.keyboard.up('f');

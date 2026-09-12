@@ -8,7 +8,7 @@ export interface ClassDefinition { name: string; health: number; aim: number; am
 /** Class roles reference Stats_Classes/Stats_Skills; balance and active abilities are our own. */
 export const CLASSES: Record<ClassId, ClassDefinition> = {
   medic: { name: '医疗兵', health: 85, aim: 0.7, ammo: 0.9, passive: '战地护理：受伤后2秒开始回血', skills: ['heal', 'regenerate'], color: 0x81d7ac },
-  assassin: { name: '刺客', health: 70, aim: 0.95, ammo: 0.75, passive: '要害瞄准：头部伤害额外提高25%', skills: ['focus', 'cloak'], color: 0xc1a4f0 },
+  assassin: { name: '刺客', health: 70, aim: 0.95, ammo: 0.75, passive: '要害瞄准：头部伤害额外提高25%；隐匿：站定5秒后隐形，蹲行保持，射击/近战/换弹解除；仍可被击中，携带目标物时失效', skills: ['focus', 'cloak'], color: 0xc1a4f0 },
   commando: { name: '突击兵', health: 100, aim: 0.6, ammo: 1.3, passive: '弹药专精：携带更多备用弹药', skills: ['supply', 'overdrive'], color: 0xf0c57a },
   tank: { name: '重装兵', health: 130, aim: 0.55, ammo: 1, passive: '防爆装甲：爆炸伤害降低30%', skills: ['barrier', 'iron'], color: 0x9cbdde },
 };

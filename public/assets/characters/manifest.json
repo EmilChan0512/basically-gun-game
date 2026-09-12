@@ -518,6 +518,42 @@
       "symbol": 375,
       "frame": 48,
       "sha256": "5a9f4fe61bd2e86876912cf83d58e813c5624cf0b724e51a66f217a2285000a7"
+    },
+    {
+      "id": "knife",
+      "symbol": 375,
+      "frame": 63,
+      "sha256": "4194f5ae15a2210c9b194ed9d7f467f484d6bc9993c2c2db41d48abab1674a6a"
+    },
+    {
+      "id": "bat",
+      "symbol": 375,
+      "frame": 65,
+      "sha256": "1c249a6526e451340366390bec343fb121b5b3decb5fc6869d5bf3d9c983fe41"
+    },
+    {
+      "id": "baton",
+      "symbol": 375,
+      "frame": 66,
+      "sha256": "7ae4bd7a273d00a9db0395c304feb89cc7eb2eab8fbf24e0dd1cc9966ee483f5"
+    },
+    {
+      "id": "nine-iron",
+      "symbol": 375,
+      "frame": 67,
+      "sha256": "efc4da192731703f405396a416a5d0b6de3654876cd48c8a58b1b4a2782fac45"
+    },
+    {
+      "id": "machete",
+      "symbol": 375,
+      "frame": 64,
+      "sha256": "33fb218c0561aaf01fc90a7c24b8f1d90c46a29a5bb9b86fb31022272808222b"
+    },
+    {
+      "id": "katana",
+      "symbol": 375,
+      "frame": 62,
+      "sha256": "540f74fbc792fc12985c64a6b33746109fc1502d08c6b2714c37d1467447c5f7"
     }
   ]
 }

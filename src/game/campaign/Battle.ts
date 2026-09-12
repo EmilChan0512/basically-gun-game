@@ -5,6 +5,7 @@ import { traceBulletLine, type BulletTrace, type Point, type RandomSource } from
 import { Arsenal } from './Arsenal';
 import { launchProjectile, stepProjectile, type WeaponProjectile } from '../../shared/simulation/WeaponProjectile';
 import { WEAPONS } from './Catalog';
+import { stepStealth } from '../../shared/simulation/Stealth';
 import { botInput } from '../../shared/simulation/BotController';
 import { EventJournal } from '../../shared/simulation/Events';
 import { createMode, resolveResult, type ModeRules, type MatchResult } from '../../shared/simulation/ModeRules';
@@ -27,7 +28,7 @@ export interface BattleInput { left: boolean; right: boolean; crouch: boolean; j
 export const idleInput = (): BattleInput => ({ left: false, right: false, crouch: false, jump: false, fire: false, aim: { x: 900, y: 555 } });
 export interface Actor {
   id: string; name: string; team: 1 | 2; human: boolean; movement: OriginalMovement; life: OriginalLife;
-  arsenal: Arsenal; aim: Point; kills: number; supplyReady: number;
+  arsenal: Arsenal; aim: Point; kills: number; supplyReady: number; stealthFrames: number;
   deliveryPreviousWeapon?: WeaponId;
   shield?: ShieldState;
   offhand?: OffhandController;
@@ -99,6 +100,7 @@ export class Battle {
     actor.kit.skill = equipment.skill ?? actor.kit.skill;
     actor.kit.item = equipment.item ?? actor.kit.item;
     actor.life = new OriginalLife(loadoutStats(actor.kit).health);
+    actor.stealthFrames = 0;
     actor.skillFrames = 0; actor.skillCooldown = 0; actor.itemCooldown = 0;
     actor.itemCharges = ITEMS[actor.kit.item].charges;
     actor.shield = undefined;
@@ -150,6 +152,7 @@ export class Battle {
       const carrier = this.actors.find(a => a.id === event.actorId);
       if (carrier) {
         if (event.kind === 'pickup') {
+          carrier.stealthFrames = 0;
           carrier.deliveryPreviousWeapon = carrier.arsenal.selected;
           if (carrier.offhand) {
             carrier.deliveryPreviousOffhand = carrier.offhand.equipped;
@@ -190,7 +193,7 @@ export class Battle {
     this.actors.push({ id, name, team, human, movement, life: new OriginalLife(stats.health),
       arsenal: kit ? new Arsenal(kit.primary, kit.primary, isSpecialOffhand(kit.secondary) ? kit.primary : kit.secondary, stats.ammo) : new Arsenal(human ? this.startingWeapon : 'm4'),
       offhand: kit && isSpecialOffhand(kit.secondary) ? new OffhandController(SPECIAL_OFFHANDS[kit.secondary].kind, kit.secondary) : undefined,
-      kit, skillCooldown: 0, skillFrames: 0, itemCharges: kit ? ITEMS[kit.item].charges : 0, itemCooldown: 0,
+      kit, stealthFrames: 0, skillCooldown: 0, skillFrames: 0, itemCharges: kit ? ITEMS[kit.item].charges : 0, itemCooldown: 0,
       aim: { x: spawn.x + (team === 1 ? 300 : -300), y: spawn.y - 42 }, kills: 0, supplyReady: 0,
       brain: { target: null, acquired: 0, offset: 0, lastX: spawn.x, stuck: 0, state: 'advance' } });
   }
@@ -200,7 +203,10 @@ export class Battle {
       if (actor.offhand.select(!actor.offhand.equipped, actor.offhand.triggerHeld)) actor.arsenal.gun.cancelReload();
     } else actor.arsenal.swap();
   }
-  reload(actor = this.player) { if (this.phase === 'running' && actor.life.alive && (!actor.offhand || actor.offhand.permitsGunfire)) actor.arsenal.gun.reload(); }
+  reload(actor = this.player) {
+    if (this.phase === 'running' && actor.life.alive && (!actor.offhand || actor.offhand.permitsGunfire)
+      && actor.arsenal.gun.reload()) actor.stealthFrames = 0;
+  }
   private say(message: string) { this.notice = message; this.noticeFrame = this.frame; }
   useSkill(actor = this.player) {
     if (this.phase !== 'running' || !actor.life.alive || !actor.kit) return false;
@@ -244,6 +250,7 @@ export class Battle {
       crouching: a.movement.crouching, generation: a.life.deaths, protected: a.life.spawnProtectionFrames > 0 }));
   }
   private spawn(actor: Actor) {
+    actor.stealthFrames = 0;
     const enemies = this.actors.filter(a => a.team !== actor.team && a.life.alive);
     const safety = (p: Point) => Math.min(...enemies.map(a => Math.hypot(a.movement.x - p.x, a.movement.y - p.y)), 9999);
     const occupied = (p: Point) => this.actors.some(a => a !== actor && a.life.alive && Math.abs(a.movement.x - p.x) < 36 && Math.abs(a.movement.y - p.y) < 70);
@@ -312,6 +319,7 @@ export class Battle {
     if (target.life.health < beforeHealth) this.journal.emit({ tick: this.frame, kind: 'damage', actorId: source?.id, targetId: target.id, amount: beforeHealth - target.life.health });
     if (target.kit?.classId === 'medic' && target.life.regenDelay > 60) target.life.regenDelay = 60;
     if (killed) {
+      target.stealthFrames = 0;
       if (this.waves && target.team === 1) this.waves.reserveRevive(target.id);
       this.journal.emit({ tick: this.frame, kind: 'death', actorId: source?.id, targetId: target.id });
       target.skillFrames = 0;
@@ -355,6 +363,8 @@ export class Battle {
       const decision = actor.human ? { input, actions: [] } : botInput({ ...this, mode: this.mode, random: this.random }, actor);
       for (const action of decision.actions) { if (action === 'swap') this.swap(actor); if (action === 'reload') this.reload(actor); }
       const control = decision.input;
+      const previousX = actor.movement.x, previousY = actor.movement.y;
+      const wasReloading = actor.arsenal.gun.reloadFrames > 0;
       if (control.jump && (!actor.human || !heldJump)) actor.movement.jump();
       actor.movement.tick(control);
       const m = actor.movement;
@@ -385,6 +395,12 @@ export class Battle {
       // Apply equally to players and reinforcements, only on an actual shot.
       if (traces.length && this.waves) actor.life.spawnProtectionFrames = 0;
       if (traces.length && actor.kit?.skill === 'cloak') actor.skillFrames = 0;
+      actor.stealthFrames = stepStealth(actor.stealthFrames ?? 0,
+        actor.kit?.classId === 'assassin' && actor.deliveryPreviousWeapon === undefined,
+        Math.abs(m.x - previousX) < .01 && Math.abs(m.y - previousY) < .01 && m.vx === 0 && m.vy === 0,
+        m.crouching, m.jumping || m.climb !== 0,
+        traces.length > 0 || !!offhand && offhand.attackSerial !== attackSerial,
+        wasReloading || actor.arsenal.gun.reloadFrames > 0);
       for (const trace of traces) {
         if (WEAPONS[actor.arsenal.selected].projectile) {
           this.projectiles.push(launchProjectile(actor.id, actor.team, actor.arsenal.selected, trace.origin, trace.end, this.random,
@@ -476,6 +492,6 @@ export class Battle {
         crouching: a.movement.crouching, jumping: a.movement.jumping, life: a.life.snapshot(), weapon: a.arsenal.selected,
         offhand: a.offhand?.view(),
         ammo: a.arsenal.gun.ammo, reserve: a.arsenal.gun.reserveAmmo, reload: a.arsenal.gun.reloadFrames, kills: a.kills, shots: a.arsenal.shots, ai: a.brain.state,
-        classId: a.kit?.classId ?? null, maxHealth: a.life.maxHealth, skill: a.kit?.skill ?? null, skillCooldown: a.skillCooldown, skillFrames: a.skillFrames, item: a.kit?.item ?? null, itemCharges: a.itemCharges })) };
+        classId: a.kit?.classId ?? null, stealthFrames: a.stealthFrames, maxHealth: a.life.maxHealth, skill: a.kit?.skill ?? null, skillCooldown: a.skillCooldown, skillFrames: a.skillFrames, item: a.kit?.item ?? null, itemCharges: a.itemCharges })) };
   }
 }

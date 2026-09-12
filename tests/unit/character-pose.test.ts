@@ -3,8 +3,40 @@ import { characterPose, CHARACTER_ART } from '../../src/client/presentation/Char
 import { CLASSES, WEAPONS, type ClassId } from '../../src/game/campaign/Catalog';
 import type { WeaponId } from '../../src/game/combat/Combat';
 import manifest from '../../public/assets/characters/manifest.json';
+import { SPECIAL_OFFHANDS, type SpecialOffhandId } from '../../src/shared/content/Offhands';
 
 describe('recovered character anatomy', () => {
+  it('breathes with anchored feet and loops without a pose discontinuity', () => {
+    const first = characterPose('assassin', 'm4', { frame: 0 });
+    const middle = characterPose('assassin', 'm4', { frame: 30 });
+    expect(middle.parts).not.toEqual(first.parts);
+    expect(characterPose('assassin', 'm4', { frame: 60 })).toEqual(first);
+    const feet = (pose: typeof first) => pose.parts.filter(p => p.id.endsWith('-boot'));
+    feet(middle).forEach((part, i) => {
+      expect(Math.abs(part.matrix[4] - feet(first)[i].matrix[4])).toBeLessThan(.2);
+      expect(Math.abs(part.matrix[5] - feet(first)[i].matrix[5])).toBeLessThan(.2);
+    });
+  });
+  it('uses original melee grips with a single weapon and mirrors all authored attack frames', () => {
+    for (const [id, item] of Object.entries(SPECIAL_OFFHANDS)) if (item.kind === 'melee') {
+      const poses = [];
+      for (let age = -1; age <= item.windup + item.active + item.recovery; age++) {
+        const melee = { id: id as SpecialOffhandId, age };
+        const right = characterPose('assassin', 'm4', { melee, aim: { x: 100, y: -42 } });
+        const left = characterPose('assassin', 'm4', { melee, flip: true, aim: { x: -100, y: -42 } });
+        expect(right.parts.filter(p => p.id === id)).toHaveLength(1);
+        expect(right.parts.filter(p => p.id.endsWith('-hand'))).toHaveLength(2);
+        right.parts.forEach((part, i) => {
+          expect(CHARACTER_ART[part.id]).toBeDefined();
+          expect(part.matrix.every(Number.isFinite)).toBe(true);
+          expect(left.parts[i].matrix[4]).toBeCloseTo(-part.matrix[4]);
+          expect(left.parts[i].matrix[5]).toBeCloseTo(part.matrix[5]);
+        });
+        poses.push(right.parts);
+      }
+      expect(new Set(poses.map(pose => JSON.stringify(pose))).size).toBeGreaterThan(5);
+    }
+  });
   it('uses upper arms and hands, never the thigh symbol as an arm', () => {
     for (const role of Object.keys(CLASSES)) {
       const symbol = (part: string) => manifest.assets.find(asset => asset.id === `${role}-${part}`)?.symbol;

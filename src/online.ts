@@ -17,8 +17,9 @@ import { CollisionWorld } from './shared/content/CollisionWorld';
 import { NETWORK_TICK_MS } from './shared/protocol/Timing';
 import { FireInput } from './client/session/FireInput';
 
-function abilityText(actor: { skill?: SkillId | null; skillCooldown: number; skillFrames: number; item?: ItemId | null; itemCharges: number }) {
-  return actor.skill ? `E ${SKILLS[actor.skill].name} · ${actor.skillFrames > 0 ? '生效中' : actor.skillCooldown > 0 ? (actor.skillCooldown / 30).toFixed(1) + 's' : '就绪'}${actor.item ? ` | G ${ITEMS[actor.item].name} ×${actor.itemCharges}` : ''}` : '';
+function abilityText(actor: { classId?: string | null; stealthFrames?: number; skill?: SkillId | null; skillCooldown: number; skillFrames: number; item?: ItemId | null; itemCharges: number }) {
+  const passive = actor.classId === 'assassin' ? ` | 隐匿：${(actor.stealthFrames ?? 0) >= 150 ? '已生效' : `站定 ${((actor.stealthFrames ?? 0) / 30).toFixed(1)}/5s`}` : '';
+  return (actor.skill ? `E ${SKILLS[actor.skill].name} · ${actor.skillFrames > 0 ? '生效中' : actor.skillCooldown > 0 ? (actor.skillCooldown / 30).toFixed(1) + 's' : '就绪'}${actor.item ? ` | G ${ITEMS[actor.item].name} ×${actor.itemCharges}` : ''}` : '') + passive;
 }
 
 function equipmentText(actor: { weapon: string; ammo: number; reserve: number; offhand?: OffhandView }) {

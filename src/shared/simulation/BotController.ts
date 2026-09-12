@@ -1,3 +1,4 @@
+import { isConcealed } from './Stealth';
 import type { Actor, BattleInput, Difficulty } from '../../game/campaign/Battle';
 import type { Mission } from '../../game/campaign/Missions';
 import type { RandomSource } from '../../game/combat/Ballistics';
@@ -13,9 +14,9 @@ interface BotContext {
 export interface BotDecision { input: BattleInput; actions: PlayerAction[] }
 export function botInput(context: BotContext, actor: Actor): BotDecision {
     const m = actor.movement, brain = actor.brain;
-    const enemies = context.actors.filter(a => a.team !== actor.team && a.life.alive)
+    const enemies = context.actors.filter(a => a.team !== actor.team && a.life.alive && !isConcealed(a))
       .sort((a, b) => Math.abs(a.movement.x - m.x) - Math.abs(b.movement.x - m.x));
-    const target = enemies.find(a => !(a.kit?.skill === 'cloak' && a.skillFrames > 0) && Math.abs(a.movement.x - m.x) < 620 && clearSight({ x: m.x, y: m.y - 42 }, { x: a.movement.x, y: a.movement.y - 33 }, context.wall));
+    const target = enemies.find(a => Math.abs(a.movement.x - m.x) < 620 && clearSight({ x: m.x, y: m.y - 42 }, { x: a.movement.x, y: a.movement.y - 33 }, context.wall));
     if (brain.target !== (target?.id ?? null)) { brain.target = target?.id ?? null; brain.acquired = context.frame; }
     const skill = actor.team === 1 ? 'normal' : context.difficulty;
     const reaction = { easy: 24, normal: 16, hard: 9 }[skill];

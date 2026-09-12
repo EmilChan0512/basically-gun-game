@@ -1,3 +1,4 @@
+import { isConcealed } from '../../shared/simulation/Stealth';
 import Phaser from 'phaser';
 import { LocalSession } from '../../client/session/LocalSession';
 import { Battle, idleInput } from '../campaign/Battle';
@@ -136,7 +137,10 @@ export class CampaignScene extends Phaser.Scene {
       this.art.lineStyle(3, color).lineBetween(p.x, p.y, p.x, p.y - 125);
       this.art.fillStyle(color).fillTriangle(p.x, p.y - 125, p.x + 40, p.y - 110, p.x, p.y - 95);
     }
-    b.actors.forEach((actor, i) => { this.soldier(actor); if (actor.life.alive) this.label(i, actor.name, actor.movement.x, actor.movement.y - (actor.movement.crouching ? 72 : 92), actor.team === 1 ? '#99e3d8' : '#f2b19b'); });
+    b.actors.forEach((actor, i) => {
+      if (actor.team !== b.player.team && actor.life.alive && isConcealed(actor)) return;
+      this.soldier(actor); if (actor.life.alive) this.label(i, actor.name, actor.movement.x, actor.movement.y - (actor.movement.crouching ? 72 : 92), actor.team === 1 ? '#99e3d8' : '#f2b19b');
+    });
     let label = b.actors.length;
     if (b.mission.mode === 'ctf') this.rig.delivery(b.snapshot().deliveryTargets, new Map(b.actors.map(a => [a.id, a.movement])), this.art);
     for (const effect of b.effects) {

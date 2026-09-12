@@ -1,9 +1,10 @@
 import type { SimulationEvent } from './Events';
+import { isConcealed } from './Stealth';
 import { clearSight } from '../../game/campaign/Navigation';
 import { VISION_RADIUS, VISION_EYE_HEIGHT } from './Vision';
 export interface RevealActor {
   id: string; team: 1 | 2; movement: { x: number; y: number };
-  life: { alive: boolean }; kit: { skill: string } | null; skillFrames: number;
+  life: { alive: boolean }; kit: { skill: string } | null; skillFrames: number; stealthFrames?: number;
 }
 /** Per-match presentation policy. No client-provided reveal or firing timestamps. */
 export class RevealPolicy {
@@ -20,7 +21,7 @@ export class RevealPolicy {
     const observers = actors.filter(a => a.team === team && a.life.alive);
     return new Set(actors.filter(target => {
       if (target.team === team || publicCarriers.has(target.id)) return true;
-      if (target.kit?.skill === 'cloak' && target.skillFrames > 0) return false;
+      if (target.life.alive && isConcealed(target)) return false;
       const shot = this.lastShots.get(target.id);
       if (shot !== undefined && frame >= shot && frame - shot < 60) return true;
       return observers.some(observer => Math.hypot(target.movement.x - observer.movement.x, target.movement.y - observer.movement.y) <= VISION_RADIUS

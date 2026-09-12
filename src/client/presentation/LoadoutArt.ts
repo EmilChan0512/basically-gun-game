@@ -1,6 +1,6 @@
 import { WEAPONS, SPECIAL_OFFHANDS, CLASSES, type ClassId } from '../../game/campaign/Catalog';
 import frames from './offhand-frames.json';
-import { CHARACTER_ART, characterAsset, characterPose } from './CharacterPose';
+import { CHARACTER_ART, characterAsset, characterPose, IDLE_CYCLE_FRAMES } from './CharacterPose';
 import type { EquipmentLoadout } from '../../shared/content/Equipment';
 
 const source = (id: string) => `/assets/reference/${id}.png`;
@@ -30,8 +30,11 @@ export function loadoutArt(id: string, label: string, className = ''): string {
 /** Exactly the same joints, vectors and weapon grip used by the battle rig. */
 export function operatorArt(role: ClassId, equipment: EquipmentLoadout) {
   const pose = characterPose(role, equipment.primary);
-  return `<svg class="operator-art" viewBox="-35 -78 112 90" role="img" aria-label="${CLASSES[role].name}角色与${WEAPONS[equipment.primary].name}配装预览">${pose.parts.map(part => {
+  const frames = Array.from({ length: IDLE_CYCLE_FRAMES / 3 + 1 }, (_, frame) => characterPose(role, equipment.primary, { frame: frame * 3 }));
+  const names = pose.parts.map((_, i) => `operator-${role}-${equipment.primary}-${i}`);
+  const styles = names.map((name, i) => `@keyframes ${name}{${frames.map((frame, n) => `${n / (frames.length - 1) * 100}%{transform:matrix(${frame.parts[i].matrix.join(',')})}`).join('')}}`).join('');
+  return `<svg class="operator-art" viewBox="-35 -78 112 90" role="img" aria-label="${CLASSES[role].name}角色与${WEAPONS[equipment.primary].name}配装预览"><style>${styles}@media(prefers-reduced-motion:reduce){.operator-art image{animation:none!important}}</style>${pose.parts.map((part, i) => {
     const box = CHARACTER_ART[part.id];
-    return `<image href="${characterAsset(part.id)}" x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" transform="matrix(${part.matrix.join(' ')})"/>`;
+    return `<image href="${characterAsset(part.id)}" x="${box.x}" y="${box.y}" width="${box.w}" height="${box.h}" transform="matrix(${part.matrix.join(' ')})" style="animation:${names[i]} ${IDLE_CYCLE_FRAMES / 30}s linear infinite"/>`;
   }).join('')}</svg>`;
 }

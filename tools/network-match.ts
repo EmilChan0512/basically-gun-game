@@ -138,10 +138,11 @@ try {
           const actor: Actor = model.actors.find(a => a.id === snapshot.id) ?? {
             id: snapshot.id, name: snapshot.id, team: snapshot.team, human: snapshot.team === 1,
             movement: new OriginalMovement(model.wall), life: new OriginalLife(snapshot.maxHealth), arsenal: new Arsenal(snapshot.weapon),
-            aim: { x: 0, y: 0 }, kills: 0, supplyReady: 0, kit: null, skillCooldown: 0, skillFrames: 0, itemCharges: 0, itemCooldown: 0,
+            aim: { x: 0, y: 0 }, kills: 0, supplyReady: 0, stealthFrames: 0, kit: null, skillCooldown: 0, skillFrames: 0, itemCharges: 0, itemCooldown: 0,
             brain: { target: null, acquired: 0, offset: 0, lastX: snapshot.x, stuck: 0, state: 'advance' },
           };
           actor.team = snapshot.team;
+          actor.stealthFrames = snapshot.stealthFrames;
           const pose = state.poses.find(p => p.id === actor.id)!;
           const kit = rosters[i].players.find((p: any) => p.name === pose.name)?.equipment as EquipmentLoadout | undefined;
           const primary = kit?.primary ?? (WEAPONS[snapshot.weapon].slot === 'primary' ? snapshot.weapon : 'm4');

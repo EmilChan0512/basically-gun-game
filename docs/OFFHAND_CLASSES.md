@@ -25,13 +25,13 @@
 - `Stats_Guns`：提取六种近战、六种盾牌名称、近战基础伤害/距离、盾反弹率及Blast防爆系数。原作盾减伤仅10%—45%；按本轮“格挡大部分伤害”的要求提高为70%—90%，不宣称这些强化数值来自原作。
 - `Bullet_Melee_Basic`：前向短射线与首个命中；当前使用更密的墙体采样和现有30Hz攻击窗口适配。
 - `Bullet.doHitEffect`、`Status`：朝向差小于80度、概率反弹和乘法减伤。以点积处理角度环绕；所有盾均可减伤，反弹与减伤独立。
-- `Guns.setFrame`：knife/sword不同动作。`MBFZ_fla.arm_gun_316`的knife_fire标签为538、下一标签550；sword_fire为551、下一标签566，即12/15帧。当前分件重建蓄力、刺击/挥砍与恢复，并同步有效攻击帧和短暂刀光；不是播放原版整个人物时间轴。
+- `Guns.setFrame`：knife/sword不同动作。`MBFZ_fla.arm_gun_316`的knife_fire标签为538、下一标签550；sword_fire为551、下一标签566，即12/15帧。当前恢复原作双臂、手掌及刀身的时间轴变换，并将接触帧适配到现有前摇/攻击/恢复窗口；刀具采用原作局部坐标 SVG。详见 [隐匿与角色动态](STEALTH_AND_ANIMATION.md)。
 - 原版刀盾属于职业主装备体系；本项目遵照当前要求放在副手槽，不照搬原版持盾同时使用副枪的安排。
 - 原版独立暴击、反弹特殊爆炸物等尚未纳入当前简化伤害体系，本轮不增加随机近战暴击或新爆炸武器。
 
 ## 素材与重建
 
-`public/assets/reference/offhand-manifest.json`包含18张未修改的PNG（6种近战、6种盾及盾背面）的时间轴标签、帧号与SHA256。角色身上绘制时用透明裁边帧，并保持手柄锚点，避免原112×68画布引起手持偏移。
+`public/assets/reference/offhand-manifest.json`包含18张未修改的PNG（6种近战、6种盾及盾背面）的时间轴标签、帧号与SHA256。盾牌绘制使用透明裁边帧；刀类局内绘制已切换为 public/assets/characters 下的矢量素材，直接保留原作坐标及持刀关节，避免原112×68画布引起手持偏移。
 
 ```powershell
 npx tsx tools/archaeology/offhand-art.ts
