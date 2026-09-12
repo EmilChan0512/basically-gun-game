@@ -1,4 +1,5 @@
 import { Battle, seededRandom } from '../../game/campaign/Battle';
+import { GROWTH_RULES } from '../content/GrowthCatalog';
 import { customMatch } from '../content/Maps';
 import { MatchSession } from './MatchSession';
 import type { PlayerCommand } from '../protocol/Commands';
@@ -12,8 +13,11 @@ export class Room {
   session: MatchSession | null = null;
   hostId: string | null = null;
   round = 0;
-  constructor(readonly id: string, public mapId = 'hijack', public mode: import('./ModeRules').ModeId = 'tdm', readonly debug = false) {}
+  constructor(readonly id: string, public mapId = 'hijack', public mode: import('./ModeRules').ModeId = 'tdm', readonly debug = false, readonly rules: 'classic' | 'growth' = 'classic') {
+    if (!['classic', 'growth'].includes(rules) || rules === 'growth' && (debug || mode !== 'tdm')) throw Error('Invalid room rules');
+  }
   join(id: string, name: string, equipment?: EquipmentLoadout) {
+    if (this.rules === 'growth') equipment = { classId: 'medic', primary: 'm4', secondary: 'usp', skill: 'heal', item: 'frag' };
     if (equipment) equipment = validateEquipment(equipment);
     if (this.players.size >= 8) throw Error('Room is full');
     if (this.players.has(id) || !id || !name.trim() || name.length > 24) throw Error('Invalid player');
@@ -34,6 +38,7 @@ export class Room {
     }
   }
   configure(id: string, mapId: string, mode: import('./ModeRules').ModeId) {
+    if (this.rules === 'growth' && mode !== 'tdm') throw Error('P1成长模式仅支持团队交火');
     if (id !== this.hostId || this.session) throw Error('Only lobby host can configure');
     customMatch(mapId, mode); this.mapId = mapId; this.mode = mode;
     [...this.players.values()].forEach((player, i) => { player.ready = false; player.team = mode === 'coop' || i % 2 === 0 ? 1 : 2; });
@@ -44,6 +49,7 @@ export class Room {
     player.ready = ready;
   }
   equip(id: string, value: unknown) {
+    if (this.rules === 'growth') throw Error('P1成长模式使用统一Assault配装');
     const player = this.players.get(id);
     if (!player || !player.connected || this.session && !this.debug) throw Error('Cannot change equipment');
     const equipment = validateEquipment(value);
@@ -56,10 +62,11 @@ export class Room {
     const roster = [...this.players.values()].sort((a, b) => a.team - b.team);
     const blue = roster.filter(p => p.team === 1).length, red = roster.length - blue;
     if (!blue || (this.mode !== 'coop' && !red)) throw Error('Both teams required');
-    const battle = new Battle({ ...map, allies: blue - 1, enemies: red }, 'normal', 'm4', seededRandom(seed), null, `${this.id}:${++this.round}`);
+    const battle = new Battle({ ...map, ...(this.rules === 'growth' ? { seconds: GROWTH_RULES.seconds, goal: Number.MAX_SAFE_INTEGER } : {}), allies: blue - 1, enemies: red }, 'normal', 'm4', seededRandom(seed), null, `${this.id}:${++this.round}`);
     this.session = new MatchSession(battle);
     roster.forEach((player, i) => { player.spectator = false; battle.actors[i].name = player.name;
-      battle.equipActor(battle.actors[i], player.equipment); this.session!.bind(player.id, battle.actors[i].id); });
+      if (this.rules === 'growth') battle.equipGrowth(battle.actors[i]); else battle.equipActor(battle.actors[i], player.equipment);
+      this.session!.bind(player.id, battle.actors[i].id); });
   }
   command(id: string, command: PlayerCommand, authorityShotFrame?: number) { return this.players.get(id)?.connected ? this.session?.submit(id, command, authorityShotFrame) ?? false : false; }
   disconnect(id: string) {
@@ -94,5 +101,5 @@ export class Room {
     for (const [key, player] of this.players) { if (!player.connected) this.players.delete(key); else { player.ready = false; player.spectator = false; } }
     this.session = null;
   }
-  lobby() { return { id: this.id, debug: this.debug, instanceId: this.instanceId, round: this.round, hostId: this.hostId, mapId: this.mapId, mode: this.mode, phase: this.session ? 'playing' : 'lobby', players: [...this.players.values()].map(p => ({ ...p, equipment: { ...p.equipment } })) }; }
+  lobby() { return { id: this.id, rules: this.rules, debug: this.debug, instanceId: this.instanceId, round: this.round, hostId: this.hostId, mapId: this.mapId, mode: this.mode, phase: this.session ? 'playing' : 'lobby', players: [...this.players.values()].map(p => ({ ...p, equipment: { ...p.equipment } })) }; }
 }

@@ -1,3 +1,5 @@
+import { GrowthPanel } from './client/presentation/GrowthPanel';
+import './client/presentation/GrowthPanel.css';
 import { renderOnlineArmory, renderOnlineLoadoutSummary } from './client/presentation/OnlineArmory';
 import { starterEquipment } from './shared/content/OnlineProgress';
 import type { EquipmentLoadout } from './shared/content/Equipment';
@@ -23,7 +25,8 @@ import { isConcealed } from './shared/simulation/Stealth';
 import { CombatFeedback } from './client/presentation/CombatFeedback';
 import { CombatFeedbackView } from './client/presentation/CombatFeedbackView';
 
-function abilityText(actor: { classId?: string | null; stealthFrames?: number; skill?: SkillId | null; skillCooldown: number; skillFrames: number; item?: ItemId | null; itemCharges: number }) {
+function abilityText(actor: { growth?: { classId: string }; classId?: string | null; stealthFrames?: number; skill?: SkillId | null; skillCooldown: number; skillFrames: number; item?: ItemId | null; itemCharges: number }) {
+  if (actor.growth) return `E 战斗翻滚 · ${actor.skillFrames ? '翻滚中' : actor.skillCooldown ? Math.ceil(actor.skillCooldown / 30) + '秒' : '就绪'} | G 手雷 ×${actor.itemCharges}`;
   return skillStatus(actor) + (actor.item ? ` | G ${ITEMS[actor.item].name} ×${actor.itemCharges}` : '');
 }
 
@@ -36,7 +39,7 @@ function equipmentText(actor: { weapon: string; ammo: number; reserve: number; o
 }
 
 export function startOnline() {
-  document.body.innerHTML = `<main class="online-app"><header class="online-header"><a class="online-brand" href="/"><span class="online-mark">S</span><span>PROJECT STRIKE<small>ONLINE OPERATIONS</small></span></a><nav aria-label="联机主导航"><a id="online-lobby-nav" href="#lobby">联机大厅</a><a href="/?offline">单机免登录</a><a id="online-armory-nav" href="#loadout">出战配装</a></nav><span id="online-profile-chip">游客档案</span></header><p id="status" role="status">连接服务器后可创建或加入房间。</p><div id="online-lobby-page"><div class="online-lobby-title"><p class="arsenal-eyebrow">MULTIPLAYER / BRIEFING</p><h1>联机大厅</h1><p>整备你的装备，和队友一起出发。</p></div><section id="online-account"><h2>联机账号</h2><p>账号等级、金币和装备权益由服务器保存。单机可免登录，离线进度不计入联网资产。</p><div class="loadout" id="account-login"><label>账号<input id="account-name" autocomplete="username" maxlength="24"></label><label>密码<input id="account-password" type="password" autocomplete="current-password" minlength="8" maxlength="128"></label><button id="account-register">注册联机账号</button><button id="account-signin">登录</button></div><p id="account-status" role="status">普通联机需登录；公共调试房间可直接试玩。</p><button id="account-logout" hidden>退出账号</button><button id="online-leave" hidden>离开房间 / 返回配装</button></section><div id="online-loadout-brief"></div><section id="online-connection"><h2>加入行动</h2><div class="loadout"><label>服务器<input id="server" value="ws://43.142.165.82:4180"></label><label>调试昵称<input id="name" value="玩家" maxlength="24"></label><label>房间码<input id="code"></label></div><div class="online-room-actions"><button id="create">创建房间</button><button id="join">加入房间</button><button id="join-debug">加入公共调试房间</button><button id="reconnect">断线重连</button></div></section><div id="lobby"></div><p id="online-hud" aria-live="off"></p><div id="online-game"></div><p class="online-keys">A/D移动 · 空格跳跃 · S蹲伏 · 鼠标射击 · Q切枪 · R换弹 · E技能 · G道具</p></div><section id="online-preflight" hidden><div id="preflight-armory"></div></section></main>`;
+  document.body.innerHTML = `<main class="online-app"><header class="online-header"><a class="online-brand" href="/"><span class="online-mark">S</span><span>PROJECT STRIKE<small>ONLINE OPERATIONS</small></span></a><nav aria-label="联机主导航"><a id="online-lobby-nav" href="#lobby">联机大厅</a><a href="/?offline">单机免登录</a><a id="online-armory-nav" href="#loadout">出战配装</a></nav><span id="online-profile-chip">游客档案</span></header><p id="status" role="status">连接服务器后可创建或加入房间。</p><div id="online-lobby-page"><div class="online-lobby-title"><p class="arsenal-eyebrow">MULTIPLAYER / BRIEFING</p><h1>联机大厅</h1><p>整备你的装备，和队友一起出发。</p></div><section id="online-account"><h2>联机账号</h2><p>账号等级、金币和装备权益由服务器保存。单机可免登录，离线进度不计入联网资产。</p><div class="loadout" id="account-login"><label>账号<input id="account-name" autocomplete="username" maxlength="24"></label><label>密码<input id="account-password" type="password" autocomplete="current-password" minlength="8" maxlength="128"></label><button id="account-register">注册联机账号</button><button id="account-signin">登录</button></div><p id="account-status" role="status">普通联机需登录；公共调试房间可直接试玩。</p><button id="account-logout" hidden>退出账号</button><button id="online-leave" hidden>离开房间 / 返回配装</button></section><div id="online-loadout-brief"></div><section id="online-connection"><h2>加入行动</h2><div class="loadout"><label>服务器<input id="server" value="ws://43.142.165.82:4180"></label><label>调试昵称<input id="name" value="玩家" maxlength="24"></label><label>房间码<input id="code"></label></div><div class="online-room-actions"><button id="create">创建房间</button><button id="create-growth">创建成长试玩房间（P1）</button><button id="join">加入房间</button><button id="join-debug">加入公共调试房间</button><button id="reconnect">断线重连</button></div></section><div id="lobby"></div><div id="growth-session-controls" hidden><button id="growth-leave">离开成长房间</button><button id="growth-reconnect">断线重连</button></div><p id="online-hud" aria-live="off"></p><div id="online-game"></div><section id="growth-panel" hidden aria-label="局内成长"></section><p class="online-keys">A/D移动 · 空格跳跃 · S蹲伏 · 鼠标射击 · Q切枪 · R换弹 · E技能 · G道具</p></div><section id="online-preflight" hidden><div id="preflight-armory"></div></section></main>`;
   const el = (id: string) => document.getElementById(id)!;
   if (!['localhost', '127.0.0.1', '[::1]'].includes(location.hostname) || location.port === '4180') {
     (el('server') as HTMLInputElement).value = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}`;
@@ -62,12 +65,13 @@ export function startOnline() {
   };
   renderHistory();
   let network: NetworkSession | undefined, game: Phaser.Game | undefined;
+  const growthPanel = new GrowthPanel(el('growth-panel'), message => network?.send(message));
   let serverUrl = '', profileSignature = '', draft: EquipmentLoadout = starterEquipment();
   const sessionKey = (url: string) => `strike-online-session:${url}`;
   const readToken = (url: string) => { try { return sessionStorage.getItem(sessionKey(url)); } catch { return null; } };
   const writeToken = (url: string, token: string) => { try { if (token) sessionStorage.setItem(sessionKey(url), token); else sessionStorage.removeItem(sessionKey(url)); } catch { /* Session remains usable in memory. */ } };
   let armorySignature = '';
-  const canEdit = () => !network?.room || network.room.debug || network.room.phase === 'lobby';
+  const canEdit = () => network?.room?.rules !== 'growth' && (!network?.room || network.room.debug || network.room.phase === 'lobby');
   const currentEquipment = () => network?.room?.players.find(p => p.id === network?.playerId)?.equipment ?? draft;
   const renderPreflight = () => {
     const profile = network?.profile ?? null, room = network?.room;
@@ -118,6 +122,10 @@ export function startOnline() {
     current.onChange = () => {
       if (network !== current) return;
       const profile = current.profile, room = current.room;
+      growthPanel.render(current.state);
+      const growthPlaying = room?.rules === 'growth' && room.phase === 'playing';
+      document.body.classList.toggle('growth-playing', growthPlaying);
+      el('growth-session-controls').hidden = !growthPlaying;
       transportNote.textContent = current.allowInsecureAccounts && serverUrl.startsWith('ws:')
         ? '当前为 WS 测试兼容模式，请使用独立测试密码。联机进度仍保存在服务器。' : '';
       syncView();
@@ -125,7 +133,7 @@ export function startOnline() {
       el('online-leave').hidden = !room;
       el('account-login').hidden = !!profile;
       el('account-logout').hidden = !profile;
-      for (const id of ['create', 'join', 'join-debug', 'server', 'account-signin', 'account-register']) (el(id) as HTMLButtonElement).disabled = !!room;
+      for (const id of ['create', 'create-growth', 'join', 'join-debug', 'server', 'account-signin', 'account-register']) (el(id) as HTMLButtonElement).disabled = !!room;
       if (profile) {
         if (!room && current.socket.readyState === WebSocket.OPEN) el('status').textContent = '联机账号已登录，请选择配装后创建或加入房间。';
         el('account-status').textContent = `${profile.name} · 金币 ${profile.credits} · 对局 ${profile.matches} · 胜利 ${profile.wins}`;
@@ -151,7 +159,7 @@ export function startOnline() {
         signature = key;
         el('status').textContent = `${room.debug ? '公共调试房间 · 无时限' : `房间码 ${room.id}`} · ${room.players.length}/8`;
         el('lobby').replaceChildren();
-        for (const player of room.players) { const line = document.createElement('p'); line.textContent = `${player.team === 1 ? '蓝队' : '红队'} · ${player.name} · ${CLASSES[player.equipment.classId ?? 'medic'].name} · ${room.debug ? '调试中' : player.spectator ? '观战（下局参战）' : player.ready ? '已准备' : '未准备'}`; el('lobby').append(line); }
+        for (const player of room.players) { const line = document.createElement('p'); line.textContent = `${player.team === 1 ? '蓝队' : '红队'} · ${player.name} · ${room.rules === 'growth' ? 'Assault · 成长试玩' : CLASSES[player.equipment.classId ?? 'medic'].name} · ${room.debug ? '调试中' : player.spectator ? '观战（下局参战）' : player.ready ? '已准备' : '未准备'}`; el('lobby').append(line); }
         if (room.phase === 'lobby' || room.debug) {
           if (!room.debug) {
             const preview = document.createElement('div'); preview.id = 'online-map-preview';
@@ -165,7 +173,7 @@ export function startOnline() {
               for (const [id, name] of [['tdm', '团队交火'], ['dom', '据点争夺'], ['coop', '合作生存'], ['ctf', '公文包争夺']]) { const option = document.createElement('option'); option.value = id; option.textContent = name; mode.append(option); }
               mode.value = room.mode;
               for (const option of Array.from(mode.options)) {
-                option.disabled = !MAPS.find(m => m.id === room.mapId)!.modes.includes(option.value as 'tdm' | 'dom' | 'coop');
+                option.disabled = room.rules === 'growth' && option.value !== 'tdm' || !MAPS.find(m => m.id === room.mapId)!.modes.includes(option.value as 'tdm' | 'dom' | 'coop');
                 option.title = option.disabled ? '此地图尚未配置该模式的目标点' : '';
               }
               const configure = () => {
@@ -186,8 +194,9 @@ export function startOnline() {
       }
       if (current.state) {
         const actor = current.state.state.actors.find(a => a.id === current.state!.actorId);
-        if (actor) el('online-hud').textContent = `HP ${Math.ceil(actor.life.health)} · ${equipmentText(actor)} · ${abilityText(actor)}${current.state.state.waves ? '' : ` · ${current.state.state.scores.join(' : ')}`}`;
+        if (actor) el('online-hud').textContent = `HP ${Math.ceil(actor.life.health)} · ${equipmentText(actor)} · ${current.state.growth ? `E 战斗翻滚 ${actor.skillCooldown ? Math.ceil(actor.skillCooldown / 30) + '秒' : '就绪'} · G 手雷 ×${actor.itemCharges}` : abilityText(actor)}${current.state.state.waves ? '' : ` · ${current.state.state.scores.join(' : ')}`}`;
         else el('online-hud').textContent = `观战中 · Tab切换跟随角色 · ${current.state.state.scores.join(' : ')}`;
+        if (current.state.growth && current.state.growth.momentumUntil > current.state.state.frame) el('online-hud').textContent += ' · 乘胜加速中';
         if (current.state.state.waves) { const w = current.state.state.waves;
           el('online-hud').textContent += ` · 第${w.wave}/${w.scenario.waves.length}波 · 团队复活${w.revives} · ${w.spawnBlocked ? '增援入口受阻，请离开入口' : w.phase === 'intermission' ? '休整中' : '战斗中'}`; }
         if (current.state.mode === 'ctf') el('online-hud').textContent += ` · 公文包争夺：交付3次获胜 · ${current.state.state.deliveryTargets?.map(t => `${t.team === 1 ? '蓝' : '橙'}包${t.carrierId ? '携带中' : '在基地'}`).join(' / ')}`;
@@ -202,11 +211,11 @@ export function startOnline() {
     };
     return current;
   };
-  const enter = (action: 'create' | 'join' | 'joinDebug') => {
+  const enter = (action: 'create' | 'join' | 'joinDebug', rules: 'classic' | 'growth' = 'classic') => {
     const current = connect(); if (!current) return;
     if (action !== 'joinDebug' && !current.profile) { el('status').textContent = '请先注册或登录联机账号，然后选择出战配装。'; return; }
     historyReplace('#lobby'); syncView();
-    current.send({ type: action, code: (el('code') as HTMLInputElement).value.trim(), name: (el('name') as HTMLInputElement).value, equipment: draft });
+    current.send({ type: action, rules, code: (el('code') as HTMLInputElement).value.trim(), name: (el('name') as HTMLInputElement).value, equipment: draft });
   };
   const authenticate = (mode: 'register' | 'login') => {
     const current = connect(); if (!current) return;
@@ -218,16 +227,19 @@ export function startOnline() {
   el('account-signin').onclick = () => authenticate('login');
   el('account-logout').onclick = () => {
     writeToken(serverUrl, ''); network?.send({ type: 'logout' }); network?.close(); network = undefined;
-    game?.destroy(true); game = undefined; draft = starterEquipment(); profileSignature = '';
+    game?.destroy(true); game = undefined; growthPanel.render(null); draft = starterEquipment(); profileSignature = '';
     el('account-login').hidden = false; el('account-logout').hidden = true; el('online-leave').hidden = true;
     historyReplace('#lobby'); syncView(); el('online-profile-chip').textContent = '游客档案'; el('lobby').replaceChildren(); el('online-hud').textContent = ''; radar.hidden = true;
     el('account-status').textContent = '已退出联机账号'; el('status').textContent = '请登录或加入公共调试房间。';
-    for (const id of ['create', 'join', 'join-debug', 'server', 'account-signin', 'account-register']) (el(id) as HTMLButtonElement).disabled = false;
+    for (const id of ['create', 'create-growth', 'join', 'join-debug', 'server', 'account-signin', 'account-register']) (el(id) as HTMLButtonElement).disabled = false;
     renderPreflight();
   };
   el('online-leave').onclick = () => { network?.send({ type: 'leave' }); };
   el('join-debug').onclick = () => enter('joinDebug');
   el('reconnect').onclick = () => network?.reconnect();
+  el('growth-leave').onclick = () => network?.send({ type: 'leave' });
+  el('growth-reconnect').onclick = () => network?.reconnect();
+  el('create-growth').onclick = () => enter('create', 'growth');
   el('create').onclick = () => enter('create'); el('join').onclick = () => enter('join');
   const restore = () => {
     const url = (el('server') as HTMLInputElement).value.trim(), token = readToken(url);
@@ -292,7 +304,7 @@ class OnlineScene extends Phaser.Scene {
         this.scale.getParentBounds(); this.scale.refresh();
       }
     };
-    const focus = (event: FocusEvent) => { if ((event.target as HTMLElement)?.closest('#lobby, #online-account, #online-preflight')) blur(); };
+    const focus = (event: FocusEvent) => { if ((event.target as HTMLElement)?.closest('#lobby, #online-account, #online-preflight, #growth-panel')) blur(); };
     window.addEventListener('focusin', focus);
     window.addEventListener('online-view-change', viewChanged);
     viewChanged();

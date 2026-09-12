@@ -17,7 +17,11 @@ test('short clicks fire and tracers disappear during a stopped snapshot stream',
       const path = '/src/client/session/ShotPresentation.ts';
       const { ShotPresentation } = await import(path), original = ShotPresentation.prototype.visible;
       ShotPresentation.prototype.visible = function (now: number) {
-        const result = original.call(this, now); (window as any).__liveTracers = result.length; return result;
+        const result = original.call(this, now); (window as any).__liveTracers = result.length;
+        // Record the transient observation inside the browser. The sequential
+        // server-shot assertion can otherwise outlive a 33–100ms tracer.
+        if (result.length) (window as any).__sawLiveTracer = true;
+        return result;
       };
     });
     const battle = [...server.rooms.values()][0].session!.battle;
@@ -27,7 +31,7 @@ test('short clicks fire and tracers disappear during a stopped snapshot stream',
     await page.mouse.move(bounds.x + bounds.width * 0.6, bounds.y + bounds.height * 0.6);
     await page.mouse.down(); await page.mouse.up();
     await expect.poll(() => battle.player.arsenal.shots, { intervals: [10] }).toBe(before + 1);
-    await expect.poll(() => page.evaluate(() => (window as any).__liveTracers), { intervals: [10] }).toBeGreaterThan(0);
+    await expect.poll(() => page.evaluate(() => (window as any).__sawLiveTracer), { intervals: [10] }).toBe(true);
     const socket = [...server.wss.clients][0], send = socket.send.bind(socket);
     let paused = true;
     socket.send = ((data: string, ...args: any[]) => {

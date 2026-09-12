@@ -1,4 +1,6 @@
 import { OriginalMovement } from '../movement/OriginalMovement';
+import { GROWTH_RULES, GROWTH_WEAPONS } from '../../shared/content/GrowthCatalog';
+import { newGrowth, awardGrowth, selectGrowth, rerollGrowth, type GrowthState } from '../../shared/simulation/Growth';
 import { randomId } from '../../shared/simulation/RandomId';
 import { OriginalLife } from '../combat/OriginalLife';
 import { COMBAT_FRAME_MS, type WeaponId } from '../combat/Combat';
@@ -28,6 +30,7 @@ export type Difficulty = 'easy' | 'normal' | 'hard';
 export interface BattleInput { left: boolean; right: boolean; crouch: boolean; jump: boolean; fire: boolean; aim: Point }
 export const idleInput = (): BattleInput => ({ left: false, right: false, crouch: false, jump: false, fire: false, aim: { x: 900, y: 555 } });
 export interface Actor {
+  growth?: GrowthState;
   id: string; name: string; team: 1 | 2; human: boolean; movement: OriginalMovement; life: OriginalLife;
   arsenal: Arsenal; aim: Point; kills: number; supplyReady: number; stealthFrames: number;
   deliveryPreviousWeapon?: WeaponId;
@@ -79,6 +82,23 @@ export class Battle {
     if (mission.mode === 'coop') this.waves = new WaveDirector(mission.allies + 1, mission.scenario);
   }
   get player() { return this.actors[0]; }
+  /** Authority-only P1 setup: independent Assault identity, fixed M4/USP and frag. */
+  equipGrowth(actor: Actor) {
+    this.equipActor(actor, { classId: 'medic', primary: 'm4', secondary: 'usp', skill: 'heal', item: 'frag' });
+    // Render as the existing commando, but never apply its passive or old stats.
+    actor.kit = null; actor.equipment = undefined;
+    actor.life = new OriginalLife(GROWTH_RULES.health);
+    actor.arsenal = new Arsenal('m4', 'm4', 'usp', GROWTH_RULES.ammo, GROWTH_WEAPONS);
+    actor.growth = newGrowth();
+  }
+  growthChoice(actorId: string, batch: number, upgrade: unknown, reroll = false) {
+    const actor = this.actors.find(a => a.id === actorId);
+    if (this.phase !== 'running' || !actor?.growth) return false;
+    const accepted = reroll ? rerollGrowth(actor.growth, batch, this.random, this.frame)
+      : selectGrowth(actor.growth, batch, upgrade, this.random, this.frame);
+    if (accepted && !reroll && upgrade === 'grenadePouch') actor.itemCharges++;
+    return accepted;
+  }
   /** Trusted lobby setup only; never permits in-match replacement or refilling. */
   equipActor(actor: Actor, value: EquipmentLoadout) {
     if (this.frame !== 0 || this.phase !== 'running' || !this.actors.includes(actor)) throw Error('Cannot change equipment during battle');
@@ -210,10 +230,24 @@ export class Battle {
   private reloadEvent(actor: Actor) { this.journal.emit({ tick: this.frame, kind: 'reload', actorId: actor.id, weapon: actor.arsenal.selected, duration: actor.arsenal.gun.reloadFrames, emptyMagazine: actor.arsenal.gun.ammo === 0 }); }
   reload(actor = this.player) {
     if (this.phase === 'running' && actor.life.alive && (!actor.offhand || actor.offhand.permitsGunfire)
-      && actor.arsenal.gun.reload()) { actor.stealthFrames = 0; this.reloadEvent(actor); }
+      && actor.arsenal.gun.reload()) {
+      if (actor.growth?.selected.includes('tacticalReload') && actor.arsenal.gun.ammo > 0) actor.arsenal.gun.reloadFrames = Math.ceil(actor.arsenal.gun.reloadFrames * .8);
+      actor.stealthFrames = 0; this.reloadEvent(actor);
+    }
   }
   private say(message: string) { this.notice = message; this.noticeFrame = this.frame; }
   useSkill(actor = this.player) {
+    if (actor.growth) {
+      if (this.phase !== 'running' || !actor.life.alive || actor.skillCooldown) return false;
+      actor.skillCooldown = GROWTH_RULES.rollCooldown; actor.skillFrames = GROWTH_RULES.rollTicks;
+      if (actor.growth.selected.includes('slideReload')) {
+        const gun = actor.arsenal.gun, rounds = Math.min(3, gun.reserveAmmo, gun.weapon.magazineSize - gun.ammo);
+        gun.ammo += rounds; gun.reserveAmmo -= rounds;
+      }
+      this.journal.emit({ tick: this.frame, kind: 'skill', actorId: actor.id, ability: 'combatRoll' });
+      this.bursts.push({ x: actor.movement.x, y: actor.movement.y - 30, frame: this.frame, radius: 45, color: 0x65d8ef });
+      return true;
+    }
     if (this.phase !== 'running' || !actor.life.alive || !actor.kit) return false;
     if (SKILLS[actor.kit.skill].passive) return false;
     if (actor.deliveryPreviousWeapon !== undefined && actor.kit.skill === 'cloak') return false;
@@ -234,9 +268,9 @@ export class Battle {
     if (actor.human) this.say(`${skill.name}已发动`); return true;
   }
   useItem(aim: Point = this.player.aim, actor = this.player) {
-    if (this.phase !== 'running' || !actor.life.alive || !actor.kit || actor.itemCooldown) return false;
+    if (this.phase !== 'running' || !actor.life.alive || !actor.kit && !actor.growth || actor.itemCooldown) return false;
     if (actor.itemCharges <= 0) { this.say('本次出战道具已耗尽'); return false; }
-    const item = actor.kit.item;
+    const item = actor.growth ? 'frag' : actor.kit!.item;
     if (item === 'medkit') {
       if (actor.life.health >= actor.life.maxHealth) { this.say('生命已满'); return false; }
       actor.life.health = Math.min(actor.life.maxHealth, actor.life.health + 40);
@@ -271,6 +305,7 @@ export class Battle {
       actor.arsenal = new Arsenal(e.primary, e.primary, isSpecialOffhand(e.secondary) ? e.primary : e.secondary);
     }
     actor.skillFrames = 0;
+    if (actor.growth) { actor.arsenal = new Arsenal('m4', 'm4', 'usp', GROWTH_RULES.ammo, GROWTH_WEAPONS); actor.movement.speedScale = 1; }
     if (actor.offhand) actor.offhand = new OffhandController(actor.offhand.kind, actor.offhand.id);
     actor.aim = { x: spawn.x + (actor.team === 1 ? 300 : -300), y: spawn.y - 42 };
     actor.brain.target = null; actor.brain.stuck = 0;
@@ -328,6 +363,7 @@ export class Battle {
     }
     const beforeHealth = target.life.health;
     const killed = target.life.damage(amount, !source);
+    if (target.growth && source && target.life.health < beforeHealth) target.growth.attackers[source.id] = this.frame;
     // Coarse incoming sector, never the hidden attacker's precise position.
     const direction = context.origin ? Math.round(Math.atan2(context.origin.y - target.movement.y, context.origin.x - target.movement.x) / (Math.PI / 4)) * 45 : undefined;
     const cause = context.kind === 'environment' ? '战场环境' : context.weapon ? WEAPONS[context.weapon].name : context.kind === 'explosion' ? '破片手雷 / 爆炸'
@@ -335,6 +371,24 @@ export class Battle {
     if (target.life.health < beforeHealth) this.journal.emit({ tick: this.frame, kind: 'damage', actorId: source?.id, targetId: target.id, amount: beforeHealth - target.life.health, direction });
     if (target.kit?.classId === 'medic' && target.life.regenDelay > 60) target.life.regenDelay = 60;
     if (killed) {
+      if (target.growth) {
+        for (const participant of this.actors) {
+          if (!participant.growth || participant.team === target.team) continue;
+          const contributed = participant === source || this.frame - (target.growth.attackers[participant.id] ?? -1000) <= 240;
+          if (!contributed) continue;
+          awardGrowth(participant.growth, participant === source ? GROWTH_RULES.killXp : GROWTH_RULES.assistXp, this.random, this.frame);
+        }
+        target.growth.attackers = {}; target.growth.momentumUntil = 0; target.movement.speedScale = 1;
+      }
+      if (source?.growth && source.life.alive) {
+        const g = source.growth;
+        if (g.selected.includes('momentum')) g.momentumUntil = this.frame + 90;
+        if (g.ultimate && this.frame >= g.berserkerReady) {
+          source.life.health = Math.min(source.life.maxHealth, source.life.health + 15);
+          g.momentumUntil = this.frame + 90; g.berserkerReady = this.frame + 150;
+          this.bursts.push({ x: source.movement.x, y: source.movement.y - 30, frame: this.frame, radius: 65, color: 0xf6a552 });
+        }
+      }
       target.stealthFrames = 0;
       if (this.waves && target.team === 1) this.waves.reserveRevive(target.id);
       target.deathInfo = { sourceName: source?.name ?? '环境伤害', cause };
@@ -365,6 +419,25 @@ export class Battle {
     this.bursts = this.bursts.filter(b => this.frame - b.frame < 18);
     for (const actor of this.actors) {
       const input = inputs.get(actor.id) ?? { ...idleInput(), aim: actor.aim };
+      const growth = actor.growth;
+      if (growth) {
+        if (!growth.ultimate && this.frame >= GROWTH_RULES.ultimateTick) {
+          growth.ultimate = true;
+          this.bursts.push({ x: actor.movement.x, y: actor.movement.y - 30, frame: this.frame, radius: 90, color: 0xf6a552 });
+        }
+        actor.movement.speedScale = actor.life.alive ? actor.skillFrames ? 1.5 : growth.momentumUntil > this.frame ? 1.2 : 1 : 1;
+        if (actor.life.alive && growth.selected.includes('scavenger')) for (const corpse of this.actors) {
+          if (corpse.life.alive || corpse.team === actor.team || growth.scavenged[corpse.id] === corpse.life.deaths
+            || Math.hypot(actor.movement.x - corpse.movement.x, actor.movement.y - corpse.movement.y) > 80) continue;
+          const gun = actor.arsenal.gun, max = Math.ceil(gun.weapon.magazineSize * (gun.weapon.spareMagazines + 1) * GROWTH_RULES.ammo) - gun.weapon.magazineSize;
+          if (gun.reserveAmmo >= max) continue;
+          gun.reserveAmmo = Math.min(max, gun.reserveAmmo + Math.ceil(gun.weapon.magazineSize / 2));
+          growth.scavenged[corpse.id] = corpse.life.deaths;
+          this.journal.emit({ tick: this.frame, kind: 'supply', actorId: actor.id });
+        }
+        if (actor.life.alive && growth.selected.includes('quickHands') && (input.left || input.right) && Math.abs(actor.movement.vx) > .5
+          && this.frame % 3 === 0 && actor.arsenal.gun.reloadFrames > 1) actor.arsenal.gun.reloadFrames--;
+      }
       const heldJump = this.jumpHeld.get(actor.id) ?? false;
       this.jumpHeld.set(actor.id, input.jump);
       if (actor.skillCooldown) actor.skillCooldown--;
@@ -407,11 +480,13 @@ export class Battle {
         const target = this.actors.find(a => a.id === hit.targetId);
         if (target) { this.applyDamage(target, hit.damage); this.journal.emit({ tick: this.frame, kind: 'melee-hit', actorId: actor.id, targetId: target.id }); }
       }
-      actor.arsenal.setTrigger(control.fire && (!offhand || offhand.permitsGunfire));
+      actor.arsenal.setTrigger(control.fire && (!growth || !actor.skillFrames) && (!offhand || offhand.permitsGunfire));
       const traces = actor.arsenal.tick(actor.id, actor.team, { x: m.x, y: m.y - (m.crouching ? 28 : 42) }, actor.aim,
         { crouching: m.crouching, airborne: m.jumping, moving: m.vx !== 0, aimStat: actor.kit ? loadoutStats(actor.kit).aim : 0.7 },
         this.hitboxHistory.resolve(this.frame, actor.human ? shotFrames.get(actor.id) : undefined, this.hitboxes()), this.wall, this.random,
-        actor.skillFrames && actor.kit?.skill === 'focus' ? 0.25 : 1);
+        growth ? Math.min(growth.selected.includes('controlledBurst') && m.crouching && m.vx === 0 ? .65 : 1,
+          growth.selected.includes('lastStand') && actor.life.health < actor.life.maxHealth * .25 ? .6 : 1)
+          : actor.skillFrames && actor.kit?.skill === 'focus' ? 0.25 : 1);
       if (traces.length) this.journal.emit({ tick: this.frame, kind: 'shot', actorId: actor.id, weapon: actor.arsenal.selected });
       if (!wasReloading && actor.arsenal.gun.reloadFrames) this.reloadEvent(actor);
       if (wasReloading && !actor.arsenal.gun.reloadFrames) this.journal.emit({ tick: this.frame, kind: 'reload-end', actorId: actor.id });
@@ -522,6 +597,7 @@ export class Battle {
         crouching: a.movement.crouching, jumping: a.movement.jumping, life: a.life.snapshot(), weapon: a.arsenal.selected,
         offhand: a.offhand?.view(), deathInfo: !a.life.alive ? a.deathInfo : undefined,
         ammo: a.arsenal.gun.ammo, reserve: a.arsenal.gun.reserveAmmo, reload: a.arsenal.gun.reloadFrames, kills: a.kills, shots: a.arsenal.shots, ai: a.brain.state,
-        classId: a.kit?.classId ?? null, stealthFrames: a.stealthFrames, maxHealth: a.life.maxHealth, skill: a.kit?.skill ?? null, skillCooldown: a.skillCooldown, skillFrames: a.skillFrames, item: a.kit?.item ?? null, itemCharges: a.itemCharges })) };
+        growth: a.growth ? { classId: a.growth.classId, level: a.growth.level, ultimate: a.growth.ultimate } : undefined,
+        classId: a.growth ? 'commando' as const : a.kit?.classId ?? null, stealthFrames: a.stealthFrames, maxHealth: a.life.maxHealth, skill: a.kit?.skill ?? null, skillCooldown: a.skillCooldown, skillFrames: a.skillFrames, item: a.growth ? 'frag' as const : a.kit?.item ?? null, itemCharges: a.itemCharges })) };
   }
 }

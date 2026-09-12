@@ -12,11 +12,12 @@ export class OriginalMovement {
   climbFrames = 0;
   hardLandingFrames = 0;
   rotation = 0;
+  speedScale = 1;
   constructor(readonly wall: WallMask) {}
   checkpoint() {
     return { x: this.x, y: this.y, vx: this.vx, vy: this.vy, jumping: this.jumping, crouching: this.crouching,
       manualJump: this.manualJump, fallFrames: this.fallFrames, climb: this.climb, climbFrames: this.climbFrames,
-      hardLandingFrames: this.hardLandingFrames, rotation: this.rotation };
+      hardLandingFrames: this.hardLandingFrames, rotation: this.rotation, speedScale: this.speedScale };
   }
   reset(x: number, y: number) {
     this.x = x; this.y = y; this.vx = this.vy = 0;
@@ -39,8 +40,8 @@ export class OriginalMovement {
       || (this.crouching && (this.hit(-17, -45) || this.hit(17, -45)));
     const direction = this.hardLandingFrames ? 0 : input.left ? -1 : input.right ? 1 : 0;
     if (direction) {
-      this.vx += direction * (this.jumping ? 1.4 : 1.8);
-      const maximum = this.crouching ? 4 : 9.5;
+      this.vx += direction * (this.jumping ? 1.4 : 1.8) * this.speedScale;
+      const maximum = (this.crouching ? 4 : 9.5) * this.speedScale;
       if (direction < 0 && this.vx < -maximum) this.vx = -maximum;
       if (direction > 0 && this.vx > maximum) this.vx = maximum;
     } else {

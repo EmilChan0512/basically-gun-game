@@ -1,4 +1,4 @@
-import { COMBAT_FRAME_MS, GunController, type ShotClock, type WeaponId } from '../combat/Combat';
+import { COMBAT_FRAME_MS, GunController, type ShotClock, type WeaponId, type WeaponConfig } from '../combat/Combat';
 import { traceBulletLine, type Point, type RandomSource, type UnitHitbox, type BulletTrace } from '../combat/Ballistics';
 import { Recoil, type ShootingPose } from '../combat/Recoil';
 import { WEAPONS } from './Catalog';
@@ -14,22 +14,22 @@ export class Arsenal {
   private held = false;
   recoil: Recoil;
   shots = 0;
-  constructor(selected: WeaponId = 'm4', primary?: WeaponId, secondary: WeaponId = 'usp', readonly ammoMultiplier = 0.9) {
+  constructor(selected: WeaponId = 'm4', primary?: WeaponId, secondary: WeaponId = 'usp', readonly ammoMultiplier = 0.9, readonly configs?: Partial<Record<WeaponId, WeaponConfig>>) {
     this.primary = primary ?? (WEAPONS[selected].slot === 'primary' ? selected : 'm4');
     this.secondary = secondary;
-    this.guns = new Map([...new Set([this.primary, this.secondary])].map(id => [id, new GunController(WEAPONS[id].config, this.clock, ammoMultiplier)]));
+    this.guns = new Map([...new Set([this.primary, this.secondary])].map(id => [id, new GunController(configs?.[id] ?? WEAPONS[id].config, this.clock, ammoMultiplier)]));
     this.selected = this.guns.has(selected) ? selected : this.primary;
     this.recoil = new Recoil(this.gun.weapon.recoil);
   }
   get gun() { return this.guns.get(this.selected)!; }
   checkpoint() {
-    return { primary: this.primary, secondary: this.secondary, selected: this.selected, ammoMultiplier: this.ammoMultiplier,
+    return { primary: this.primary, secondary: this.secondary, selected: this.selected, ammoMultiplier: this.ammoMultiplier, configs: this.configs,
       clock: { ...this.clock }, latched: this.latched, held: this.held, shots: this.shots,
       recoil: { base: this.recoil.base, dynamic: this.recoil.dynamic, upper: this.recoil.upper },
       guns: [...this.guns].map(([id, gun]) => ({ id, state: gun.checkpoint() })) };
   }
   static restore(state: ReturnType<Arsenal['checkpoint']>) {
-    const arsenal = new Arsenal(state.selected, state.primary, state.secondary, state.ammoMultiplier);
+    const arsenal = new Arsenal(state.selected, state.primary, state.secondary, state.ammoMultiplier, state.configs);
     Object.assign(arsenal.clock, state.clock);
     arsenal.latched = state.latched; arsenal.held = state.held; arsenal.shots = state.shots;
     Object.assign(arsenal.recoil, state.recoil);

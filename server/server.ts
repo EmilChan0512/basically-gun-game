@@ -11,6 +11,7 @@ import { RevealPolicy } from '../src/shared/simulation/RevealPolicy';
 import { visibleState } from '../src/shared/protocol/VisibleState';
 import type { MatchSession } from '../src/shared/simulation/MatchSession';
 import { OnlineAccounts } from './OnlineAccounts';
+import { growthView } from '../src/shared/simulation/Growth';
 import { ownedEquipment } from '../src/shared/content/OnlineProgress';
 import { validateEquipment } from '../src/shared/content/Equipment';
 import type { ClassId } from '../src/game/campaign/Catalog';
@@ -81,11 +82,13 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
     const session = room.session;
     if (!session || !session.battle.result || endedSessions.has(session)) return;
     const roster = participants.get(session);
-    if (!room.debug && roster && session.battle.frame >= 900) {
+    if (!room.debug && room.rules === 'classic' && roster && session.battle.frame >= 900) {
       const rewards = [...roster.values()].filter(p => p.commands >= 30).map(p => ({ ...p, won: session.battle.result!.winner === p.team }));
       for (const id of accounts.settle(`${room.instanceId}:${room.round}`, rewards)) publishProfile(id);
     }
     endedSessions.add(session);
+    if (room.rules === 'growth') logger.log('info', 'growth.playtest_result', { ...roomFields(room),
+      players: session.battle.actors.map(a => ({ actorId: a.id, kills: a.kills, deaths: a.life.deaths, level: a.growth?.level, xp: a.growth?.xp, choices: a.growth?.choices })) });
     logger.log('info', 'match.ended', { ...roomFields(room), frame: session.battle.frame, result: session.battle.result });
   };
   const warnClient = (client: Client, reason: string) => {
@@ -170,12 +173,13 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
           if (typeof message.name !== 'string') throw Error('Name required');
           const code = message.type === 'create' ? randomBytes(4).toString('hex') : message.type === 'joinDebug' ? 'debug' : message.code;
           if (typeof code !== 'string') throw Error('Room code required');
-          const room = message.type === 'create' ? new Room(code) : rooms.get(code);
+          if (message.type === 'create' && message.rules !== undefined && !['classic', 'growth'].includes(message.rules)) throw Error('Invalid room rules');
+          const room = message.type === 'create' ? new Room(code, 'hijack', 'tdm', false, message.rules ?? 'classic') : rooms.get(code);
           if (!room) throw Error('Room not found');
           if (!room.debug && !client.accountId) throw Error('请先登录联机账号');
           if (client.accountId && [...credentials.values()].some(c => c.accountId === client.accountId)) throw Error('此账号已有房间席位，请断线重连或等待旧席位释放');
           const profile = client.accountId ? accounts.profile(client.accountId) : undefined;
-          const equipment = room.debug ? message.equipment === undefined ? undefined : validateEquipment(message.equipment)
+          const equipment = room.rules === 'growth' ? undefined : room.debug ? message.equipment === undefined ? undefined : validateEquipment(message.equipment)
             : ownedEquipment(profile!, message.equipment ?? profile!.classes[profile!.selected].equipment);
           room.join(client.id, profile?.name ?? message.name, equipment); rooms.set(code, room); client.room = room; lobby(room);
           logger.log('info', message.type === 'create' ? 'room.created' : 'room.joined', { connectionId: client.connectionId, playerId: client.id, ...roomFields(room), players: room.players.size });
@@ -187,6 +191,7 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
             if (typeof message.ready !== 'boolean') throw Error('Invalid ready'); room.ready(client.id, message.ready); lobby(room);
             logger.log('debug', 'room.ready_changed', { playerId: client.id, ...roomFields(room), ready: message.ready });
           } else if (message.type === 'equip') {
+            if (room.rules === 'growth') throw Error('P1成长模式使用统一Assault配装');
             if (!room.debug) {
               if (!client.accountId) throw Error('请先登录联机账号');
               ownedEquipment(accounts.profile(client.accountId), message.equipment);
@@ -210,6 +215,11 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
             lobby(room); logger.log('info', 'match.started', { ...roomFields(room), players: room.players.size });
           }
           else if (message.type === 'return') { settle(room); room.returnToLobby(client.id); lobby(room); logger.log('info', 'room.returned_to_lobby', roomFields(room)); }
+          else if (message.type === 'growthChoice' || message.type === 'growthReroll') {
+            if (room.rules !== 'growth' || message.roomId !== room.id || message.round !== room.round || !Number.isSafeInteger(message.batch)) throw Error('Match mismatch');
+            const actorId = room.session?.actorId(client.id);
+            if (!room.players.get(client.id)?.connected || !actorId || !room.session!.battle.growthChoice(actorId, message.batch, message.upgrade, message.type === 'growthReroll')) throw Error('升级选择已过期或不可用');
+          }
           else if (message.type === 'input') {
             if (message.roomId !== room.id || message.round !== room.round) throw Error('Match mismatch');
             const shotFrame = client.latency.shotFrame(room.session?.battle.frame ?? 0, now);
@@ -291,6 +301,8 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
           poses: b.actors.map(a => ({ id: a.id, name: a.name, aim: { ...a.aim } })), effects: b.effects, bursts: b.bursts,
           grenades: b.grenades.map(g => ({ x: g.x, y: g.y })), projectiles: b.projectiles.map(p => ({ x: p.x, y: p.y, vx: p.vx, vy: p.vy })), events: b.journal.since(eventCursor) };
         message.movement = b.actors.find(a => a.id === message.actorId)?.movement.checkpoint();
+        const ownGrowth = b.actors.find(a => a.id === message.actorId)?.growth;
+        if (ownGrowth) message.growth = growthView(ownGrowth);
         message.jumpHeld = session.jumpHeld(client.id);
         // WebSocket delivers in order. Advance only when queued successfully;
         // a skipped snapshot must not consume the recipient's pending events.
