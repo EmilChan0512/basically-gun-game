@@ -1,4 +1,5 @@
 import { OriginalMovement } from '../movement/OriginalMovement';
+import { randomId } from '../../shared/simulation/RandomId';
 import { OriginalLife } from '../combat/OriginalLife';
 import { COMBAT_FRAME_MS, type WeaponId } from '../combat/Combat';
 import { traceBulletLine, type BulletTrace, type Point, type RandomSource } from '../combat/Ballistics';
@@ -68,7 +69,7 @@ export class Battle {
   bursts: { x: number; y: number; frame: number; radius: number; color: number }[] = [];
   notice = ''; noticeFrame = 0;
   readonly wall: (x: number, y: number) => boolean;
-  constructor(readonly mission: Mission, readonly difficulty: Difficulty = 'normal', readonly startingWeapon: WeaponId = 'm4', private random: RandomSource = createRandom(Math.floor(Math.random() * 0x100000000)), readonly loadout: Loadout | null = null, id: string = crypto.randomUUID()) {
+  constructor(readonly mission: Mission, readonly difficulty: Difficulty = 'normal', readonly startingWeapon: WeaponId = 'm4', private random: RandomSource = createRandom(Math.floor(Math.random() * 0x100000000)), readonly loadout: Loadout | null = null, id: string = randomId()) {
     this.id = id; this.mode = createMode(mission.mode, mission.deliveryBases);
     this.wall = wallFor(mission);
     this.addActor('player', '你', 1, true, 0);
