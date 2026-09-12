@@ -14,6 +14,38 @@ function setup(count = 2) {
 }
 
 describe('independent growth rules', () => {
+  it('starts solo with one equally equipped bot that moves, shoots and selects upgrades', () => {
+    const { room, battle, a, b } = setup(1);
+    expect(room.players.size).toBe(1); expect(battle.actors).toHaveLength(2);
+    expect(a.human).toBe(true); expect(b.human).toBe(false);
+    expect(b.life.maxHealth).toBe(a.life.maxHealth);
+    expect(b.arsenal.gun.weapon).toEqual(a.arsenal.gun.weapon);
+    a.movement.reset(300, 599.5); b.movement.reset(500, 599.5);
+    awardGrowth(b.growth!, 200, seededRandom(2), 0);
+    for (let i = 0; i < 90; i++) room.session!.tick();
+    expect(b.growth!.selected).toHaveLength(1); expect(b.arsenal.shots).toBeGreaterThan(0);
+    expect(battle.result).toBeNull();
+  });
+
+  it('keeps solo play after spectators leave, reconnects the human, and removes bots next multiplayer round', () => {
+    const { room, battle } = setup(1);
+    room.join('spectator', 'Spectator'); room.disconnect('spectator'); room.expire('spectator');
+    expect(battle.result).toBeNull();
+    room.disconnect('p0'); room.reconnect('p0'); expect(room.session!.actorId('p0')).toBe(battle.player.id);
+    room.join('p1', 'Second'); battle.endMatch(1, 'fixture'); room.returnToLobby('p0');
+    room.ready('p0', true); room.ready('p1', true); room.start('p0', 2);
+    expect(room.session!.battle.actors).toHaveLength(2);
+    expect(room.session!.battle.actors.every(a => a.human)).toBe(true);
+    room.disconnect('p1'); room.expire('p1'); expect(room.session!.battle.result?.winner).toBe(1);
+  });
+
+  it('ends a solo room when its only human expires, while classic PvP still requires two', () => {
+    const { room, battle } = setup(1); room.disconnect('p0'); room.expire('p0');
+    expect(battle.result).not.toBeNull();
+    const classic = new Room('classic'); classic.join('a', 'A'); classic.ready('a', true);
+    expect(() => classic.start('a', 1)).toThrow('Room not ready');
+  });
+
   it('uses fixed equipment and health, rejects old equipment edits and unsupported modes', () => {
     const { room, battle, a } = setup();
     expect(a.kit).toBeNull(); expect(a.life.maxHealth).toBe(100);

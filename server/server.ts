@@ -1,3 +1,7 @@
+import { freshGrowthMetrics, type GrowthMetrics, type GrowthWeaponMetrics } from '../src/shared/content/GrowthRecords';
+import type { GrowthWeaponId } from '../src/shared/content/GrowthCatalog';
+import { ownedGrowthLoadout, freshGrowthCareer } from '../src/shared/content/GrowthCareer';
+import type { GrowthClassId } from '../src/shared/content/GrowthCatalog';
 import { WebSocketServer, WebSocket } from 'ws';
 import { randomUUID, randomBytes } from 'node:crypto';
 import { Room } from '../src/shared/simulation/Room';
@@ -11,7 +15,7 @@ import { RevealPolicy } from '../src/shared/simulation/RevealPolicy';
 import { visibleState } from '../src/shared/protocol/VisibleState';
 import type { MatchSession } from '../src/shared/simulation/MatchSession';
 import { OnlineAccounts } from './OnlineAccounts';
-import { growthView } from '../src/shared/simulation/Growth';
+import { growthView, type GrowthState } from '../src/shared/simulation/Growth';
 import { ownedEquipment } from '../src/shared/content/OnlineProgress';
 import { validateEquipment } from '../src/shared/content/Equipment';
 import type { ClassId } from '../src/game/campaign/Catalog';
@@ -53,13 +57,26 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
   const credentials = new Map<string, { id: string; room: Room; expires: number; accountId?: string }>();
   type Client = { connectionId: string; connectedAt: number; warningAt: number; suppressedWarnings: number; id: string; accountId?: string; authToken?: string; authenticating?: boolean; room?: Room; count: number; window: number; eventMatch?: string; eventCursor?: number; latency: LatencyBudget; nextProbe: number };
   const clients = new Map<WebSocket, Client>();
-  type Participant = { accountId: string; classId: ClassId; team: 1 | 2; kills: number; commands: number };
+  type Participant = { actorId: string; deaths: number; level: number; choices: GrowthState['choices']; metrics: GrowthMetrics; weaponMetrics: Partial<Record<GrowthWeaponId, GrowthWeaponMetrics>>; growthClass?: GrowthClassId; matchXp: number; accountId: string; classId: ClassId; team: 1 | 2; kills: number; commands: number };
   const participants = new WeakMap<MatchSession, Map<string, Participant>>();
+  const captureParticipants = (room: Room) => {
+    if (!room.session) return;
+    for (const participant of participants.get(room.session)?.values() ?? []) {
+      const actor = room.session.battle.actors.find(a => a.id === participant.actorId);
+      if (!actor) continue;
+      participant.kills = Math.max(participant.kills, actor.kills); participant.deaths = actor.life.deaths;
+      if (actor.growth) {
+        participant.matchXp = actor.growth.xp; participant.level = actor.growth.level;
+        participant.choices = structuredClone(actor.growth.choices);
+        participant.metrics = structuredClone(actor.growth.metrics); participant.weaponMetrics = structuredClone(actor.growth.weaponMetrics);
+      }
+    }
+  };
   const send = (socket: WebSocket, data: unknown) => {
     if (socket.readyState !== WebSocket.OPEN || socket.bufferedAmount >= 65536) { counters.skippedSends++; return false; }
     socket.send(JSON.stringify(data)); return true;
   };
-  const lobby = (room: Room) => { for (const [socket, client] of clients) if (client.room === room) send(socket, { type: 'lobby', room: room.lobby() }); };
+  const lobby = (room: Room) => { for (const [socket, client] of clients) if (client.room === room) send(socket, { type: 'lobby', room: room.lobby(), ownGrowthLoadout: room.players.get(client.id)?.growthLoadout }); };
   const publishProfile = (id: string) => { for (const [socket, client] of clients) if (client.accountId === id) send(socket, { type: 'profile', profile: accounts.profile(id) }); };
   function invalidateAccount(id: string) {
     const changedRooms = new Set<Room>();
@@ -81,14 +98,20 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
   const settle = (room: Room) => {
     const session = room.session;
     if (!session || !session.battle.result || endedSessions.has(session)) return;
+    captureParticipants(room);
     const roster = participants.get(session);
     if (!room.debug && room.rules === 'classic' && roster && session.battle.frame >= 900) {
       const rewards = [...roster.values()].filter(p => p.commands >= 30).map(p => ({ ...p, won: session.battle.result!.winner === p.team }));
       for (const id of accounts.settle(`${room.instanceId}:${room.round}`, rewards)) publishProfile(id);
     }
+    if (!room.debug && room.rules === 'growth' && roster && session.battle.frame >= 900) {
+      const rewards = [...roster.values()].filter(p => p.commands >= 30 && p.growthClass).map(p => ({ ...p, classId: p.growthClass!, won: session.battle.result!.winner === p.team }));
+      for (const id of accounts.settleGrowth(`${room.instanceId}:${room.round}`, rewards)) publishProfile(id);
+    }
     endedSessions.add(session);
     if (room.rules === 'growth') logger.log('info', 'growth.playtest_result', { ...roomFields(room),
-      players: session.battle.actors.map(a => ({ actorId: a.id, kills: a.kills, deaths: a.life.deaths, level: a.growth?.level, xp: a.growth?.xp, choices: a.growth?.choices })) });
+      players: [...(roster?.values() ?? [])].map(p => ({ actorId: p.actorId, classId: p.growthClass, kills: p.kills, deaths: p.deaths, level: p.level, xp: p.matchXp, choices: p.choices })),
+      trainingBots: session.battle.actors.filter(a => !a.human).length });
     logger.log('info', 'match.ended', { ...roomFields(room), frame: session.battle.frame, result: session.battle.result });
   };
   const warnClient = (client: Client, reason: string) => {
@@ -145,9 +168,13 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
           throw Error('请等待登录完成');
         } else if (message.type === 'leave') {
           const room = client.room; if (!room) throw Error('Join a room first');
-          settle(room); room.disconnect(client.id); room.expire(client.id); settle(room);
+          captureParticipants(room); settle(room); room.disconnect(client.id); room.expire(client.id); settle(room);
           for (const [token, entry] of credentials) if (entry.id === client.id) credentials.delete(token);
           client.room = undefined; client.eventMatch = undefined; lobby(room); send(socket, { type: 'left' });
+        } else if (message.type === 'growthSave') {
+          if (!client.accountId || client.room) throw Error('请在房间外保存成长配装');
+          accounts.saveGrowth(client.accountId, message.slot, message.loadout); publishProfile(client.accountId);
+          send(socket, { type: 'growthSaved' });
         } else if (message.type === 'purchase' || message.type === 'profileEquip') {
           if (!client.accountId) throw Error('请先登录联机账号');
           if (client.room) throw Error('请在进入房间前购买或保存配装');
@@ -181,7 +208,9 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
           const profile = client.accountId ? accounts.profile(client.accountId) : undefined;
           const equipment = room.rules === 'growth' ? undefined : room.debug ? message.equipment === undefined ? undefined : validateEquipment(message.equipment)
             : ownedEquipment(profile!, message.equipment ?? profile!.classes[profile!.selected].equipment);
-          room.join(client.id, profile?.name ?? message.name, equipment); rooms.set(code, room); client.room = room; lobby(room);
+          const growthCareer = profile?.growth ?? freshGrowthCareer();
+          room.join(client.id, profile?.name ?? message.name, equipment, room.rules === 'growth' ? ownedGrowthLoadout(growthCareer, growthCareer.loadouts[growthCareer.selectedSlot]) : undefined);
+          rooms.set(code, room); client.room = room; lobby(room);
           logger.log('info', message.type === 'create' ? 'room.created' : 'room.joined', { connectionId: client.connectionId, playerId: client.id, ...roomFields(room), players: room.players.size });
           const token = randomBytes(32).toString('hex'); credentials.set(token, { id: client.id, room, expires: Infinity, accountId: client.accountId });
           send(socket, { type: 'credential', token });
@@ -190,6 +219,10 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
           if (message.type === 'ready') {
             if (typeof message.ready !== 'boolean') throw Error('Invalid ready'); room.ready(client.id, message.ready); lobby(room);
             logger.log('debug', 'room.ready_changed', { playerId: client.id, ...roomFields(room), ready: message.ready });
+          } else if (message.type === 'growthEquip') {
+            if (!client.accountId) throw Error('请先登录联机账号');
+            const career = accounts.profile(client.accountId).growth ?? freshGrowthCareer();
+            room.equipGrowth(client.id, ownedGrowthLoadout(career, message.loadout)); lobby(room);
           } else if (message.type === 'equip') {
             if (room.rules === 'growth') throw Error('P1成长模式使用统一Assault配装');
             if (!room.debug) {
@@ -209,7 +242,7 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
             const roster = new Map<string, Participant>();
             for (const player of room.players.values()) {
               const owner = [...clients.values()].find(c => c.id === player.id)?.accountId;
-              if (owner && !player.spectator) roster.set(player.id, { accountId: owner, classId: player.equipment.classId ?? 'medic', team: player.team, kills: 0, commands: 0 });
+              if (owner && !player.spectator) roster.set(player.id, { actorId: room.session!.actorId(player.id)!, deaths: 0, level: 1, choices: [], metrics: freshGrowthMetrics(), weaponMetrics: {}, growthClass: player.growthLoadout?.classId, matchXp: 0, accountId: owner, classId: player.equipment.classId ?? 'medic', team: player.team, kills: 0, commands: 0 });
             }
             participants.set(room.session!, roster);
             lobby(room); logger.log('info', 'match.started', { ...roomFields(room), players: room.players.size });
@@ -263,10 +296,7 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
     const simulationStart = performance.now();
     for (const room of rooms.values()) {
       room.session?.advance(Math.min(delta, 250));
-      if (room.session) for (const [id, participant] of participants.get(room.session) ?? []) {
-        const actor = room.session.battle.actors.find(a => a.id === room.session!.actorId(id));
-        if (actor) participant.kills = Math.max(participant.kills, actor.kills);
-      }
+      captureParticipants(room);
     }
     if ([...rooms.values()].some(r => r.session)) { timings.push(performance.now() - simulationStart); if (timings.length > 2048) timings.shift(); }
     for (const room of rooms.values()) if (room.session?.battle.result && !endedSessions.has(room.session)) {

@@ -1,8 +1,10 @@
+import { freshGrowthCareer, type GrowthCareer } from './GrowthCareer';
 import { STARTER_WEAPONS, CLASSES, ITEMS, SKILLS, WEAPONS, SPECIAL_OFFHANDS, isSpecialOffhand, defaultLoadout, levelForXp, type ClassId, type ItemId } from '../../game/campaign/Catalog';
 import type { WeaponId } from '../../game/combat/Combat';
 import { validateEquipment, type EquipmentLoadout } from './Equipment';
 
 export interface OnlineProfile {
+  growth?: GrowthCareer;
   id: string; name: string; credits: number;
   selected: ClassId; weapons: WeaponId[]; items: ItemId[];
   classes: Record<ClassId, { xp: number; equipment: Required<EquipmentLoadout> }>;
@@ -13,7 +15,7 @@ export function starterEquipment(classId: ClassId = 'medic'): Required<Equipment
   return { classId, primary, secondary, skill, item };
 }
 export function freshOnlineProfile(id: string, name: string): OnlineProfile {
-  return { id, name, credits: 350, selected: 'medic', weapons: [...STARTER_WEAPONS], items: ['medkit'], matches: 0, wins: 0,
+  return { growth: freshGrowthCareer(), id, name, credits: 350, selected: 'medic', weapons: [...STARTER_WEAPONS], items: ['medkit'], matches: 0, wins: 0,
     classes: Object.fromEntries(Object.keys(CLASSES).map(id => [id, { xp: 0, equipment: starterEquipment(id as ClassId) }])) as OnlineProfile['classes'] };
 }
 /** Also used by the server: a browser cannot grant itself ownership or levels. */

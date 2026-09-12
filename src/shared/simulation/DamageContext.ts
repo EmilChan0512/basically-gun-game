@@ -10,6 +10,7 @@ export interface DamageContext {
   hitPoint?: Point;
   attackId?: string;
   reflected?: boolean;
+  headshot?: boolean;
   weapon?: WeaponId;
 }
 export function validateDamageContext(context: DamageContext) {
@@ -18,6 +19,7 @@ export function validateDamageContext(context: DamageContext) {
     || (context.kind !== 'environment' && (!context.sourceId || !context.origin || !context.hitPoint))
     || (context.kind === 'environment' && context.sourceId !== undefined)
     || [context.origin, context.hitPoint].some(p => p && (!Number.isFinite(p.x) || !Number.isFinite(p.y)))
+    || (context.headshot !== undefined && (typeof context.headshot !== 'boolean' || context.kind !== 'bullet'))
     || (context.reflected !== undefined && (typeof context.reflected !== 'boolean' || context.kind !== 'bullet'))
     || (context.attackId !== undefined && (!context.attackId || context.attackId.length > 200))) throw Error('Invalid damage context');
 }

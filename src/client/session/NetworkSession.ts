@@ -1,3 +1,4 @@
+import type { GrowthLoadout } from '../../shared/content/GrowthCatalog';
 import type { StateMessage } from '../../shared/protocol/State';
 import type { PlayerAction } from '../../shared/protocol/Commands';
 import type { BattleInput } from '../../game/campaign/Battle';
@@ -11,6 +12,7 @@ import type { OnlineProfile } from '../../shared/content/OnlineProgress';
 export class NetworkSession {
   socket: WebSocket;
   playerId = '';
+  growthLoadout: GrowthLoadout | null = null;
   profile: OnlineProfile | null = null;
   authToken = '';
   allowInsecureAccounts = false;
@@ -25,6 +27,7 @@ export class NetworkSession {
   private token = '';
   room: ReturnType<Room['lobby']> | null = null;
   onChange: () => void = () => {};
+  onGrowthSaved: () => void = () => {};
   onError: (message: string) => void = () => {};
   private sequence = 0;
   private actions = new Set<PlayerAction>();
@@ -43,10 +46,12 @@ export class NetworkSession {
         const pending = this.queued; this.queued = []; for (const message of pending) this.send(message);
       } else if (message.type === 'authenticated') { this.profile = message.profile; this.authToken = message.token; }
       else if (message.type === 'profile') this.profile = message.profile;
-      else if (message.type === 'left') { this.room = null; this.state = null; this.token = ''; this.clearActions(); }
+      else if (message.type === 'growthSaved') this.onGrowthSaved();
+      else if (message.type === 'left') { this.room = null; this.state = null; this.growthLoadout = null; this.token = ''; this.clearActions(); }
       else if (message.type === 'credential') this.token = message.token;
       else if (message.type === 'resumed') { this.playerId = message.playerId; this.sequence = message.nextSequence; this.state = null; this.prediction = new Prediction(); }
       else if (message.type === 'lobby') {
+        this.growthLoadout = message.ownGrowthLoadout ?? null;
         if (message.room.phase === 'lobby' || message.room.id !== this.room?.id || message.room.round !== this.room?.round) {
           this.state = null; this.sequence = 0; this.actions.clear(); this.prediction = new Prediction(); this.interpolation = new Interpolation();
         }

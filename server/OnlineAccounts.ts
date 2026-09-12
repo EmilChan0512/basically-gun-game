@@ -1,3 +1,6 @@
+import { earnedGrowthTraits, earnedGrowthAchievements, freshGrowthMetrics, type GrowthMetrics, type GrowthWeaponMetrics } from '../src/shared/content/GrowthRecords';
+import { freshGrowthCareer, validateGrowthCareer, migrateGrowthCareer, ownedGrowthLoadout, growthSlots } from '../src/shared/content/GrowthCareer';
+import { GROWTH_WEAPONS, defaultGrowthLoadout, type GrowthClassId, type GrowthWeaponId } from '../src/shared/content/GrowthCatalog';
 import { randomBytes, randomUUID, scrypt, timingSafeEqual, createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, renameSync, writeFileSync, openSync, closeSync, fsyncSync, unlinkSync } from 'node:fs';
 import { dirname } from 'node:path';
@@ -28,6 +31,8 @@ export class OnlineAccounts {
       const value = JSON.parse(readFileSync(file, 'utf8'));
       if (![1, 2].includes(value.version) || !Array.isArray(value.accounts) || !Array.isArray(value.sessions)) throw Error('Invalid account database');
       const migrating = value.version === 1;
+      const growthMigrating = value.accounts.some((a: Account) => !a.profile?.growth);
+      const growthExpanding = value.accounts.some((a: Account) => a.profile?.growth && (a.profile.growth.version as number) === 1);
       if (migrating) { value.version = 2; value.ledger = []; }
       if (!Array.isArray(value.ledger)) throw Error('Invalid asset ledger');
       for (const account of value.accounts) {
@@ -53,10 +58,15 @@ export class OnlineAccounts {
           ownedEquipment(account.profile, career.equipment);
         }
       }
+      for (const account of value.accounts) {
+        if (!account.profile.growth) { account.profile.growth = freshGrowthCareer(); this.record(value, account.profile.id, 'migration', 0, 'Independent growth career v1; legacy assets unchanged'); }
+        else account.profile.growth = migrateGrowthCareer(account.profile.growth);
+        validateGrowthCareer(account.profile.growth);
+      }
       this.data = value;
-      if (migrating) {
+      if (migrating || growthMigrating || growthExpanding) {
         // Keep the previous schema for an administrator-assisted binary rollback.
-        writeFileSync(`${file}.schema1-${randomUUID()}.backup`, readFileSync(file), { mode: 0o600, flag: 'wx' });
+        writeFileSync(`${file}.${migrating ? 'schema1' : growthExpanding ? 'growth-v2' : 'growth-v1'}-${randomUUID()}.backup`, readFileSync(file), { mode: 0o600, flag: 'wx' });
         this.commit(value);
       }
     } catch (error) {
@@ -151,6 +161,44 @@ export class OnlineAccounts {
     const account = this.data.accounts.find(a => a.profile.id === id);
     if (!account) throw Error('请先登录联机账号');
     return structuredClone(account.profile);
+  }
+  saveGrowth(id: string, slot: unknown, input?: unknown) {
+    const next = structuredClone(this.data), account = next.accounts.find(a => a.profile.id === id);
+    if (!account) throw Error('请先登录联机账号');
+    const career = account.profile.growth ??= freshGrowthCareer();
+    if (!Number.isInteger(slot) || (slot as number) < 0 || (slot as number) >= growthSlots(career.xp)) throw Error('配装槽尚未解锁');
+    if (input !== undefined) {
+      const loadout = ownedGrowthLoadout(career, input);
+      while (career.loadouts.length <= (slot as number)) career.loadouts.push(defaultGrowthLoadout());
+      career.loadouts[slot as number] = loadout;
+    }
+    if (!career.loadouts[slot as number]) throw Error('配装槽尚未保存');
+    career.selectedSlot = slot as number; this.commit(next); return this.profile(id);
+  }
+  settleGrowth(matchId: string, rewards: { accountId: string; classId: GrowthClassId; matchXp: number; kills: number; won: boolean; metrics?: GrowthMetrics; weaponMetrics?: Partial<Record<GrowthWeaponId, GrowthWeaponMetrics>> }[]) {
+    const next = structuredClone(this.data), updated: string[] = [];
+    for (const reward of rewards) {
+      const account = next.accounts.find(a => a.profile.id === reward.accountId), operation = `growth:${matchId}:${reward.accountId}`;
+      if (!account || next.ledger.some(e => e.id === operation)) continue;
+      const career = account.profile.growth ??= freshGrowthCareer();
+      if (!Object.hasOwn(career.mastery, reward.classId) || !Number.isSafeInteger(reward.matchXp) || reward.matchXp < 0 || !Number.isSafeInteger(reward.kills) || reward.kills < 0) throw Error('Invalid growth settlement');
+      const xp = 100 + Math.min(300, Math.floor(reward.matchXp / 5)) + Math.min(200, reward.kills * 10) + (reward.won ? 50 : 0);
+      career.xp = Math.min(1000000000, career.xp + xp);
+      career.mastery[reward.classId] = Math.min(1000000000, career.mastery[reward.classId] + xp);
+      career.matches++; if (reward.won) career.wins++;
+      if (reward.metrics) for (const key of Object.keys(freshGrowthMetrics()) as (keyof GrowthMetrics)[]) {
+        const value = reward.metrics[key]; if (!Number.isSafeInteger(value) || value < 0) throw Error('Invalid growth metrics');
+        career.metrics[key] = Math.min(1000000000, key.startsWith('best') ? Math.max(career.metrics[key], value) : career.metrics[key] + value);
+      }
+      for (const [weapon, stat] of Object.entries(reward.weaponMetrics ?? {})) {
+        if (!Object.hasOwn(GROWTH_WEAPONS, weapon) || !Number.isSafeInteger(stat.hits) || stat.hits < 0 || !Number.isSafeInteger(stat.kills) || stat.kills < 0) throw Error('Invalid weapon metrics');
+        career.weaponXp[weapon as GrowthWeaponId] = Math.min(1000000000, (career.weaponXp[weapon as GrowthWeaponId] ?? 0) + Math.min(600, stat.hits * 4 + stat.kills * 40));
+      }
+      career.traits = earnedGrowthTraits(career.metrics); career.achievements = earnedGrowthAchievements(career.metrics);
+      this.record(next, reward.accountId, 'match', 0, `${reward.classId} growth +${xp} XP`, operation);
+      updated.push(reward.accountId);
+    }
+    if (updated.length) this.commit(next); return updated;
   }
   authenticate(token: unknown) {
     if (typeof token !== 'string' || !/^[a-f0-9]{64}$/.test(token)) throw Error('登录已过期，请重新登录');

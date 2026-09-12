@@ -11,7 +11,7 @@ export function radarSvg(map: MapGeometry, message: Pick<StateMessage, 'state' |
   const projection = radarProjection(map), art = map.artwork;
   const terrain = map.terrain.map(t => `<rect x="${t.x}" y="${t.y}" width="${t.width}" height="${t.height}" fill="#71818d"/>`).join('');
   const backdrop = art ? `<image href="/assets/reference/${escape(art.id)}.png" x="${art.x}" y="${art.y}" width="${art.width}" height="${art.height}" opacity="0.6"/>` : terrain;
-  const markers = message.state.actors.filter(a => a.life.alive).map(actor => {
+  const markers = message.state.actors.filter(a => a.life.alive && (a.team === team || !a.growth?.ghost)).map(actor => {
     const p = projection.point(actor), self = actor.id === message.actorId;
     return `<circle data-actor="${escape(actor.id)}" cx="${p.x}" cy="${p.y}" r="${self ? 4.5 : 3}" fill="${self ? '#ffffff' : actor.team === team ? '#58ead4' : '#ff897c'}" stroke="#10202d" stroke-width="1"/>`;
   }).join('');
