@@ -4,7 +4,8 @@ import { LocalSession } from '../../client/session/LocalSession';
 import { Battle, idleInput } from '../campaign/Battle';
 import type { Actor } from '../campaign/Battle';
 import { MISSIONS, type Mission } from '../campaign/Missions';
-import { CombatAudio } from '../campaign/Audio';
+import { gameAudio } from '../../client/audio/AudioService';
+import { AudioPresentation } from '../../client/audio/AudioPresentation';
 import { CLASSES } from '../campaign/Catalog';
 
 import { ReferenceArt, preloadReferenceArt } from '../campaign/ReferenceArt';
@@ -14,7 +15,8 @@ export class CampaignScene extends Phaser.Scene {
   battle = new Battle(MISSIONS[0]);
   private session = new LocalSession(this.battle);
   activeBattle = false;
-  readonly audio = new CombatAudio();
+  readonly audio = gameAudio;
+  private audioPresentation = new AudioPresentation();
   onFrame?: () => void;
   onPause?: () => void;
   private keys = new Set<string>();
@@ -54,12 +56,12 @@ export class CampaignScene extends Phaser.Scene {
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => { if (this.activeBattle && p.leftButtonDown()) { this.mouse = true; this.audio.unlock(); } });
     const release = () => { this.mouse = false; };
     this.input.on('pointerup', release); this.input.on('pointerupoutside', release);
-    this.events.once('shutdown', () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', blur); document.removeEventListener('visibilitychange', visibility); });
+    this.events.once('shutdown', () => { this.audioPresentation.reset(); window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', blur); document.removeEventListener('visibilitychange', visibility); });
     if (import.meta.env.DEV || import.meta.env.MODE === 'test') window.__strikeCampaign = this;
     window.dispatchEvent(new CustomEvent('strike-campaign-ready', { detail: this }));
   }
   clearInput() { this.keys.clear(); this.mouse = false; this.jumpQueued = false; this.session.clearInput(); }
-  loadBattle(battle: Battle) { this.clearInput(); this.battle = battle; this.session = new LocalSession(battle); this.eventCursor = 0; this.drawMap(battle.mission); }
+  loadBattle(battle: Battle) { this.audioPresentation.reset(); this.clearInput(); this.battle = battle; this.session = new LocalSession(battle); this.eventCursor = 0; this.drawMap(battle.mission); }
   private drawMap(mission: Mission) {
     if (!this.background) return;
     this.cameras.main.setBounds(0, 0, mission.width, mission.height ?? 700);
@@ -156,8 +158,10 @@ export class CampaignScene extends Phaser.Scene {
       this.art.fillStyle(burst.color, (1 - fraction) * 0.1).fillCircle(burst.x, burst.y, burst.radius);
     }
     const events = b.journal.since(this.eventCursor);
-    if (events.some(event => event.kind === 'shot')) this.audio.cue('shot');
-    if (events.some(event => event.kind === 'damage' && b.actors.find(a => a.id === event.actorId)?.team === 1)) this.audio.cue('hit');
+    if (this.activeBattle) this.audioPresentation.accept(b.id, b.frame, events.filter(e => {
+      const hidden = (id?: string) => b.actors.some(a => a.id === id && a.team !== b.player.team && isConcealed(a));
+      return !hidden(e.actorId) && !hidden(e.targetId);
+    }), b.snapshot().actors, b.player.id, b.result?.winner);
     this.eventCursor = b.journal.cursor;
     this.hurtOverlay.setAlpha(beforeHealth > b.player.life.health ? 0.16 : this.hurtOverlay.alpha * 0.85);
     if (this.activeBattle) {

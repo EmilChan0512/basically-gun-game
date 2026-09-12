@@ -1,6 +1,30 @@
 import { test, expect } from '@playwright/test';
 import { enterOffline } from '../helpers/offline-ui';
 
+test('packaged audio and subtitles work with external requests blocked', async ({ page }) => {
+  const external: string[] = [];
+  await page.route('**/*', route => {
+    if (new URL(route.request().url()).hostname !== '127.0.0.1') { external.push(route.request().url()); return route.abort(); }
+    return route.continue();
+  });
+  await page.goto('/?offline');
+  await page.locator('#audio-settings summary').click(); await page.locator('#audio-preview').click();
+  await expect(page.locator('#audio-subtitle')).toContainText('医疗兵');
+  const count = await page.evaluate(async () => {
+    const manifest = await (await fetch('/assets/audio/manifest.json')).json();
+    const context = new AudioContext();
+    for (const asset of Object.values(manifest.assets) as {file:string}[]) {
+      const response = await fetch(`/assets/audio/${asset.file}`);
+      if (!response.ok) throw Error(asset.file);
+      const decoded = await context.decodeAudioData(await response.arrayBuffer());
+      if (!(decoded.duration > 0)) throw Error(`Empty ${asset.file}`);
+    }
+    await context.close(); return Object.keys(manifest.assets).length;
+  });
+  expect(count).toBe(47); expect(external).toEqual([]);
+  expect(await page.evaluate(() => window.__strikeAudio)).toBeUndefined();
+});
+
 test('packaged production game loads and plays without Internet or development helpers', async ({ page }) => {
   const external: string[] = [], errors: string[] = [];
   await page.route('**/*', route => {

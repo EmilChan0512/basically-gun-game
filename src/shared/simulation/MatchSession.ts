@@ -107,8 +107,8 @@ export class MatchSession {
         for (const action of command.actions) {
           if (action === 'swap') this.battle.swap(actor);
           if (action === 'reload') this.battle.reload(actor);
-          if (action === 'skill') this.battle.useSkill(actor);
-          if (action === 'item') this.battle.useItem(command.input.aim, actor);
+          if (action === 'skill' && !this.battle.useSkill(actor)) this.battle.journal.emit({ tick: this.battle.frame, kind: 'error', actorId: actor.id });
+          if (action === 'item' && !this.battle.useItem(command.input.aim, actor)) this.battle.journal.emit({ tick: this.battle.frame, kind: 'error', actorId: actor.id });
         }
       }
       if (this.battle.frame - controller.lastTick === this.inputTimeoutTicks) controller.stats.timeouts++;

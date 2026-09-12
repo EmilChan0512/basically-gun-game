@@ -59,7 +59,7 @@ export function startCampaign() {
   function show(next: Screen) {
     screen = next;
     $<HTMLButtonElement>('armory-nav').disabled = ['playing', 'paused'].includes(screen);
-    if (scene) { scene.activeBattle = screen === 'playing'; scene.clearInput(); }
+    if (scene) { scene.activeBattle = screen === 'playing'; scene.clearInput(); if (screen !== 'result') scene.audio.stop(); scene.audio.pause(false); }
     $('campaign-overlay').hidden = screen === 'playing';
     $('battle-top').hidden = !['playing', 'paused', 'result'].includes(screen);
     $('battle-bottom').hidden = !['playing', 'paused'].includes(screen);
@@ -160,7 +160,7 @@ export function startCampaign() {
       if (b.mission.mode === 'ctf') $('battle-message').textContent = `公文包争夺 · 运回己方基地计分 · 携带时仅用副手 · ${b.mission.goal}分获胜`;
       if (screen === 'playing' && b.phase !== 'running') {
         reward = custom ? null : progress.settle(b);
-        scene!.audio.cue(b.phase === 'won' ? 'win' : 'lose'); show('result');
+        show('result');
       }
     };
     show('menu');

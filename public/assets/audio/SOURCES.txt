@@ -1,0 +1,6 @@
+Project Strike audio sources
+
+Original SFH1 audio: extracted from local sfh1_reference.swf. Copyright remains with the original rights holders. No CC0 or other free license is asserted for these samples.
+Movement transients: Kenney Impact Sounds, https://kenney.nl/assets/impact-sounds, CC0-1.0; original license included.
+Kill confirmation: original text rendered locally using installed Microsoft Zira Desktop (System.Speech); no cloned actor voice.
+See manifest.json for individual symbols, processing, subtitles and SHA256 hashes.

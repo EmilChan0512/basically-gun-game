@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
+import { TrainingAudio } from '../../client/audio/TrainingAudio';
 import { ReferenceArt, preloadReferenceArt } from '../campaign/ReferenceArt';
 import { OriginalSandbox, referenceTerrain } from '../combat/OriginalSandbox';
 import { COMBAT_FRAME_MS } from '../combat/Combat';
 
 export class OriginalSandboxScene extends Phaser.Scene {
+  private audio = new TrainingAudio();
   core = new OriginalSandbox();
   paused = false;
   slow = false;
@@ -57,12 +59,13 @@ export class OriginalSandboxScene extends Phaser.Scene {
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => { if (pointer.leftButtonDown()) { this.mouseHeld = true; this.syncTrigger(); } });
     const release = () => { this.mouseHeld = false; this.syncTrigger(); };
     this.input.on('pointerup', release); this.input.on('pointerupoutside', release);
-    this.events.once('shutdown', () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', blur); });
+    this.events.once('shutdown', () => { this.audio.reset(); window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', blur); });
     if (import.meta.env.DEV || import.meta.env.MODE === 'test') window.__originalStrike = this;
     window.dispatchEvent(new CustomEvent('strike-original-ready', { detail: this }));
   }
   private syncTrigger() { this.core.setTrigger(!this.paused && (this.keys.has('KeyF') || this.mouseHeld)); }
   reset(station = 0) {
+    this.audio.reset();
     this.core = new OriginalSandbox();
     const positions = [180, 730, 1100, 1480];
     this.core.movement.reset(positions[Math.max(0, Math.min(3, station))], 599.5);
@@ -78,6 +81,9 @@ export class OriginalSandboxScene extends Phaser.Scene {
   update(_time: number, deltaMs: number) {
     if (!this.paused) this.core.advance(Math.min(deltaMs, 100) * (this.slow ? 0.25 : 1), this.inputState(), this.pointer());
     const state = this.core.snapshot(), movement = this.core.movement;
+    this.audio.accept({ frame: state.frame, x: movement.x, y: movement.y, grounded: !movement.jumping, alive: state.life.alive, health: state.life.health,
+      weapon: state.combat.weapon, shots: state.combat.shotsFired, reload: state.combat.reloadFrames, ammo: state.combat.ammo,
+      fire: this.mouseHeld || this.keys.has('KeyF'), targetHealth: state.target.health, targetAlive: state.target.alive }, this.paused);
     this.cameras.main.centerOn(movement.x, 390);
     this.art.clear(); this.rig.begin();
     const aim = { x: movement.x + this.core.aimDirection.x * 100, y: movement.y - (movement.crouching ? 28 : 42) + this.core.aimDirection.y * 100 };

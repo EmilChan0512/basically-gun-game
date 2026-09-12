@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { TrainingAudio } from '../../client/audio/TrainingAudio';
 import { defaults, simulation, type MovementConfig } from '../config/movement';
 import { stations, terrain } from '../config/course';
 import { Soldier } from '../characters/Soldier';
@@ -7,6 +8,7 @@ import type { MoveInput } from '../movement/MovementController';
 import { GunLab } from '../combat/GunLab';
 
 export class MovementLabScene extends Phaser.Scene {
+  private audio = new TrainingAudio();
   soldier!: Soldier;
   config: MovementConfig = { ...defaults };
   measurements = new JumpMeasurements();
@@ -101,12 +103,13 @@ export class MovementLabScene extends Phaser.Scene {
     };
     this.input.on('pointerup', pointerUp);
     this.input.on('pointerupoutside', pointerUp);
-    this.events.once('shutdown', () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', blur); });
+    this.events.once('shutdown', () => { this.audio.reset(); window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', blur); });
     this.reset();
     window.dispatchEvent(new CustomEvent('strike-ready', { detail: this }));
     if (import.meta.env.DEV || import.meta.env.MODE === 'test') window.__strike = this;
   }
   reset(station = this.station) {
+    this.audio.reset();
     this.station = Math.max(0, Math.min(stations.length - 1, station));
     const point = stations[this.station];
     this.soldier.reset(point.x, point.y);
@@ -148,6 +151,10 @@ export class MovementLabScene extends Phaser.Scene {
     this.cameras.main.centerOn(this.soldier.body.center.x, 405);
     const pointer = this.input.activePointer.positionToCamera(this.cameras.main) as Phaser.Math.Vector2;
     this.soldier.render(pointer);
+    const sound = this.snapshot();
+    this.audio.accept({ frame: sound.combat.combatFrame, x: sound.x, y: sound.y, grounded: sound.grounded, alive: true, health: 100,
+      weapon: sound.combat.weapon, shots: sound.combat.shotsFired, reload: sound.combat.reloadFrames, ammo: sound.combat.ammo,
+      fire: this.mouseHeld || this.keys.has('KeyF'), targetHealth: sound.combat.health, targetAlive: sound.combat.alive }, this.paused);
     this.drawTarget();
     this.drawDebug(pointer);
     this.telemetryTimer += deltaMs;

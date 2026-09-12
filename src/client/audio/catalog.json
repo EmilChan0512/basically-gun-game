@@ -1,0 +1,904 @@
+{
+  "version": 1,
+  "assets": {
+    "S_pistolFire": {
+      "file": "S_pistolFire.ogg",
+      "category": "effect",
+      "volume": 0.38,
+      "symbol": "S_pistolFire",
+      "sourceFile": "67_S_pistolFire.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "b993923e93a93ab274c6c5dd37c20cbe6b4017bf680b2a1ef36599e540c68830",
+      "sha256": "39dd00e1c3b897c8e9488b0f9a83e58137a798ac0b0c0f16eacfc00a753d829b",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_PistolReload": {
+      "file": "S_PistolReload.ogg",
+      "category": "effect",
+      "volume": 0.45,
+      "symbol": "S_PistolReload",
+      "sourceFile": "111_S_PistolReload.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "af0a800a4516f149fd8adf9376c454e5843577e62a71b43493c1c12f95505e61",
+      "sha256": "7ba66b5b2d8c492d9ffa384dfedea8730b8d5c5f4100fe610b7584a36178d6c1",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_uziFire": {
+      "file": "S_uziFire.ogg",
+      "category": "effect",
+      "volume": 0.38,
+      "symbol": "S_uziFire",
+      "sourceFile": "72_S_uziFire.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "ccae49e309fb3c8be5eb77b081bd794856efe78cef7a88c96c19f7c3cfe3206d",
+      "sha256": "7b4c8ed0d35aebea6f5246a71e9dbebf983eee223794c4ff70b0c3e0c98cc5e5",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_mp5": {
+      "file": "S_mp5.ogg",
+      "category": "effect",
+      "volume": 0.38,
+      "symbol": "S_mp5",
+      "sourceFile": "128_S_mp5.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "390404edea0a9a1750c48452ead57f40fa16e4ed3e632a32d2ba82c93fef358d",
+      "sha256": "1de023effa9e7027295836f9b5762731fcfc08b097a98a6c8991cd325b2afa21",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_RifleReload": {
+      "file": "S_RifleReload.ogg",
+      "category": "effect",
+      "volume": 0.45,
+      "symbol": "S_RifleReload",
+      "sourceFile": "108_S_RifleReload.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "b4ce1ec5b2f499492980758432581cdc5d63963d155e53ad2aa92541397488fd",
+      "sha256": "668d9937bed7930a61c2d2eb992d89e35656ba7faa9f1d91eccdaafa4a835351",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_assaultFire": {
+      "file": "S_assaultFire.ogg",
+      "category": "effect",
+      "volume": 0.38,
+      "symbol": "S_assaultFire",
+      "sourceFile": "66_S_assaultFire.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "3dc9bdd19937014caef15163815804d9cefe0b022c9b6a637ab49e5de0aba46e",
+      "sha256": "30a3bdb7b5b6117bf21429d5dd26204311236e6b1bfa0821a9c2eeb8b90539d4",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_deagle": {
+      "file": "S_deagle.ogg",
+      "category": "effect",
+      "volume": 0.38,
+      "symbol": "S_deagle",
+      "sourceFile": "143_S_deagle.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "8000834ee4a9909d8f137ef99d51b47aed38c17f41424347e2344f8f22285343",
+      "sha256": "9fd0468114c22d930f5c704503fb02c59a7568393107baa50ad33e99de3bebe6",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_BulpupReload": {
+      "file": "S_BulpupReload.ogg",
+      "category": "effect",
+      "volume": 0.45,
+      "symbol": "S_BulpupReload",
+      "sourceFile": "222_S_BulpupReload.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "59b691b7d85fdb18f038ecf0b6b505bd98ac038e4cd3ec954a7de59178ca86ff",
+      "sha256": "20323ae01086e46262f283da3e302e53db4a3a63c74df9537ee9137c5bff5f06",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_rocketFire": {
+      "file": "S_rocketFire.ogg",
+      "category": "effect",
+      "volume": 0.38,
+      "symbol": "S_rocketFire",
+      "sourceFile": "74_S_rocketFire.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "54c8a9fe2430ef77f98abf1f24792539327d956c46bb47a37bd39b1fb1a60cae",
+      "sha256": "997c606e0e2664a3287d8da2096d9a2b4a3b58c4fe7b208bafd248b01e90c344",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_MagnumReload": {
+      "file": "S_MagnumReload.ogg",
+      "category": "effect",
+      "volume": 0.45,
+      "symbol": "S_MagnumReload",
+      "sourceFile": "133_S_MagnumReload.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "f9dd5b7ef016789cf22653ccea323832e2b09d0cb3597f7cf357fde56317f8c9",
+      "sha256": "bd56d94cc8861bb36cabe44476d958ad520ea104accb1e0ab74d571247c1b7ef",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_ak": {
+      "file": "S_ak.ogg",
+      "category": "effect",
+      "volume": 0.38,
+      "symbol": "S_ak",
+      "sourceFile": "227_S_ak.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "071fdb77a32d2921864701d7e24b00309ec982774d33e8b52e019fc6e9d9d873",
+      "sha256": "350b707f2e80151db45c5812f53bbebe6655bcabc0cf44713c7717b6d72db933",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_scout": {
+      "file": "S_scout.ogg",
+      "category": "effect",
+      "volume": 0.38,
+      "symbol": "S_scout",
+      "sourceFile": "106_S_scout.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "e9a5b0522ce0139f7ab29592a4bf4843ab146407a94c38672492dbbb137a9a5f",
+      "sha256": "e7ee55adf8a6af09c641703f46b81ee187de1f99de42b8e6f558fb63084ddebc",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_SniperReload": {
+      "file": "S_SniperReload.ogg",
+      "category": "effect",
+      "volume": 0.45,
+      "symbol": "S_SniperReload",
+      "sourceFile": "102_S_SniperReload.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "5e64b674c2402c07b1db4d16d8ddebbfb440f89d57b0947a18dbec973e32adfc",
+      "sha256": "6362b39130775461cfad8541d098bd514361fe4572ef0a3aa18ca7175c68edac",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_sniperFire": {
+      "file": "S_sniperFire.ogg",
+      "category": "effect",
+      "volume": 0.38,
+      "symbol": "S_sniperFire",
+      "sourceFile": "73_S_sniperFire.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "8fd4b8f7d0150ca34e525eb03b765a25049952c055b232564162795874daaf5e",
+      "sha256": "c0ff4c5b1469dd911880347a92bc7aae7de5d7b0913ffb4a3ee7dcca80e5008c",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_RocketReload": {
+      "file": "S_RocketReload.ogg",
+      "category": "effect",
+      "volume": 0.45,
+      "symbol": "S_RocketReload",
+      "sourceFile": "107_S_RocketReload.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "6cdc6903ccde9ec6c5ef357dadb22c7222c0bb12afb1a13e952b97507590c44b",
+      "sha256": "d8973d5a0f6058cb19ca942ef4e8317136a39382f162795826787b0d94a2e7d2",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_HeavyReload": {
+      "file": "S_HeavyReload.ogg",
+      "category": "effect",
+      "volume": 0.45,
+      "symbol": "S_HeavyReload",
+      "sourceFile": "138_S_HeavyReload.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "fd426a4702ccca13978e849dc7e6964590b00bd7b02727065186afbf97637165",
+      "sha256": "00fd841a404d3d67c675e6fd1db36b11bc5ed42dc2670af10e027d6f51d5f8f4",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_LauncherReload": {
+      "file": "S_LauncherReload.ogg",
+      "category": "effect",
+      "volume": 0.45,
+      "symbol": "S_LauncherReload",
+      "sourceFile": "135_S_LauncherReload.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "b8e396de75dee002aa151ed82db96c70cfc02832175347109a377c1269f67475",
+      "sha256": "1e809d2c6ccc7d31ee27389ab41f66a906056ecfefddfc3611272e4a108669b9",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_shotgunFire": {
+      "file": "S_shotgunFire.ogg",
+      "category": "effect",
+      "volume": 0.38,
+      "symbol": "S_shotgunFire",
+      "sourceFile": "65_S_shotgunFire.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "f8ad9153a1c995270a943e00a4a7beee1b4386af529eb5cec0ec8357083b10db",
+      "sha256": "83ffdc9d692388f699e20f0c655a47b67a0ca8830a08cab4eb384364570b3772",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_ShotgunReload": {
+      "file": "S_ShotgunReload.ogg",
+      "category": "effect",
+      "volume": 0.45,
+      "symbol": "S_ShotgunReload",
+      "sourceFile": "105_S_ShotgunReload.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "d17a8d6aff3e28efd4f60ebaf4c44cbb9b7aad0b23e88c9405794f90b3bd42fc",
+      "sha256": "44c4bebbc9e9597925fe74b299807b99a2fb2670ef59d3d4d3371c38de7ed82a",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_autoshotgunFire": {
+      "file": "S_autoshotgunFire.ogg",
+      "category": "effect",
+      "volume": 0.38,
+      "symbol": "S_autoshotgunFire",
+      "sourceFile": "224_S_autoshotgunFire.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "da8edd919502daf6a3b112b91c463d2eab7c6d8fcb96e9f358570fbcdc7a2b32",
+      "sha256": "af5fb8596ff3d862c5c2ae43f2f3eb12f11cb6ef62450c3e3a9e6b83ca1659be",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_Equip": {
+      "file": "S_Equip.ogg",
+      "category": "effect",
+      "volume": 0.55,
+      "symbol": "S_Equip",
+      "sourceFile": "91_S_Equip.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "349fb114a9b9dbd10e8d6e5494fe7ca04f6be223d5afed3ae7a2755659afeb91",
+      "sha256": "cc064c37c805b8d17f5ee24a68723ae903b1320d623fd95140460f894bee2eff",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_GunClick": {
+      "file": "S_GunClick.ogg",
+      "category": "effect",
+      "volume": 0.55,
+      "symbol": "S_GunClick",
+      "sourceFile": "62_S_GunClick.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "03c2db54f8dd61df5ae11ccbd4b9f7613af39bad8b8f73d8a1792cb7e367c22c",
+      "sha256": "d71bc312582b4325f5190e2945b31eb11573c1a3e97049e4e5fbd949a9d23a60",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_Headshot1": {
+      "file": "S_Headshot1.ogg",
+      "category": "effect",
+      "volume": 0.35,
+      "symbol": "S_Headshot1",
+      "sourceFile": "81_S_Headshot1.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "47ed9a5d84f70169e14d4452ba4b659fb951f33f35cf971f748bf3c9b1682f4a",
+      "sha256": "7790d346ec2c8654645e1cff67ae4eb9833c340dabbdf425cc8d0410b405fe4b",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_Blunt2": {
+      "file": "S_Blunt2.ogg",
+      "category": "effect",
+      "volume": 0.35,
+      "symbol": "S_Blunt2",
+      "sourceFile": "64_S_Blunt2.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "e5079453368b924c3cbe4f9d871ccc077bcf1363691ba6016c2e7ab65b447364",
+      "sha256": "f79b1f8e68b11bf6b26a415b85fc79fc511110e1dd7d3406b1968570b97ce88a",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_Die1": {
+      "file": "S_Die1.ogg",
+      "category": "effect",
+      "volume": 0.55,
+      "symbol": "S_Die1",
+      "sourceFile": "85_S_Die1.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "f72c892be5277e835288e6e6e4da816bedbb0ad8ab2386096aa7c744b3b228d3",
+      "sha256": "795e234f4ab453fc1bc4e195cfc11e01334eba901cc89878d6a6de4807e5ab5c",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_Powerup": {
+      "file": "S_Powerup.ogg",
+      "category": "effect",
+      "volume": 0.55,
+      "symbol": "S_Powerup",
+      "sourceFile": "88_S_Powerup.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "a9135044c2944c0d21e719dfced63ab4b1a8d26f79741d6cd73be30ef7a1a651",
+      "sha256": "4bfff5763e46b6df3b7cc3d0e16c11d48671a2837ebd7e882f81d9755738fea3",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_Whip1": {
+      "file": "S_Whip1.ogg",
+      "category": "effect",
+      "volume": 0.55,
+      "symbol": "S_Whip1",
+      "sourceFile": "70_S_Whip1.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "792f66f590d3909ff60765adbbe87a76c6a4186001d7d1b7293a6c1dfb0844f9",
+      "sha256": "f318616a3252d40d7b04de8243fe2dfe8105c511b8a7fef7598ec416f4b1d920",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_Cut3": {
+      "file": "S_Cut3.ogg",
+      "category": "effect",
+      "volume": 0.55,
+      "symbol": "S_Cut3",
+      "sourceFile": "69_S_Cut3.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "10934c3c76b1fa2d2efdc661ccc2747fad7996fd3b39767612de7039b1a4608e",
+      "sha256": "2437ac3d7f9b50c4ff3e659a3a64bc0976132255fecde9df5620312458b3f36b",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_Reflect1": {
+      "file": "S_Reflect1.ogg",
+      "category": "effect",
+      "volume": 0.55,
+      "symbol": "S_Reflect1",
+      "sourceFile": "140_S_Reflect1.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "b5e2c93b616e2efc8cbc2f4330642b5f548fad9ce437f18a88b2a7a41f45d0e0",
+      "sha256": "f2be7123110a932fdd2a002de7ca0e7aed75968c27f52af68956373a8045c923",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_rocketExplode": {
+      "file": "S_rocketExplode.ogg",
+      "category": "effect",
+      "volume": 0.55,
+      "symbol": "S_rocketExplode",
+      "sourceFile": "90_S_rocketExplode.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "7840b8ff9e38f5787c3febbac54324b5fe76a912f01ea3fe9b8fc2683bc49455",
+      "sha256": "9bb6f9f73ca5ea5af8bcb21537fc3b9bb9538a8ff0a60a4e73c1ba973e009343",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_Skill": {
+      "file": "S_Skill.ogg",
+      "category": "effect",
+      "volume": 0.55,
+      "symbol": "S_Skill",
+      "sourceFile": "87_S_Skill.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "d68867444d28363b3eddd03f4aa0db028f032c408130441e1ef11b15a3ca9e67",
+      "sha256": "fcc7ca59f86d3a9a26992550f465d41cd97c65063eb95c13316d6a343cd06647",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_Heal": {
+      "file": "S_Heal.ogg",
+      "category": "effect",
+      "volume": 0.55,
+      "symbol": "S_Heal",
+      "sourceFile": "86_S_Heal.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "defeaf8b6d6c7ce95d3a6202c305d0970f481c90e35f12eb2f9a35e5daf5a10d",
+      "sha256": "7ef38c91873d908f0fe7e16ce64062d8f02b49b2ae7aa2d12a77aa85466355f6",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_Click": {
+      "file": "S_Click.ogg",
+      "category": "effect",
+      "volume": 0.35,
+      "symbol": "S_Click",
+      "sourceFile": "233_S_Click.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "6634da7a9cbf83cb0464463dec7dd5d489e387815ef7d80bc5400a4b7321d1f5",
+      "sha256": "255951c073c07a2474290afda637b387beb7ec19171586972b0a309a3c6de4c9",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_Error": {
+      "file": "S_Error.ogg",
+      "category": "effect",
+      "volume": 0.55,
+      "symbol": "S_Error",
+      "sourceFile": "89_S_Error.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "425f9f9267f8b19400b67843ded4be1bd1951c643009194a45b59a9b54dc73b4",
+      "sha256": "a614b1699745a81b9cac0655557defb4293fee42a8233ef517c47796f7402018",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_Medal": {
+      "file": "S_Medal.ogg",
+      "category": "effect",
+      "volume": 0.55,
+      "symbol": "S_Medal",
+      "sourceFile": "228_S_Medal.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "7b9734e12eeeacc4a0b84ae93821b78b6b1cdab04facdb14ae2b57994055bb96",
+      "sha256": "d451393d868b935f676dc6bda2510b6484cec7b3baae5ddf0a57695072afdf82",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "S_Beep": {
+      "file": "S_Beep.ogg",
+      "category": "effect",
+      "volume": 0.55,
+      "symbol": "S_Beep",
+      "sourceFile": "223_S_Beep.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "964020c6156ced187cfc407c6f09b2e7f1248305fd8cdd347d03889cb4053c76",
+      "sha256": "77af40ce72b01018e322db9900dabba21b5f87fcbb134fdae7ff0c6d48edabca",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning"
+    },
+    "V_Medic1": {
+      "file": "V_Medic1.ogg",
+      "category": "voice",
+      "volume": 0.95,
+      "symbol": "V_Medic1",
+      "sourceFile": "132_V_Medic1.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "60f8498452501c7881b7e2769ffa89e7b39c75b2fa08d131d12121e24c651188",
+      "sha256": "be4c63185cb645c6adab6fa9c3f2d3cc8343d8f8ca607b7290cc9fbf8278cb72",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning",
+      "text": "医疗兵：准备行动！",
+      "originalText": "Ready for action!",
+      "group": "medic"
+    },
+    "V_Medic2": {
+      "file": "V_Medic2.ogg",
+      "category": "voice",
+      "volume": 0.95,
+      "symbol": "V_Medic2",
+      "sourceFile": "131_V_Medic2.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "3948f309dd60d693822dcd36a8bf8f6d314f4fb3695e172f3ee40b40ee18de46",
+      "sha256": "d8e443cfba9590d05a6fac96a74317633ca1ca80804fa726a5f22debb7f7f6b7",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning",
+      "text": "医疗兵：让我看看你的伤！",
+      "originalText": "Show me your wounds!",
+      "group": "medic"
+    },
+    "V_Sniper1": {
+      "file": "V_Sniper1.ogg",
+      "category": "voice",
+      "volume": 0.95,
+      "symbol": "V_Sniper1",
+      "sourceFile": "101_V_Sniper1.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "ec3c114d3c44e496c8f75ac99462a9e15f9cd17e81e5f617a15f3084d1471039",
+      "sha256": "5670d0891b798e18e988f31ac5ad3ece670d53aa93f3d405f1d6c78bb7f99980",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning",
+      "text": "刺客：开始行动！",
+      "originalText": "Let's do this!",
+      "group": "assassin"
+    },
+    "V_Sniper2": {
+      "file": "V_Sniper2.ogg",
+      "category": "voice",
+      "volume": 0.95,
+      "symbol": "V_Sniper2",
+      "sourceFile": "100_V_Sniper2.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "0e2e1bd6b10f16ffb0ab54240c92cc2eedfeb214e45d0bcd0956c306ea719924",
+      "sha256": "f8dd2aba3b5e7dc2dcfed0ab2ee03a77e78a12120eab490137ab5e2a1109a296",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning",
+      "text": "刺客：他们连怎么中招的都不知道。",
+      "originalText": "Won't know what hit 'em.",
+      "group": "assassin"
+    },
+    "V_Soldier1": {
+      "file": "V_Soldier1.ogg",
+      "category": "voice",
+      "volume": 0.95,
+      "symbol": "V_Soldier1",
+      "sourceFile": "99_V_Soldier1.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "1c035cb38bbfd4c4283f665e41b5863cb6080162e311a9754e75a2521cfe3d12",
+      "sha256": "cc52c1f401405ea3bc943a528b3563e0bd676072571d8f372f7cf0dc4524977f",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning",
+      "text": "突击兵：装弹上膛！",
+      "originalText": "Lock and load!",
+      "group": "commando"
+    },
+    "V_Tank1": {
+      "file": "V_Tank1.ogg",
+      "category": "voice",
+      "volume": 0.95,
+      "symbol": "V_Tank1",
+      "sourceFile": "97_V_Tank1.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "64e731b05acc4f253f3aa22e53a86a9ee182faa108d96e4f87b2b6232ba59642",
+      "sha256": "c52a0f1eeb8256d2dfb809f6753a37f2838399ec5680292f73b06f1de79d7b3a",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning",
+      "text": "重装兵：放马过来！",
+      "originalText": "Bring it on!",
+      "group": "tank"
+    },
+    "V_k3": {
+      "file": "V_k3.ogg",
+      "category": "voice",
+      "volume": 0.95,
+      "symbol": "V_k3",
+      "sourceFile": "118_V_k3.mp3",
+      "source": "Strike Force Heroes 1 / local static SWF export",
+      "license": "Original game asset; rights remain with original owners; no free redistribution license asserted.",
+      "sourceSha256": "8a7070fe795f82e7dce9ec71f00d1d66a91fe0efbcc1e42c776c61c385495d15",
+      "sha256": "935afd9f75bcd752e89740dfdc887582ecc7f3f03128092520a8466285a6d256",
+      "processing": "40Hz high-pass, peak limiter 0.65 (Vorbis overshoot headroom), mono 44100Hz Vorbis q4; no voice cloning",
+      "text": "生命再生已启动！",
+      "originalText": "Health regeneration up!",
+      "group": "regenerate"
+    },
+    "footstep": {
+      "file": "footstep.ogg",
+      "category": "effect",
+      "volume": 0.24,
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "sourceFile": "footstep_concrete_000.ogg",
+      "license": "CC0-1.0",
+      "processing": "Unmodified selected sample",
+      "sha256": "d7267e183067757c92c169de2a379abea592cfca6b39bb2e8feea15221ad79fe"
+    },
+    "jump": {
+      "file": "jump.ogg",
+      "category": "effect",
+      "volume": 0.38,
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "sourceFile": "footstep_concrete_001.ogg",
+      "license": "CC0-1.0",
+      "processing": "Unmodified selected sample",
+      "sha256": "507a75eb19b897087855a3be3cf11a12d7fa37d143ad535eeebe0b8031c7325d"
+    },
+    "land": {
+      "file": "land.ogg",
+      "category": "effect",
+      "volume": 0.38,
+      "source": "https://kenney.nl/assets/impact-sounds",
+      "sourceFile": "impactSoft_heavy_000.ogg",
+      "license": "CC0-1.0",
+      "processing": "Unmodified selected sample",
+      "sha256": "49e7ca88743fca974bb8676ea138b751cfd8f9033b5e7af8736c2a215d6edbc1"
+    },
+    "voice-kill": {
+      "file": "voice-kill.ogg",
+      "category": "voice",
+      "volume": 0.95,
+      "text": "目标已消灭。",
+      "originalText": "Target eliminated.",
+      "group": "kill",
+      "source": "Local Windows System.Speech / Microsoft Zira Desktop",
+      "license": "Locally synthesized original text; installed Windows voice; no actor cloning.",
+      "processing": "Offline TTS, radio band-pass and peak limiter",
+      "sha256": "d0c47e55942519c89467a1c1f3b35903fff78de525aff92e88535aff17163a78"
+    }
+  },
+  "weapons": {
+    "usp": {
+      "shot": "S_pistolFire",
+      "reload": "S_PistolReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "uzi": {
+      "shot": "S_uziFire",
+      "reload": "S_PistolReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "mp5": {
+      "shot": "S_mp5",
+      "reload": "S_RifleReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "beretta": {
+      "shot": "S_pistolFire",
+      "reload": "S_PistolReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "skorpion": {
+      "shot": "S_assaultFire",
+      "reload": "S_RifleReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "vector": {
+      "shot": "S_assaultFire",
+      "reload": "S_RifleReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "socom": {
+      "shot": "S_pistolFire",
+      "reload": "S_PistolReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "patriot": {
+      "shot": "S_pistolFire",
+      "reload": "S_PistolReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "ump": {
+      "shot": "S_assaultFire",
+      "reload": "S_RifleReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "m1911": {
+      "shot": "S_pistolFire",
+      "reload": "S_PistolReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "glock18": {
+      "shot": "S_pistolFire",
+      "reload": "S_PistolReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "phantom": {
+      "shot": "S_assaultFire",
+      "reload": "S_RifleReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "p99": {
+      "shot": "S_pistolFire",
+      "reload": "S_PistolReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "raffica": {
+      "shot": "S_pistolFire",
+      "reload": "S_PistolReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "aks": {
+      "shot": "S_assaultFire",
+      "reload": "S_RifleReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "deagle": {
+      "shot": "S_deagle",
+      "reload": "S_PistolReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "rcp90": {
+      "shot": "S_assaultFire",
+      "reload": "S_BulpupReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "cyclone": {
+      "shot": "S_rocketFire",
+      "reload": "S_PistolReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "m4": {
+      "shot": "S_assaultFire",
+      "reload": "S_RifleReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "needler": {
+      "shot": "S_pistolFire",
+      "reload": "S_MagnumReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "famas": {
+      "shot": "S_assaultFire",
+      "reload": "S_BulpupReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "cougar": {
+      "shot": "S_pistolFire",
+      "reload": "S_MagnumReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "scar": {
+      "shot": "S_assaultFire",
+      "reload": "S_RifleReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "p357": {
+      "shot": "S_pistolFire",
+      "reload": "S_MagnumReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "g36": {
+      "shot": "S_assaultFire",
+      "reload": "S_RifleReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "colt45": {
+      "shot": "S_pistolFire",
+      "reload": "S_MagnumReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "dragon": {
+      "shot": "S_assaultFire",
+      "reload": "S_RifleReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "p44": {
+      "shot": "S_pistolFire",
+      "reload": "S_MagnumReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "ak47": {
+      "shot": "S_ak",
+      "reload": "S_RifleReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "p500": {
+      "shot": "S_pistolFire",
+      "reload": "S_MagnumReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "scout": {
+      "shot": "S_scout",
+      "reload": "S_SniperReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "barrett": {
+      "shot": "S_assaultFire",
+      "reload": "S_RifleReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "jackal": {
+      "shot": "S_sniperFire",
+      "reload": "S_SniperReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "dragunov": {
+      "shot": "S_assaultFire",
+      "reload": "S_RifleReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "crossbow": {
+      "shot": "S_assaultFire",
+      "reload": "S_RocketReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "awp": {
+      "shot": "S_assaultFire",
+      "reload": "S_RifleReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "saw": {
+      "shot": "S_assaultFire",
+      "reload": "S_HeavyReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "rpg": {
+      "shot": "S_rocketFire",
+      "reload": "S_RocketReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "rpd": {
+      "shot": "S_assaultFire",
+      "reload": "S_HeavyReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "thumper": {
+      "shot": "S_rocketFire",
+      "reload": "S_LauncherReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "aughbar": {
+      "shot": "S_assaultFire",
+      "reload": "S_BulpupReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "stinger": {
+      "shot": "S_rocketFire",
+      "reload": "S_RocketReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "firstblood": {
+      "shot": "S_assaultFire",
+      "reload": "S_HeavyReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "lawnchair": {
+      "shot": "S_rocketFire",
+      "reload": "S_SniperReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "oicw": {
+      "shot": "S_assaultFire",
+      "reload": "S_BulpupReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "javelin": {
+      "shot": "S_rocketFire",
+      "reload": "S_RocketReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "minigun": {
+      "shot": "S_assaultFire",
+      "reload": "S_HeavyReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "commando": {
+      "shot": "S_rocketFire",
+      "reload": "S_RocketReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "shotgun": {
+      "shot": "S_shotgunFire",
+      "reload": "S_ShotgunReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "aa12": {
+      "shot": "S_autoshotgunFire",
+      "reload": "S_RifleReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "spas12": {
+      "shot": "S_shotgunFire",
+      "reload": "S_ShotgunReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "striker": {
+      "shot": "S_shotgunFire",
+      "reload": "S_SniperReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "judgement": {
+      "shot": "S_shotgunFire",
+      "reload": "S_ShotgunReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    },
+    "omar": {
+      "shot": "S_shotgunFire",
+      "reload": "S_LauncherReload",
+      "basis": "Catalog grip/reloadGrip; UnitMC.reloadSound; same-class fallback"
+    }
+  },
+  "cues": {
+    "swap": "S_Equip",
+    "empty": "S_GunClick",
+    "hit": "S_Headshot1",
+    "hurt": "S_Blunt2",
+    "death": "S_Die1",
+    "respawn": "S_Powerup",
+    "melee": "S_Whip1",
+    "melee-hit": "S_Cut3",
+    "block": "S_Reflect1",
+    "explosion": "S_rocketExplode",
+    "skill": "S_Skill",
+    "heal": "S_Heal",
+    "item": "S_Equip",
+    "supply": "S_Powerup",
+    "click": "S_Click",
+    "error": "S_Error",
+    "win": "S_Medal",
+    "lose": "S_Beep",
+    "objective-pickup": "S_Powerup",
+    "objective-delivery": "S_Medal",
+    "objective-return": "S_Beep",
+    "footstep": "footstep",
+    "jump": "jump",
+    "land": "land"
+  },
+  "voices": {
+    "medic": [
+      "V_Medic1",
+      "V_Medic2"
+    ],
+    "assassin": [
+      "V_Sniper1",
+      "V_Sniper2"
+    ],
+    "commando": [
+      "V_Soldier1"
+    ],
+    "tank": [
+      "V_Tank1"
+    ],
+    "regenerate": [
+      "V_k3"
+    ],
+    "kill": [
+      "voice-kill"
+    ]
+  }
+}

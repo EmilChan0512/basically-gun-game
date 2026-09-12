@@ -1,0 +1,19 @@
+{
+  "medic": [
+    { "symbol": "V_Medic1", "originalText": "Ready for action!", "text": "医疗兵：准备行动！" },
+    { "symbol": "V_Medic2", "originalText": "Show me your wounds!", "text": "医疗兵：让我看看你的伤！" }
+  ],
+  "assassin": [
+    { "symbol": "V_Sniper1", "originalText": "Let's do this!", "text": "刺客：开始行动！" },
+    { "symbol": "V_Sniper2", "originalText": "Won't know what hit 'em.", "text": "刺客：他们连怎么中招的都不知道。" }
+  ],
+  "commando": [
+    { "symbol": "V_Soldier1", "originalText": "Lock and load!", "text": "突击兵：装弹上膛！" }
+  ],
+  "tank": [
+    { "symbol": "V_Tank1", "originalText": "Bring it on!", "text": "重装兵：放马过来！" }
+  ],
+  "regenerate": [
+    { "symbol": "V_k3", "originalText": "Health regeneration up!", "text": "生命再生已启动！" }
+  ]
+}

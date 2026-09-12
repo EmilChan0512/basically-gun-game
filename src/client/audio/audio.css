@@ -1,0 +1,13 @@
+#audio-settings { position: fixed; right: 16px; bottom: 12px; z-index: 1000; color: #e9f3f2; font: 14px 'Segoe UI','Microsoft YaHei',sans-serif; }
+#audio-settings summary { cursor: pointer; padding: 8px 14px; background: #142934; border: 1px solid #567781; border-radius: 5px; }
+#audio-settings .audio-panel { position: absolute; bottom: 44px; right: 0; width: 240px; padding: 16px; background: #142934; border: 1px solid #567781; border-radius: 6px; box-shadow: 0 6px 24px #0008; }
+#audio-settings label { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0; }
+#audio-settings input[type=range] { width: 150px; accent-color: #81d7ac; }
+#audio-settings .audio-slider { display: grid; grid-template-columns: minmax(0,1fr) 42px; }
+#audio-settings .audio-slider span { grid-column: 1 / -1; }
+#audio-settings .audio-slider input { width: 100%; min-width: 0; }
+#audio-settings .audio-slider output { text-align: right; }
+#audio-settings input[type=checkbox] { width: auto; accent-color: #81d7ac; }
+#audio-settings button { width: 100%; }
+#audio-subtitle { position: fixed; left: 50%; bottom: 62px; transform: translateX(-50%); z-index: 999; max-width: 70vw; padding: 9px 18px; border-radius: 5px; background: #0a1523df; color: #fff; font: 17px 'Segoe UI','Microsoft YaHei',sans-serif; pointer-events: none; text-align: center; }
+#audio-subtitle:empty { display: none; }

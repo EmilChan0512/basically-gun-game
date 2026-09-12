@@ -20,6 +20,7 @@ export class NetworkSession {
   prediction = new Prediction();
   shots = new ShotPresentation();
   lastStateAt = 0;
+  audioGeneration = 0;
   skippedInputs = 0;
   private token = '';
   room: ReturnType<Room['lobby']> | null = null;
@@ -83,6 +84,7 @@ export class NetworkSession {
   reconnect() {
     if (!this.token || this.socket.readyState !== WebSocket.CLOSED) { this.onError('仅已断开的战斗连接可重连'); return; }
     const previous = this.socket;
+    this.audioGeneration++;
     this.suppressCloseError = false;
     this.welcomed = false; this.allowInsecureAccounts = false;
     this.actions.clear(); this.queued = []; this.state = null; this.prediction = new Prediction(); this.interpolation = new Interpolation();

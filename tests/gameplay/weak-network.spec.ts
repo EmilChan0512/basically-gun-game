@@ -22,6 +22,7 @@ test('short clicks fire and tracers disappear during a stopped snapshot stream',
     });
     const battle = [...server.rooms.values()][0].session!.battle;
     const before = battle.player.arsenal.shots;
+    await page.locator('canvas').scrollIntoViewIfNeeded();
     const bounds = (await page.locator('canvas').boundingBox())!;
     await page.mouse.move(bounds.x + bounds.width * 0.6, bounds.y + bounds.height * 0.6);
     await page.mouse.down(); await page.mouse.up();

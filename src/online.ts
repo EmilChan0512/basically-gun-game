@@ -2,6 +2,8 @@ import { renderOnlineArmory, renderOnlineLoadoutSummary } from './client/present
 import { starterEquipment } from './shared/content/OnlineProgress';
 import type { EquipmentLoadout } from './shared/content/Equipment';
 import Phaser from 'phaser';
+import { gameAudio } from './client/audio/AudioService';
+import { AudioPresentation } from './client/audio/AudioPresentation';
 import { NetworkSession } from './client/session/NetworkSession';
 import { preloadReferenceArt, ReferenceArt } from './game/campaign/ReferenceArt';
 import { MAPS } from './shared/content/Maps';
@@ -106,7 +108,7 @@ export function startOnline() {
     try { network = new NetworkSession((el('server') as HTMLInputElement).value); }
     catch { el('status').textContent = '服务器地址无效'; return; }
     const current = network;
-    current.onError = message => { if (network === current) { if (current.profile && !current.room) draft = current.profile.classes[current.profile.selected].equipment; renderPreflight(); el('status').textContent = message; if (!current.room) el('account-status').textContent = message; } };
+    current.onError = message => { if (network === current) { gameAudio.cue('error'); if (current.profile && !current.room) draft = current.profile.classes[current.profile.selected].equipment; renderPreflight(); el('status').textContent = message; if (!current.room) el('account-status').textContent = message; } };
     let signature = '';
     current.onChange = () => {
       if (network !== current) return;
@@ -234,6 +236,7 @@ export function startOnline() {
 }
 
 class OnlineScene extends Phaser.Scene {
+  private audioPresentation = new AudioPresentation();
   private rig!: ReferenceArt;
   private graphics!: Phaser.GameObjects.Graphics;
   private hud!: Phaser.GameObjects.Text;
@@ -284,14 +287,16 @@ class OnlineScene extends Phaser.Scene {
     window.addEventListener('online-view-change', viewChanged);
     viewChanged();
     window.addEventListener('keydown', down); window.addEventListener('keyup', up); window.addEventListener('blur', blur);
-    this.events.once('shutdown', () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', blur); window.removeEventListener('focusin', focus); window.removeEventListener('online-view-change', viewChanged); });
+    this.events.once('shutdown', () => { this.audioPresentation.reset(); gameAudio.pause(false); window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', blur); window.removeEventListener('focusin', focus); window.removeEventListener('online-view-change', viewChanged); });
   }
   update(_time: number, delta: number) {
-    const message = this.network.state; if (!message) return;
+    const message = this.network.state; if (!message) { this.audioPresentation.reset(); return; }
     const self = message.state.actors.find(a => a.id === message.actorId);
     const followed = self ?? message.state.actors[this.spectateIndex % message.state.actors.length];
     const now = performance.now();
     const editing = !document.getElementById('online-preflight')?.hidden;
+    this.audioPresentation.accept(`${message.roomId}:${message.round}:${this.network.audioGeneration}`, message.state.frame, message.events, message.state.actors,
+      message.actorId ?? followed?.id, message.result?.winner, !editing && this.network.socket.readyState === WebSocket.OPEN && now - this.network.lastStateAt < 500);
     // A hidden canvas has no usable pointer transform. Keep the authoritative
     // aim while browsing equipment and send neutral input to stop movement.
     const pointerAim = editing ? undefined

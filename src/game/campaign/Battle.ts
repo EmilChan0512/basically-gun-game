@@ -202,10 +202,13 @@ export class Battle {
     if (actor.offhand && actor.offhand.kind !== 'firearm') {
       if (actor.offhand.select(!actor.offhand.equipped, actor.offhand.triggerHeld)) actor.arsenal.gun.cancelReload();
     } else actor.arsenal.swap();
+    this.journal.emit({ tick: this.frame, kind: 'swap', actorId: actor.id, weapon: actor.arsenal.selected });
+    if (actor.arsenal.gun.reloadFrames) this.reloadEvent(actor);
   }
+  private reloadEvent(actor: Actor) { this.journal.emit({ tick: this.frame, kind: 'reload', actorId: actor.id, weapon: actor.arsenal.selected, duration: actor.arsenal.gun.reloadFrames }); }
   reload(actor = this.player) {
     if (this.phase === 'running' && actor.life.alive && (!actor.offhand || actor.offhand.permitsGunfire)
-      && actor.arsenal.gun.reload()) actor.stealthFrames = 0;
+      && actor.arsenal.gun.reload()) { actor.stealthFrames = 0; this.reloadEvent(actor); }
   }
   private say(message: string) { this.notice = message; this.noticeFrame = this.frame; }
   useSkill(actor = this.player) {
@@ -224,6 +227,7 @@ export class Battle {
     }
     if (!changed) { if (actor.human) this.say('当前无需治疗或补给'); return false; }
     actor.skillCooldown = skill.cooldown; actor.skillFrames = skill.duration;
+    this.journal.emit({ tick: this.frame, kind: 'skill', actorId: actor.id, ability: actor.kit.skill });
     this.bursts.push({ x: actor.movement.x, y: actor.movement.y - 30, frame: this.frame, radius: 70, color: CLASSES[actor.kit.classId].color });
     if (actor.human) this.say(`${skill.name}已发动`); return true;
   }
@@ -242,6 +246,7 @@ export class Battle {
       this.grenades.push({ source: actor, ...origin, vx: Math.cos(angle) * 13, vy: Math.sin(angle) * 13 - 5, fuse: 45 });
     }
     actor.itemCharges--; actor.itemCooldown = 30;
+    this.journal.emit({ tick: this.frame, kind: 'item', actorId: actor.id, ability: item });
     this.say(`${ITEMS[item].name}已使用`); return true;
   }
   forgetActorInput(id: string) { this.jumpHeld.delete(id); }
@@ -251,6 +256,7 @@ export class Battle {
       crouching: a.movement.crouching, generation: a.life.deaths, protected: a.life.spawnProtectionFrames > 0 }));
   }
   private spawn(actor: Actor) {
+    this.journal.emit({ tick: this.frame, kind: 'respawn', actorId: actor.id });
     actor.stealthFrames = 0;
     const enemies = this.actors.filter(a => a.team !== actor.team && a.life.alive);
     const safety = (p: Point) => Math.min(...enemies.map(a => Math.hypot(a.movement.x - p.x, a.movement.y - p.y)), 9999);
@@ -306,7 +312,10 @@ export class Battle {
       const defense = interceptShield(shield, { x: target.movement.x, y: target.movement.y - (target.movement.crouching ? 28 : 42) }, target.aim, context,
         definition?.kind === 'shield' ? definition : undefined, this.random);
       amount = defense.amount;
-      if (defense.blocked > 0) this.bursts.push({ ...context.hitPoint!, frame: this.frame, radius: 12, color: 0xb9eaff });
+      if (defense.blocked > 0) {
+        this.bursts.push({ ...context.hitPoint!, frame: this.frame, radius: 12, color: 0xb9eaff });
+        this.journal.emit({ tick: this.frame, kind: 'block', actorId: source?.id, targetId: target.id });
+      }
       if (defense.reflected) this.reflectShot(target, context);
     }
     if (source && target.life.alive && !target.life.spawnProtectionFrames && target.kit) {
@@ -365,10 +374,14 @@ export class Battle {
       for (const action of decision.actions) { if (action === 'swap') this.swap(actor); if (action === 'reload') this.reload(actor); }
       const control = decision.input;
       const previousX = actor.movement.x, previousY = actor.movement.y;
+      const wasJumping = actor.movement.jumping;
       const wasReloading = actor.arsenal.gun.reloadFrames > 0;
       if (control.jump && (!actor.human || !heldJump)) actor.movement.jump();
       actor.movement.tick(control);
       const m = actor.movement;
+      if (!wasJumping && m.jumping && m.vy < 0) this.journal.emit({ tick: this.frame, kind: 'jump', actorId: actor.id });
+      if (wasJumping && !m.jumping) this.journal.emit({ tick: this.frame, kind: 'land', actorId: actor.id });
+      if (!m.jumping && !m.crouching && Math.abs(m.x - previousX) > .5 && this.frame % 10 === 0) this.journal.emit({ tick: this.frame, kind: 'footstep', actorId: actor.id });
       m.x = Math.max(20, Math.min(this.mission.width - 20, m.x));
       if (m.y > (this.mission.killY ?? (this.mission.height ?? 700) + 140)) { this.damage(actor, 9999); continue; }
       actor.aim.x += (control.aim.x - actor.aim.x) * (actor.human && instantHumanAim ? 1 : 0.5);
@@ -379,19 +392,23 @@ export class Battle {
         targets: this.actors.map(a => ({ id: a.id, team: a.team, alive: a.life.alive,
           position: { x: a.movement.x, y: a.movement.y - (a.movement.crouching ? 28 : 42) } })) }) ?? [];
       if (offhand && offhand.attackSerial !== attackSerial) {
+        this.journal.emit({ tick: this.frame, kind: 'melee', actorId: actor.id });
         if (this.waves) actor.life.spawnProtectionFrames = 0;
         if (actor.kit?.skill === 'cloak') actor.skillFrames = 0;
       }
       for (const hit of meleeHits) {
         const target = this.actors.find(a => a.id === hit.targetId);
-        if (target) this.applyDamage(target, hit.damage);
+        if (target) { this.applyDamage(target, hit.damage); this.journal.emit({ tick: this.frame, kind: 'melee-hit', actorId: actor.id, targetId: target.id }); }
       }
       actor.arsenal.setTrigger(control.fire && (!offhand || offhand.permitsGunfire));
       const traces = actor.arsenal.tick(actor.id, actor.team, { x: m.x, y: m.y - (m.crouching ? 28 : 42) }, actor.aim,
         { crouching: m.crouching, airborne: m.jumping, moving: m.vx !== 0, aimStat: actor.kit ? loadoutStats(actor.kit).aim : 0.7 },
         this.hitboxHistory.resolve(this.frame, actor.human ? shotFrames.get(actor.id) : undefined, this.hitboxes()), this.wall, this.random,
         actor.skillFrames && actor.kit?.skill === 'focus' ? 0.25 : 1);
-      if (traces.length) this.journal.emit({ tick: this.frame, kind: 'shot', actorId: actor.id });
+      if (traces.length) this.journal.emit({ tick: this.frame, kind: 'shot', actorId: actor.id, weapon: actor.arsenal.selected });
+      if (!wasReloading && actor.arsenal.gun.reloadFrames) this.reloadEvent(actor);
+      if (wasReloading && !actor.arsenal.gun.reloadFrames) this.journal.emit({ tick: this.frame, kind: 'reload-end', actorId: actor.id });
+      if (control.fire && (!offhand || offhand.permitsGunfire) && actor.arsenal.gun.ammo === 0 && !actor.arsenal.gun.reloadFrames && this.frame % 12 === 0) this.journal.emit({ tick: this.frame, kind: 'empty', actorId: actor.id });
       // Cooperative arrivals retain a safe entry window until they attack.
       // Apply equally to players and reinforcements, only on an actual shot.
       if (traces.length && this.waves) actor.life.spawnProtectionFrames = 0;
@@ -422,13 +439,17 @@ export class Battle {
       }
       const supply = this.mission.spawns[actor.team - 1][0];
       if (this.frame >= actor.supplyReady && Math.abs(m.x - supply.x) < 70 && Math.abs(m.y - supply.y) < 40) {
-        actor.arsenal.resupply(); actor.supplyReady = this.frame + 300;
+        const reloadBefore = actor.arsenal.gun.reloadFrames;
+        if (actor.arsenal.resupply()) this.journal.emit({ tick: this.frame, kind: 'supply', actorId: actor.id });
+        if (!reloadBefore && actor.arsenal.gun.reloadFrames) this.reloadEvent(actor);
+        actor.supplyReady = this.frame + 300;
       }
     }
     for (const projectile of this.projectiles) {
       const impact = stepProjectile(projectile, this.hitboxes(), this.wall);
       if (!impact) continue;
       const definition = WEAPONS[projectile.weapon], rules = definition.projectile!;
+      this.journal.emit({ tick: this.frame, kind: 'explosion', actorId: projectile.sourceId, position: { x: projectile.x, y: projectile.y }, weapon: projectile.weapon });
       this.bursts.push({ x: projectile.x, y: projectile.y, radius: rules.radius, frame: this.frame, color: 0xf5b267 });
       for (const target of this.actors) {
         const center = { x: target.movement.x, y: target.movement.y - 40 }, direct = target.id === impact.targetId;
@@ -444,6 +465,7 @@ export class Battle {
       if (this.wall(grenade.x, ny)) { grenade.vy = -Math.abs(grenade.vy) * 0.4; grenade.vx *= 0.8; } else grenade.y = ny;
       grenade.vy += 0.5;
       if (--grenade.fuse === 0) {
+        this.journal.emit({ tick: this.frame, kind: 'explosion', actorId: grenade.source.id, position: { x: grenade.x, y: grenade.y } });
         this.bursts.push({ x: grenade.x, y: grenade.y, frame: this.frame, radius: 120, color: 0xf5b267 });
         for (const target of this.actors) {
           const center = { x: target.movement.x, y: target.movement.y - 30 };
