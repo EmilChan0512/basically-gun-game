@@ -5,9 +5,10 @@ import { defaultLoadout } from '../../src/game/campaign/Catalog';
 import { RevealPolicy } from '../../src/shared/simulation/RevealPolicy';
 import { isConcealed } from '../../src/shared/simulation/Stealth';
 import { traceBulletLine } from '../../src/game/combat/Ballistics';
+import { validateEquipment } from '../../src/shared/content/Equipment';
 
 function setup() {
-  const battle = new Battle({ ...MISSIONS[0], enemies: 1, allies: 0, goal: 999 }, 'normal', 'm4', seededRandom(42), defaultLoadout('assassin'));
+  const battle = new Battle({ ...MISSIONS[0], enemies: 1, allies: 0, goal: 999 }, 'normal', 'm4', seededRandom(42), { ...defaultLoadout('assassin'), skill: 'stealth' });
   const enemy = battle.actors[1]; enemy.human = true;
   battle.player.movement.reset(200, 599.5); enemy.movement.reset(430, 599.5);
   for (let i = 0; i < 20; i++) battle.tick(idleInput());
@@ -15,6 +16,19 @@ function setup() {
   return { battle, actor: battle.player, enemy };
 }
 function wait(b: Battle, frames = 150) { for (let i = 0; i < frames; i++) b.tick(idleInput()); }
+
+it('requires equipping the passive, validates its class, and ignores the active skill key', () => {
+  expect(validateEquipment({ classId: 'assassin', primary: 'scout', secondary: 'usp', skill: 'stealth' }).skill).toBe('stealth');
+  expect(() => validateEquipment({ classId: 'medic', primary: 'm4', secondary: 'usp', skill: 'stealth' })).toThrow();
+  const { battle, actor } = setup(); wait(battle, 80);
+  const bursts = battle.bursts.length;
+  expect(battle.useSkill()).toBe(false); expect(actor.stealthFrames).toBe(80);
+  expect(actor.skillCooldown).toBe(0); expect(actor.skillFrames).toBe(0); expect(battle.bursts).toHaveLength(bursts);
+  for (const skill of ['focus', 'cloak'] as const) {
+    actor.kit!.skill = skill; wait(battle, 170);
+    expect(actor.stealthFrames).toBe(0); expect(isConcealed(actor)).toBe(false);
+  }
+});
 
 it('enters at exactly 150 stationary ticks, is hidden from enemies but visible to teammates', () => {
   const { battle, actor } = setup(), reveal = new RevealPolicy();

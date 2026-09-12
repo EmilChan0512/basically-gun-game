@@ -8,7 +8,7 @@ import { MAPS } from './shared/content/Maps';
 import { mapPreviewSvg } from './client/presentation/MapPreview';
 import { CoopRecords } from './client/session/CoopRecords';
 import { radarSvg } from './client/presentation/Radar';
-import { SPECIAL_OFFHANDS, CLASSES, SKILLS, ITEMS, type SkillId, type ItemId } from './game/campaign/Catalog';
+import { SPECIAL_OFFHANDS, CLASSES, ITEMS, type SkillId, type ItemId } from './game/campaign/Catalog';
 import type { OffhandView } from './shared/simulation/Offhand';
 import './campaign.css';
 import './client/presentation/OnlineArmory.css';
@@ -16,10 +16,11 @@ import { VisionOverlay } from './client/presentation/VisionOverlay';
 import { CollisionWorld } from './shared/content/CollisionWorld';
 import { NETWORK_TICK_MS } from './shared/protocol/Timing';
 import { FireInput } from './client/session/FireInput';
+import { skillStatus } from './client/presentation/SkillStatus';
+import { isConcealed } from './shared/simulation/Stealth';
 
 function abilityText(actor: { classId?: string | null; stealthFrames?: number; skill?: SkillId | null; skillCooldown: number; skillFrames: number; item?: ItemId | null; itemCharges: number }) {
-  const passive = actor.classId === 'assassin' ? ` | 隐匿：${(actor.stealthFrames ?? 0) >= 150 ? '已生效' : `站定 ${((actor.stealthFrames ?? 0) / 30).toFixed(1)}/5s`}` : '';
-  return (actor.skill ? `E ${SKILLS[actor.skill].name} · ${actor.skillFrames > 0 ? '生效中' : actor.skillCooldown > 0 ? (actor.skillCooldown / 30).toFixed(1) + 's' : '就绪'}${actor.item ? ` | G ${ITEMS[actor.item].name} ×${actor.itemCharges}` : ''}` : '') + passive;
+  return skillStatus(actor) + (actor.item ? ` | G ${ITEMS[actor.item].name} ×${actor.itemCharges}` : '');
 }
 
 function equipmentText(actor: { weapon: string; ammo: number; reserve: number; offhand?: OffhandView }) {
@@ -272,10 +273,16 @@ class OnlineScene extends Phaser.Scene {
     };
     const up = (e: KeyboardEvent) => this.keys.delete(e.code);
     const blur = () => { this.keys.clear(); this.fire.clear(); this.network.clearActions(); };
-    const viewChanged = () => { blur(); if (document.getElementById('online-preflight')?.hidden) this.scale.refresh(); };
+    const viewChanged = () => {
+      blur();
+      if (document.getElementById('online-preflight')?.hidden) {
+        this.scale.getParentBounds(); this.scale.refresh();
+      }
+    };
     const focus = (event: FocusEvent) => { if ((event.target as HTMLElement)?.closest('#lobby, #online-account, #online-preflight')) blur(); };
     window.addEventListener('focusin', focus);
     window.addEventListener('online-view-change', viewChanged);
+    viewChanged();
     window.addEventListener('keydown', down); window.addEventListener('keyup', up); window.addEventListener('blur', blur);
     this.events.once('shutdown', () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', blur); window.removeEventListener('focusin', focus); window.removeEventListener('online-view-change', viewChanged); });
   }
@@ -312,7 +319,8 @@ class OnlineScene extends Phaser.Scene {
       const position = actor.id === message.actorId && predicted ? predicted : this.network.interpolation.position(actor, now);
       positions.set(actor.id, position);
       const motion = actor.id === message.actorId ? this.network.prediction.movement ?? actor : actor;
-      this.rig.soldier(position.x, position.y, motion.crouching, motion.vx, motion.jumping, this.animationFrame, actor.id === message.actorId ? aim : pose.aim, actor.weapon, actor.team === 1 ? 0xb7e8de : 0xf1b0a0, actor.life.alive, actor.reload, this.network.shots.visible(now).some(e => !e.reflected && e.actorId === actor.id), actor.offhand, actor.classId ?? 'medic', actor.id);
+      this.rig.soldier(position.x, position.y, motion.crouching, motion.vx, motion.jumping, this.animationFrame, actor.id === message.actorId ? aim : pose.aim, actor.weapon, actor.team === 1 ? 0xb7e8de : 0xf1b0a0, actor.life.alive, actor.reload, this.network.shots.visible(now).some(e => !e.reflected && e.actorId === actor.id), actor.offhand, actor.classId ?? 'medic', actor.id,
+        isConcealed({ kit: actor.skill ? { skill: actor.skill } : null, skillFrames: actor.skillFrames, stealthFrames: actor.stealthFrames }));
     }
     this.rig.delivery(message.state.deliveryTargets, positions, this.graphics);
     for (const p of message.projectiles ?? []) this.graphics.lineStyle(3, 0xffc56a, .9).lineBetween(p.x - p.vx * 2, p.y - p.vy * 2, p.x, p.y).fillStyle(0xffedbb).fillCircle(p.x, p.y, 3);

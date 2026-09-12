@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { ConcealmentFade } from '../../client/presentation/ConcealmentFade';
 import type { DeliveryTarget } from '../../shared/simulation/DeliveryObjectives';
 import type { OffhandView } from '../../shared/simulation/Offhand';
 import { WEAPONS, type ClassId } from './Catalog';
@@ -27,9 +28,10 @@ export function preloadReferenceArt(scene: Phaser.Scene) {
 export class ReferenceArt {
   private pool: Phaser.GameObjects.Image[] = [];
   private cursor = 0;
+  private concealment = new ConcealmentFade();
   private muzzles = new Map<string, Point>();
   constructor(private scene: Phaser.Scene) {}
-  begin() { this.cursor = 0; this.muzzles.clear(); for (const image of this.pool) image.setVisible(false); }
+  begin() { this.cursor = 0; this.concealment.begin(); this.muzzles.clear(); for (const image of this.pool) image.setVisible(false); }
   tracer(graphics: Phaser.GameObjects.Graphics, trace: BulletTrace, actorId: string | undefined, age = 0, weapon = 'm4') {
     if (age < 0 || age >= 3) return;
     const start = (actorId ? this.muzzles.get(actorId) : undefined) ?? trace.origin;
@@ -69,7 +71,12 @@ export class ReferenceArt {
       .setRotation(Math.atan2(m[1], m[0])).setFlip(false, scaleY < 0).setTint(0xffffff).setAlpha(1);
     return image;
   }
-  soldier(x: number, y: number, crouch: boolean, vx: number, jumping: boolean, frame: number, aim: { x: number; y: number }, weapon: string, tint: number, alive: boolean, reload = 0, flash = false, offhand?: OffhandView, role: ClassId = 'medic', actorId = 'player') {
+  soldier(x: number, y: number, crouch: boolean, vx: number, jumping: boolean, frame: number, aim: { x: number; y: number }, weapon: string, tint: number, alive: boolean, reload = 0, flash = false, offhand?: OffhandView, role: ClassId = 'medic', actorId = 'player', concealed = false) {
+    const start = this.cursor, alpha = this.concealment.alpha(actorId, concealed, alive, frame);
+    this.drawSoldier(x, y, crouch, vx, jumping, frame, aim, weapon, tint, alive, reload, flash, offhand, role, actorId);
+    for (let i = start; i < this.cursor; i++) this.pool[i].setAlpha(this.pool[i].alpha * alpha);
+  }
+  private drawSoldier(x: number, y: number, crouch: boolean, vx: number, jumping: boolean, frame: number, aim: { x: number; y: number }, weapon: string, tint: number, alive: boolean, reload = 0, flash = false, offhand?: OffhandView, role: ClassId = 'medic', actorId = 'player') {
     const skin = (part: string) => `${role}-${part}`;
     const flip = offhand?.equipped && offhand.kind === 'melee' && offhand.age >= 0 ? offhand.facing.x < 0 : aim.x < x;
     if (!alive) { this.actorPart({ id: skin('torso'), name: 'fallen', matrix: [0, 1, -1, 0, 0, -5] }, x, y).setAlpha(.45); return; }

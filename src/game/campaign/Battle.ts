@@ -210,6 +210,7 @@ export class Battle {
   private say(message: string) { this.notice = message; this.noticeFrame = this.frame; }
   useSkill(actor = this.player) {
     if (this.phase !== 'running' || !actor.life.alive || !actor.kit) return false;
+    if (SKILLS[actor.kit.skill].passive) return false;
     if (actor.deliveryPreviousWeapon !== undefined && actor.kit.skill === 'cloak') return false;
     if (actor.skillCooldown) { if (actor.human) this.say('技能冷却中'); return false; }
     const skill = SKILLS[actor.kit.skill];
@@ -396,7 +397,7 @@ export class Battle {
       if (traces.length && this.waves) actor.life.spawnProtectionFrames = 0;
       if (traces.length && actor.kit?.skill === 'cloak') actor.skillFrames = 0;
       actor.stealthFrames = stepStealth(actor.stealthFrames ?? 0,
-        actor.kit?.classId === 'assassin' && actor.deliveryPreviousWeapon === undefined,
+        actor.kit?.classId === 'assassin' && actor.kit.skill === 'stealth' && actor.deliveryPreviousWeapon === undefined,
         Math.abs(m.x - previousX) < .01 && Math.abs(m.y - previousY) < .01 && m.vx === 0 && m.vy === 0,
         m.crouching, m.jumping || m.climb !== 0,
         traces.length > 0 || !!offhand && offhand.attackSerial !== attackSerial,

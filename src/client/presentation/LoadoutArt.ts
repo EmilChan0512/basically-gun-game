@@ -5,6 +5,7 @@ import type { EquipmentLoadout } from '../../shared/content/Equipment';
 
 const source = (id: string) => `/assets/reference/${id}.png`;
 const icons: Record<string, string> = {
+  stealth: '<path d="M8 32s9-16 24-16 24 16 24 16-9 16-24 16S8 32 8 32zM12 55 52 9"/><path d="M38 26a9 9 0 0 0-12 12"/>',
   heal: '<path d="M25 12h14v13h13v14H39v13H25V39H12V25h13z"/>',
   regenerate: '<path d="M49 24a20 20 0 1 0 1 16M49 10v14H35"/><path d="M32 23v18m-9-9h18"/>',
   focus: '<circle cx="32" cy="32" r="17"/><circle cx="32" cy="32" r="5"/><path d="M32 6v13m0 26v13M6 32h13m26 0h13"/>',

@@ -49,6 +49,6 @@ test('offline class, purchased item and saved loadout work without an account', 
   await page.reload(); await page.locator('#continue-campaign').click(); await page.locator('#deploy').click();
   await expect(page.locator('#player-health')).toHaveText('生命 130 / 130');
   await expect(page.locator('#player-ammo')).toHaveText('SHOTGUN  4 / 12');
-  await page.keyboard.press('e'); await expect(page.locator('#abilities')).toContainText('装甲屏障：生效中');
+  await page.keyboard.press('e'); await expect(page.locator('#abilities')).toContainText('装甲屏障 · 生效中');
   expect(external).toEqual([]);
 });

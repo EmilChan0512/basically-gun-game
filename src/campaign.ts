@@ -1,3 +1,4 @@
+import { skillStatus } from './client/presentation/SkillStatus';
 import Phaser from 'phaser';
 import { MAPS, customMatch } from './shared/content/Maps';
 import { mapPreviewSvg } from './client/presentation/MapPreview';
@@ -46,7 +47,7 @@ export function startCampaign() {
   function bind(id: string, action: () => void) { $(id).onclick = () => { action(); (document.activeElement as HTMLElement)?.blur(); }; }
   function settings() {
     const l = progress.loadout;
-    return `<div class="loadout"><label>行动难度<select id="difficulty"><option value="easy">轻松 · 更长反应时间</option><option value="normal">标准</option><option value="hard">老兵 · 更准的对手</option></select></label><label>主武器<select id="weapon">${progress.data.career.weapons.filter(id => canEquipWeapon(l.classId, id) && WEAPONS[id].slot === 'primary' && WEAPONS[id].level <= l.level).map(id => `<option value="${id}">${WEAPONS[id].name}</option>`).join('')}</select></label><button id="edit-loadout">配装与升级</button></div><p class="brief-tip">${CLASSES[l.classId].name} Lv.${l.level} · E ${SKILLS[l.skill].name} · G ${ITEMS[l.item].name} · 军资 ${progress.data.career.credits}</p>`;
+    return `<div class="loadout"><label>行动难度<select id="difficulty"><option value="easy">轻松 · 更长反应时间</option><option value="normal">标准</option><option value="hard">老兵 · 更准的对手</option></select></label><label>主武器<select id="weapon">${progress.data.career.weapons.filter(id => canEquipWeapon(l.classId, id) && WEAPONS[id].slot === 'primary' && WEAPONS[id].level <= l.level).map(id => `<option value="${id}">${WEAPONS[id].name}</option>`).join('')}</select></label><button id="edit-loadout">配装与升级</button></div><p class="brief-tip">${CLASSES[l.classId].name} Lv.${l.level} · ${SKILLS[l.skill].passive ? '被动' : 'E'} ${SKILLS[l.skill].name} · G ${ITEMS[l.item].name} · 军资 ${progress.data.career.credits}</p>`;
   }
   function bindSettings() {
     $<HTMLSelectElement>('difficulty').value = progress.data.difficulty;
@@ -152,7 +153,7 @@ export function startCampaign() {
         ? offhand.kind === 'melee' ? `${SPECIAL_OFFHANDS[offhand.id ?? 'knife'].name} · ${offhand.age < 0 ? '点击攻击挥刀' : '挥击中'} · Q切换`
           : `${SPECIAL_OFFHANDS[offhand.id ?? 'shield'].name} · ${offhand.deployed ? '防御中' : '按住攻击部署'} · Q切换`
         : `${p.arsenal.selected.toUpperCase()}  ${gun.ammo} / ${gun.reserveAmmo}${gun.reloadFrames ? ` · 换弹 ${(gun.reloadFrames / 30).toFixed(1)}s` : gun.ammo === 0 ? ' · Q切枪 / 返回出生区补给' : ''}`;
-      $('abilities').textContent = p.kit ? `${CLASSES[p.kit.classId].name} Lv.${p.kit.level}${p.kit.classId === 'assassin' ? ` · 隐匿：${p.stealthFrames >= 150 ? '已生效' : (p.stealthFrames / 30).toFixed(1) + '/5s'}` : ''}  |  E ${SKILLS[p.kit.skill].name}：${p.skillFrames ? '生效中' : p.skillCooldown ? (p.skillCooldown / 30).toFixed(1) + 's' : '就绪'}  |  G ${ITEMS[p.kit.item].name} ×${p.itemCharges}` : '';
+      $('abilities').textContent = p.kit ? `${CLASSES[p.kit.classId].name} Lv.${p.kit.level} | ${skillStatus({ skill: p.kit.skill, skillFrames: p.skillFrames, skillCooldown: p.skillCooldown, stealthFrames: p.stealthFrames })} | G ${ITEMS[p.kit.item].name} ×${p.itemCharges}` : '';
       $('battle-message').textContent = b.mission.mode === 'dom' ? `据点：${{ blue: '我方控制 +1/秒', red: '敌方控制 +1/秒', contested: '争夺中 · 暂停计分', neutral: '无人占领' }[b.objective]}` : p.life.spawnProtectionFrames && p.life.alive ? '出生保护中 · 向前推进' : '击败敌人为小队得分 · 阵亡后可复活';
       $('kill-feed').textContent = b.events.filter(e => b.frame - e.frame < 150).slice(0, 2).map(e => e.text).join('  /  ');
       if (b.notice && b.frame - b.noticeFrame < 90) $('battle-message').textContent = b.notice;

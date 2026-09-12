@@ -1,4 +1,4 @@
-/** 30 Hz passive; independent of the equipped active skill and damage immunity. */
+/** 30 Hz equipped passive; independent of damage immunity. */
 export const STEALTH_DELAY = 150;
 export interface Concealable {
   stealthFrames?: number;
@@ -7,7 +7,7 @@ export interface Concealable {
   deliveryPreviousWeapon?: string;
 }
 export function isConcealed(actor: Concealable) {
-  return actor.deliveryPreviousWeapon === undefined && ((actor.stealthFrames ?? 0) >= STEALTH_DELAY
+  return actor.deliveryPreviousWeapon === undefined && (actor.kit?.skill === 'stealth' && (actor.stealthFrames ?? 0) >= STEALTH_DELAY
     || actor.kit?.skill === 'cloak' && actor.skillFrames > 0);
 }
 export function stepStealth(frames: number, eligible: boolean, stationary: boolean, crouching: boolean, airborne: boolean, attacking: boolean, reloading: boolean) {
