@@ -7,6 +7,8 @@ import { MISSIONS, type Mission } from '../campaign/Missions';
 import { gameAudio } from '../../client/audio/AudioService';
 import { AudioPresentation } from '../../client/audio/AudioPresentation';
 import { CLASSES } from '../campaign/Catalog';
+import { CombatFeedback } from '../../client/presentation/CombatFeedback';
+import { CombatFeedbackView } from '../../client/presentation/CombatFeedbackView';
 
 import { ReferenceArt, preloadReferenceArt } from '../campaign/ReferenceArt';
 
@@ -17,6 +19,8 @@ export class CampaignScene extends Phaser.Scene {
   activeBattle = false;
   readonly audio = gameAudio;
   private audioPresentation = new AudioPresentation();
+  private feedback = new CombatFeedback();
+  private feedbackView?: CombatFeedbackView;
   onFrame?: () => void;
   onPause?: () => void;
   private keys = new Set<string>();
@@ -32,6 +36,8 @@ export class CampaignScene extends Phaser.Scene {
   constructor() { super('CampaignScene'); }
   preload() { preloadReferenceArt(this); }
   create() {
+    this.feedbackView = new CombatFeedbackView(document.querySelector('.campaign-stage')!, this.feedback);
+    this.events.once('shutdown', () => this.feedbackView?.destroy());
     this.rig = new ReferenceArt(this);
     this.background = this.add.graphics(); this.art = this.add.graphics().setDepth(3);
     this.hurtOverlay = this.add.rectangle(560, 310, 1120, 620, 0xd84b45, 0).setScrollFactor(0).setDepth(20);
@@ -41,6 +47,7 @@ export class CampaignScene extends Phaser.Scene {
       if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.code)) event.preventDefault();
       if (['Escape', 'KeyP'].includes(event.code) && !event.repeat) { this.onPause?.(); return; }
       if (!this.activeBattle) return;
+      if (event.code === 'Tab' && this.feedback.dead) { event.preventDefault(); if (!event.repeat) this.feedback.cycle(); return; }
       this.audio.unlock(); this.keys.add(event.code);
       if (!event.repeat && ['Space', 'KeyW', 'ArrowUp'].includes(event.code)) this.jumpQueued = true;
       if (!event.repeat && event.code === 'KeyQ') this.session.action('swap');
@@ -61,7 +68,7 @@ export class CampaignScene extends Phaser.Scene {
     window.dispatchEvent(new CustomEvent('strike-campaign-ready', { detail: this }));
   }
   clearInput() { this.keys.clear(); this.mouse = false; this.jumpQueued = false; this.session.clearInput(); }
-  loadBattle(battle: Battle) { this.audioPresentation.reset(); this.clearInput(); this.battle = battle; this.session = new LocalSession(battle); this.eventCursor = 0; this.drawMap(battle.mission); }
+  loadBattle(battle: Battle) { this.audioPresentation.reset(); this.feedback.reset(); this.clearInput(); this.battle = battle; this.session = new LocalSession(battle); this.eventCursor = 0; this.drawMap(battle.mission); }
   private drawMap(mission: Mission) {
     if (!this.background) return;
     this.cameras.main.setBounds(0, 0, mission.width, mission.height ?? 700);
@@ -108,7 +115,7 @@ export class CampaignScene extends Phaser.Scene {
     const g = this.art, m = actor.movement, x = m.x, y = m.y;
     const color = actor.kit ? CLASSES[actor.kit.classId].color : actor.team === 1 ? 0xb7e8de : 0xf1b0a0;
     this.rig.soldier(x, y, m.crouching, m.vx, m.jumping, this.battle.frame, actor.aim, actor.arsenal.selected, color, actor.life.alive,
-      actor.arsenal.gun.reloadFrames, this.battle.effects.some(e => !e.reflected && e.actorId === actor.id && this.battle.frame - e.frame < 2), actor.offhand?.view(), actor.kit?.classId ?? 'medic', actor.id, isConcealed(actor));
+      actor.arsenal.gun.reloadFrames, this.battle.effects.some(e => !e.reflected && e.actorId === actor.id && this.battle.frame - e.frame < 2), actor.offhand?.view(), actor.kit?.classId ?? 'medic', actor.id, isConcealed(actor), this.feedback.flinch(actor.id));
     if (!actor.life.alive) return;
     const h = m.crouching ? 44 : 66;
     g.fillStyle(0x09171d, 0.3).fillEllipse(x, y + 2, 36, 5);
@@ -122,14 +129,25 @@ export class CampaignScene extends Phaser.Scene {
     if (actor.human) g.fillStyle(0xe5f49a).fillTriangle(x, y - h - 19, x - 5, y - h - 26, x + 5, y - h - 26);
   }
   update(_time: number, delta: number) {
-    const beforeHealth = this.battle.player.life.health;
     if (this.activeBattle) {
       const pointer = this.input.activePointer.positionToCamera(this.cameras.main) as Phaser.Math.Vector2;
       const has = (...keys: string[]) => keys.some(k => this.keys.has(k));
       this.session.advance(Math.min(delta, 100), () => ({ ...idleInput(), left: has('KeyA', 'ArrowLeft'), right: has('KeyD', 'ArrowRight'),
-        crouch: has('KeyS', 'ArrowDown'), jump: this.jumpQueued || has('KeyW', 'ArrowUp', 'Space'), fire: has('KeyF') || this.mouse, aim: { x: pointer.x, y: pointer.y } }), () => { this.jumpQueued = false; });
+        crouch: has('KeyS', 'ArrowDown'), jump: this.jumpQueued || has('KeyW', 'ArrowUp', 'Space'), fire: has('KeyF') || this.mouse, aim: { x: pointer.x, y: pointer.y - this.feedback.punch } }), () => { this.jumpQueued = false; });
     }
-    const b = this.battle; this.cameras.main.centerOn(b.player.movement.x, b.mission.height ? b.player.movement.y - 150 : 355);
+    const b = this.battle, snapshot = b.snapshot(), events = b.journal.since(this.eventCursor);
+    this.feedback.accept(b.id, b.frame, events, snapshot.actors.find(a => a.id === b.player.id), !!snapshot.waves && !snapshot.waves.reserved.includes(b.player.id));
+    const followed = this.feedback.follow(b.player, b.actors);
+    const mapView = this.feedback.canObserve && this.feedback.observing > 0 && followed.id === b.player.id;
+    this.feedbackView?.render(this.activeBattle && b.phase === 'running', mapView ? '地图总览' : followed.id === b.player.id ? undefined : followed.name);
+    if (this.activeBattle) this.audioPresentation.accept(b.id, b.frame, events.filter(e => {
+      const hidden = (id?: string) => b.actors.some(a => a.id === id && a.team !== b.player.team && isConcealed(a));
+      return e.targetId === b.player.id || !hidden(e.actorId) && !hidden(e.targetId);
+    }), snapshot.actors, b.player.id, b.result?.winner);
+    this.eventCursor = b.journal.cursor;
+    if (this.feedback.frozen && this.activeBattle && b.phase === 'running') { this.onFrame?.(); return; }
+    this.cameras.main.setZoom(mapView ? Math.min(1, 1120 / b.mission.width, 620 / (b.mission.height ?? 700)) : 1);
+    this.cameras.main.centerOn(mapView ? b.mission.width / 2 : followed.movement.x, mapView ? (b.mission.height ?? 700) / 2 : b.mission.height ? followed.movement.y - 150 : 355);
     this.rig.begin();
     this.art.clear(); for (const label of this.labels) label.setVisible(false);
     if (b.mission.mode === 'dom') {
@@ -157,15 +175,10 @@ export class CampaignScene extends Phaser.Scene {
       this.art.lineStyle(3, burst.color, 1 - fraction).strokeCircle(burst.x, burst.y, burst.radius * (0.3 + fraction * 0.7));
       this.art.fillStyle(burst.color, (1 - fraction) * 0.1).fillCircle(burst.x, burst.y, burst.radius);
     }
-    const events = b.journal.since(this.eventCursor);
-    if (this.activeBattle) this.audioPresentation.accept(b.id, b.frame, events.filter(e => {
-      const hidden = (id?: string) => b.actors.some(a => a.id === id && a.team !== b.player.team && isConcealed(a));
-      return !hidden(e.actorId) && !hidden(e.targetId);
-    }), b.snapshot().actors, b.player.id, b.result?.winner);
-    this.eventCursor = b.journal.cursor;
-    this.hurtOverlay.setAlpha(beforeHealth > b.player.life.health ? 0.16 : this.hurtOverlay.alpha * 0.85);
+    this.hurtOverlay.setAlpha(b.player.life.alive ? this.feedback.hitStrength * .06 : 0);
     if (this.activeBattle) {
-      const p = this.input.activePointer.positionToCamera(this.cameras.main) as Phaser.Math.Vector2;
+      const raw = this.input.activePointer.positionToCamera(this.cameras.main) as Phaser.Math.Vector2;
+      const p = { x: raw.x, y: raw.y - this.feedback.punch };
       this.art.lineStyle(1, 0xe4f49a).strokeCircle(p.x, p.y, 5).lineBetween(p.x - 10, p.y, p.x - 6, p.y).lineBetween(p.x + 6, p.y, p.x + 10, p.y);
     }
     this.onFrame?.();

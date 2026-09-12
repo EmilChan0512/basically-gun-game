@@ -31,6 +31,7 @@ export interface Actor {
   id: string; name: string; team: 1 | 2; human: boolean; movement: OriginalMovement; life: OriginalLife;
   arsenal: Arsenal; aim: Point; kills: number; supplyReady: number; stealthFrames: number;
   deliveryPreviousWeapon?: WeaponId;
+  deathInfo?: { sourceName: string; cause: string };
   shield?: ShieldState;
   offhand?: OffhandController;
   equipment?: EquipmentLoadout;
@@ -206,7 +207,7 @@ export class Battle {
     this.journal.emit({ tick: this.frame, kind: 'swap', actorId: actor.id, weapon: actor.arsenal.selected });
     if (actor.arsenal.gun.reloadFrames) this.reloadEvent(actor);
   }
-  private reloadEvent(actor: Actor) { this.journal.emit({ tick: this.frame, kind: 'reload', actorId: actor.id, weapon: actor.arsenal.selected, duration: actor.arsenal.gun.reloadFrames }); }
+  private reloadEvent(actor: Actor) { this.journal.emit({ tick: this.frame, kind: 'reload', actorId: actor.id, weapon: actor.arsenal.selected, duration: actor.arsenal.gun.reloadFrames, emptyMagazine: actor.arsenal.gun.ammo === 0 }); }
   reload(actor = this.player) {
     if (this.phase === 'running' && actor.life.alive && (!actor.offhand || actor.offhand.permitsGunfire)
       && actor.arsenal.gun.reload()) { actor.stealthFrames = 0; this.reloadEvent(actor); }
@@ -327,12 +328,17 @@ export class Battle {
     }
     const beforeHealth = target.life.health;
     const killed = target.life.damage(amount, !source);
-    if (target.life.health < beforeHealth) this.journal.emit({ tick: this.frame, kind: 'damage', actorId: source?.id, targetId: target.id, amount: beforeHealth - target.life.health });
+    // Coarse incoming sector, never the hidden attacker's precise position.
+    const direction = context.origin ? Math.round(Math.atan2(context.origin.y - target.movement.y, context.origin.x - target.movement.x) / (Math.PI / 4)) * 45 : undefined;
+    const cause = context.kind === 'environment' ? '战场环境' : context.weapon ? WEAPONS[context.weapon].name : context.kind === 'explosion' ? '破片手雷 / 爆炸'
+      : context.kind === 'melee' ? (source?.offhand?.id ? SPECIAL_OFFHANDS[source.offhand.id].name : '近战') : source ? WEAPONS[source.arsenal.selected].name : '未知武器';
+    if (target.life.health < beforeHealth) this.journal.emit({ tick: this.frame, kind: 'damage', actorId: source?.id, targetId: target.id, amount: beforeHealth - target.life.health, direction });
     if (target.kit?.classId === 'medic' && target.life.regenDelay > 60) target.life.regenDelay = 60;
     if (killed) {
       target.stealthFrames = 0;
       if (this.waves && target.team === 1) this.waves.reserveRevive(target.id);
-      this.journal.emit({ tick: this.frame, kind: 'death', actorId: source?.id, targetId: target.id });
+      target.deathInfo = { sourceName: source?.name ?? '环境伤害', cause };
+      this.journal.emit({ tick: this.frame, kind: 'death', actorId: source?.id, targetId: target.id, ...target.deathInfo });
       target.skillFrames = 0;
       if (source) {
         source.kills++;
@@ -434,7 +440,7 @@ export class Battle {
         if (trace.headMarked && actor.kit?.classId === 'assassin') amount *= 1.25;
         if (actor.skillFrames && actor.kit?.skill === 'overdrive') amount *= 1.2;
         const before = victim?.life.health ?? 0;
-        const killed = victim ? this.applyDamage(victim, { kind: 'bullet', amount, sourceId: actor.id,
+        const killed = victim ? this.applyDamage(victim, { kind: 'bullet', amount, sourceId: actor.id, weapon: actor.arsenal.selected,
           origin: trace.origin, hitPoint: trace.end, attackId: `${actor.id}:${this.frame}:${actor.arsenal.shots}` }) : false;
         this.effects.push({ frame: this.frame, actorId: actor.id, trace, team: actor.team, damage: before - (victim?.life.health ?? 0), killed });
       }
@@ -455,7 +461,7 @@ export class Battle {
       for (const target of this.actors) {
         const center = { x: target.movement.x, y: target.movement.y - 40 }, direct = target.id === impact.targetId;
         if (!target.life.alive || target.team === projectile.team || !direct && (Math.hypot(center.x - projectile.x, center.y - projectile.y) >= rules.radius || !clearSight(projectile, center, this.wall))) continue;
-        this.applyDamage(target, { kind: 'explosion', sourceId: projectile.sourceId, origin: { x: projectile.x, y: projectile.y }, hitPoint: center,
+        this.applyDamage(target, { kind: 'explosion', sourceId: projectile.sourceId, weapon: projectile.weapon, origin: { x: projectile.x, y: projectile.y }, hitPoint: center,
           amount: definition.config.damage * projectile.damageScale * (direct ? 1 : rules.splashMultiplier) });
       }
     }
@@ -514,7 +520,7 @@ export class Battle {
       seconds: Math.max(0, Math.ceil(this.mission.seconds - this.frame / 30)),
       actors: this.actors.map(a => ({ id: a.id, team: a.team, x: a.movement.x, y: a.movement.y, vx: a.movement.vx, vy: a.movement.vy,
         crouching: a.movement.crouching, jumping: a.movement.jumping, life: a.life.snapshot(), weapon: a.arsenal.selected,
-        offhand: a.offhand?.view(),
+        offhand: a.offhand?.view(), deathInfo: !a.life.alive ? a.deathInfo : undefined,
         ammo: a.arsenal.gun.ammo, reserve: a.arsenal.gun.reserveAmmo, reload: a.arsenal.gun.reloadFrames, kills: a.kills, shots: a.arsenal.shots, ai: a.brain.state,
         classId: a.kit?.classId ?? null, stealthFrames: a.stealthFrames, maxHealth: a.life.maxHealth, skill: a.kit?.skill ?? null, skillCooldown: a.skillCooldown, skillFrames: a.skillFrames, item: a.kit?.item ?? null, itemCharges: a.itemCharges })) };
   }

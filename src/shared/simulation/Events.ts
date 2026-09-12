@@ -2,7 +2,8 @@ import type { WeaponId } from '../../game/combat/Combat';
 export type SimulationEvent = { id: number; tick: number;
   kind: 'shot' | 'damage' | 'death' | 'result' | 'objective-pickup' | 'objective-delivery' | 'objective-return'
     | 'reload' | 'reload-end' | 'swap' | 'empty' | 'respawn' | 'footstep' | 'jump' | 'land' | 'melee' | 'melee-hit' | 'block' | 'explosion' | 'skill' | 'item' | 'supply' | 'error';
-  actorId?: string; targetId?: string; amount?: number; weapon?: WeaponId; ability?: string; duration?: number; position?: { x: number; y: number } };
+  actorId?: string; targetId?: string; amount?: number; weapon?: WeaponId; ability?: string; duration?: number; position?: { x: number; y: number };
+  direction?: number; sourceName?: string; cause?: string; emptyMagazine?: boolean };
 /** Bounded presentation journal; simulation state never depends on whether events were read. */
 export class EventJournal {
   private sequence = 0;

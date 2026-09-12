@@ -579,6 +579,18 @@
       "license": "Locally synthesized original text; installed Windows voice; no actor cloning.",
       "processing": "Offline TTS, radio band-pass and peak limiter",
       "sha256": "d0c47e55942519c89467a1c1f3b35903fff78de525aff92e88535aff17163a78"
+    },
+    "voice-reload": {
+      "file": "voice-reload.wav",
+      "category": "voice",
+      "volume": 0.85,
+      "text": "正在换弹，掩护我！",
+      "originalText": "Reloading. Cover me!",
+      "group": "reload",
+      "source": "Local Windows System.Speech / Microsoft Zira Desktop",
+      "license": "Locally synthesized original text; installed Windows voice; no actor cloning.",
+      "processing": "Offline standard Windows TTS, PCM WAV",
+      "sha256": "dfdb0e82aaf25e6d3fc454d7c96d4af87e57b4dc014d23876544114ea91f54e1"
     }
   },
   "weapons": {
@@ -899,6 +911,9 @@
     ],
     "kill": [
       "voice-kill"
+    ],
+    "reload": [
+      "voice-reload"
     ]
   }
 }

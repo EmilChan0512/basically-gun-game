@@ -71,10 +71,18 @@ export class ReferenceArt {
       .setRotation(Math.atan2(m[1], m[0])).setFlip(false, scaleY < 0).setTint(0xffffff).setAlpha(1);
     return image;
   }
-  soldier(x: number, y: number, crouch: boolean, vx: number, jumping: boolean, frame: number, aim: { x: number; y: number }, weapon: string, tint: number, alive: boolean, reload = 0, flash = false, offhand?: OffhandView, role: ClassId = 'medic', actorId = 'player', concealed = false) {
+  soldier(x: number, y: number, crouch: boolean, vx: number, jumping: boolean, frame: number, aim: { x: number; y: number }, weapon: string, tint: number, alive: boolean, reload = 0, flash = false, offhand?: OffhandView, role: ClassId = 'medic', actorId = 'player', concealed = false, flinch = 0) {
     const start = this.cursor, alpha = this.concealment.alpha(actorId, concealed, alive, frame);
     this.drawSoldier(x, y, crouch, vx, jumping, frame, aim, weapon, tint, alive, reload, flash, offhand, role, actorId);
-    for (let i = start; i < this.cursor; i++) this.pool[i].setAlpha(this.pool[i].alpha * alpha);
+    for (let i = start; i < this.cursor; i++) {
+      const part = this.pool[i]; part.setAlpha(part.alpha * alpha);
+      if (alive && flinch) {
+        // Brief lean about the feet; hitboxes and authoritative movement stay unchanged.
+        part.x += (y - part.y) * flinch * .10;
+        part.rotation += flinch * .055;
+        part.setTint(0xffc4be);
+      }
+    }
   }
   private drawSoldier(x: number, y: number, crouch: boolean, vx: number, jumping: boolean, frame: number, aim: { x: number; y: number }, weapon: string, tint: number, alive: boolean, reload = 0, flash = false, offhand?: OffhandView, role: ClassId = 'medic', actorId = 'player') {
     const skin = (part: string) => `${role}-${part}`;

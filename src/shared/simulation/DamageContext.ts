@@ -1,4 +1,5 @@
 import type { Point } from '../../game/combat/Ballistics';
+import type { WeaponId } from '../../game/combat/Combat';
 export type DamageKind = 'bullet' | 'explosion' | 'melee' | 'environment';
 /** Authority-only damage description. Never accepted from a player command. */
 export interface DamageContext {
@@ -9,6 +10,7 @@ export interface DamageContext {
   hitPoint?: Point;
   attackId?: string;
   reflected?: boolean;
+  weapon?: WeaponId;
 }
 export function validateDamageContext(context: DamageContext) {
   if (!['bullet', 'explosion', 'melee', 'environment'].includes(context.kind)

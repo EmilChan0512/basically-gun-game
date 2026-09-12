@@ -19,7 +19,7 @@ test('offline mixer decodes every bundled clip, persists settings, displays subt
     await ctx.close(); return measurements;
   });
   await test.info().attach('decoded-audio.json',{body:JSON.stringify(report,null,2),contentType:'application/json'});
-  expect(report).toHaveLength(47); expect(report.filter(r=>!(r.duration>0 && r.peak>.005 && r.peak<=1))).toEqual([]);
+  expect(report).toHaveLength(48); expect(report.filter(r=>!(r.duration>0 && r.peak>.005 && r.peak<=1))).toEqual([]);
   await page.locator('[data-audio=effects]').fill('35');
   await page.locator('[data-audio=muted]').check();
   await page.reload(); await page.waitForFunction(()=>!!window.__strikeAudio);

@@ -20,6 +20,8 @@ import { NETWORK_TICK_MS } from './shared/protocol/Timing';
 import { FireInput } from './client/session/FireInput';
 import { skillStatus } from './client/presentation/SkillStatus';
 import { isConcealed } from './shared/simulation/Stealth';
+import { CombatFeedback } from './client/presentation/CombatFeedback';
+import { CombatFeedbackView } from './client/presentation/CombatFeedbackView';
 
 function abilityText(actor: { classId?: string | null; stealthFrames?: number; skill?: SkillId | null; skillCooldown: number; skillFrames: number; item?: ItemId | null; itemCharges: number }) {
   return skillStatus(actor) + (actor.item ? ` | G ${ITEMS[actor.item].name} ×${actor.itemCharges}` : '');
@@ -249,9 +251,13 @@ class OnlineScene extends Phaser.Scene {
   private vision!: VisionOverlay;
   private fire = new FireInput();
   private spectateIndex = 0;
+  private feedback = new CombatFeedback();
+  private feedbackView?: CombatFeedbackView;
   constructor(private network: NetworkSession) { super('Online'); }
   preload() { preloadReferenceArt(this); }
   create() {
+    this.feedbackView = new CombatFeedbackView(document.getElementById('online-game')!, this.feedback);
+    this.events.once('shutdown', () => this.feedbackView?.destroy());
     if (document.getElementById('lobby')?.contains(document.activeElement)) (document.activeElement as HTMLElement)?.blur();
     document.getElementById('online-game')?.setAttribute('aria-busy', 'false');
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
@@ -270,6 +276,7 @@ class OnlineScene extends Phaser.Scene {
     this.hud = this.add.text(16, 16, '', { fontSize: '18px', backgroundColor: '#10202dcc', padding: { x: 10, y: 10 } }).setScrollFactor(0).setDepth(10);
     const down = (e: KeyboardEvent) => {
       if (!document.getElementById('online-preflight')?.hidden || (e.target as HTMLElement)?.closest('input,button,select,a')) return;
+      if (e.code === 'Tab' && this.feedback.dead) { e.preventDefault(); if (!e.repeat) this.feedback.cycle(); return; }
       if (e.code === 'Tab' && !this.network.state?.actorId) { e.preventDefault(); if (!e.repeat) this.spectateIndex++; return; }
       if (e.code === 'Space') e.preventDefault(); this.keys.add(e.code);
       if (!e.repeat && e.code === 'KeyQ') this.network.action('swap');
@@ -295,16 +302,20 @@ class OnlineScene extends Phaser.Scene {
   update(_time: number, delta: number) {
     const message = this.network.state; if (!message) { this.audioPresentation.reset(); return; }
     const self = message.state.actors.find(a => a.id === message.actorId);
-    const followed = self ?? message.state.actors[this.spectateIndex % message.state.actors.length];
+    this.feedback.accept(`${message.roomId}:${message.round}:${this.network.audioGeneration}`, message.state.frame, message.events, self,
+      !!message.state.waves && !message.state.waves.reserved.includes(self?.id ?? ''));
+    const followed = self ? this.feedback.follow(self, message.state.actors) : message.state.actors[this.spectateIndex % message.state.actors.length];
     const now = performance.now();
     const editing = !document.getElementById('online-preflight')?.hidden;
+    const mapView = this.feedback.canObserve && this.feedback.observing > 0 && followed?.id === self?.id;
+    this.feedbackView?.render(!editing && !message.result, mapView ? '地图总览' : followed?.id === self?.id ? undefined : message.poses.find(p => p.id === followed?.id)?.name);
     this.audioPresentation.accept(`${message.roomId}:${message.round}:${this.network.audioGeneration}`, message.state.frame, message.events, message.state.actors,
       message.actorId ?? followed?.id, message.result?.winner, !editing && this.network.socket.readyState === WebSocket.OPEN && now - this.network.lastStateAt < 500);
     // A hidden canvas has no usable pointer transform. Keep the authoritative
     // aim while browsing equipment and send neutral input to stop movement.
     const pointerAim = editing ? undefined
       : this.input.activePointer.positionToCamera(this.cameras.main) as Phaser.Math.Vector2;
-    const aim = pointerAim && Number.isFinite(pointerAim.x) && Number.isFinite(pointerAim.y) ? pointerAim
+    const aim = pointerAim && Number.isFinite(pointerAim.x) && Number.isFinite(pointerAim.y) ? { x: pointerAim.x, y: pointerAim.y - this.feedback.punch }
       : message.poses.find(p => p.id === message.actorId)?.aim ?? { x: 0, y: 0 };
     this.elapsed += Math.min(delta, 100);
     this.animationFrame += Math.min(delta, 100) / NETWORK_TICK_MS;
@@ -317,9 +328,13 @@ class OnlineScene extends Phaser.Scene {
     // must all consume the same position within this render frame.
     const renderAlpha = message.result || this.network.socket.readyState !== WebSocket.OPEN
       || now - this.network.lastStateAt > 500 || this.network.socket.bufferedAmount > 8192 ? 1 : this.elapsed / NETWORK_TICK_MS;
-    const predicted = self ? this.network.prediction.position(renderAlpha, delta) ?? self
+    if (this.feedback.frozen && !message.result) return;
+    const predicted = self && followed?.id === self.id ? this.network.prediction.position(renderAlpha, delta) ?? self
       : followed && this.network.interpolation.position(followed, now);
-    if (predicted) this.cameras.main.centerOn(predicted.x, predicted.y - 150);
+    const geometry = MAPS.find(m => m.id === message.mapId)!.geometry;
+    this.cameras.main.setZoom(mapView ? Math.min(1, 1120 / geometry.width, 620 / (geometry.height ?? 700)) : 1);
+    if (mapView) this.cameras.main.centerOn(geometry.width / 2, (geometry.height ?? 700) / 2);
+    else if (predicted) this.cameras.main.centerOn(predicted.x, predicted.y - 150);
     this.rig.begin(); this.graphics.clear();
     const positions = new Map<string, { x: number; y: number }>();
     for (const actor of message.state.actors) {
@@ -328,9 +343,10 @@ class OnlineScene extends Phaser.Scene {
       positions.set(actor.id, position);
       const motion = actor.id === message.actorId ? this.network.prediction.movement ?? actor : actor;
       this.rig.soldier(position.x, position.y, motion.crouching, motion.vx, motion.jumping, this.animationFrame, actor.id === message.actorId ? aim : pose.aim, actor.weapon, actor.team === 1 ? 0xb7e8de : 0xf1b0a0, actor.life.alive, actor.reload, this.network.shots.visible(now).some(e => !e.reflected && e.actorId === actor.id), actor.offhand, actor.classId ?? 'medic', actor.id,
-        isConcealed({ kit: actor.skill ? { skill: actor.skill } : null, skillFrames: actor.skillFrames, stealthFrames: actor.stealthFrames }));
+        isConcealed({ kit: actor.skill ? { skill: actor.skill } : null, skillFrames: actor.skillFrames, stealthFrames: actor.stealthFrames }), this.feedback.flinch(actor.id));
     }
     this.rig.delivery(message.state.deliveryTargets, positions, this.graphics);
+    if (self?.life.alive && !editing) this.graphics.lineStyle(1, 0xe4f49a).strokeCircle(aim.x, aim.y, 5);
     for (const p of message.projectiles ?? []) this.graphics.lineStyle(3, 0xffc56a, .9).lineBetween(p.x - p.vx * 2, p.y - p.vy * 2, p.x, p.y).fillStyle(0xffedbb).fillCircle(p.x, p.y, 3);
     for (const g of message.grenades) this.graphics.fillStyle(0xeec17a).fillCircle(g.x, g.y, 5);
     for (const burst of message.bursts) {

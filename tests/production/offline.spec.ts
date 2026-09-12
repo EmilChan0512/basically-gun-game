@@ -21,7 +21,7 @@ test('packaged audio and subtitles work with external requests blocked', async (
     }
     await context.close(); return Object.keys(manifest.assets).length;
   });
-  expect(count).toBe(47); expect(external).toEqual([]);
+  expect(count).toBe(48); expect(external).toEqual([]);
   expect(await page.evaluate(() => window.__strikeAudio)).toBeUndefined();
 });
 

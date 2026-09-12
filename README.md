@@ -16,6 +16,8 @@
 
 ## 直接游玩
 
+战斗反馈已升级：死亡击杀信息与 5 秒大字倒计时，2 秒后 Tab 观察队友/地图；方向受击、短促后仰与准星上跳、阶段状态和低弹药/无备弹提醒。换弹与击败语音仅在关键情况播放并限频。详见 [战斗反馈](docs/COMBAT_FEEDBACK.md)。
+
 每次本地发行执行 `npm run release`，会自动生成并校验 **`artifacts/Project-Strike-Windows-latest.zip`**。这是给朋友分发的 Windows 64 位便携包：完整解压后双击 `PLAY.cmd` 打开联机大厅，或双击 `SOLO.cmd` 进入单机，浏览器自动打开。包内已带运行环境，无需安装 Node.js 或 npm；保持启动窗口开启即可。联机仍需要可用的配套服务器。
 
 每次发行的独立版本保存在 `artifacts/releases/friends-<内容版本>-<时间>/`，不会覆盖旧版本；`artifacts/friends-latest.json` 记录最新包路径、版本和 SHA256。`package:game` 在 Windows 上也会自动生成此 ZIP。发行流程包含便携运行环境启动验证、ZIP 内逐文件校验和生产离线测试。
