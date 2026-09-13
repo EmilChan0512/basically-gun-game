@@ -1,4 +1,5 @@
-import { GROWTH_ATTACHMENTS, GROWTH_ACHIEVEMENTS, GROWTH_TRAITS, type GrowthAttachment, type GrowthAchievement } from '../../shared/content/GrowthRecords';
+import { gunsmith } from './Gunsmith';
+import { GROWTH_ATTACHMENTS, GROWTH_ACHIEVEMENTS, GROWTH_TRAITS, type GrowthAchievement } from '../../shared/content/GrowthRecords';
 import { uiArt, operatorConcept } from './UIArt';
 import { loadoutArt } from './LoadoutArt';
 import { renderGrowthGuide } from './GrowthPanel';
@@ -14,6 +15,7 @@ export class GrowthCareerPanel {
   private pending = false;
   private status = '';
   private tab = 'weapons';
+  private smithOpen = false;
   private room: { id: string; loadout: GrowthLoadout } | undefined;
   private submitted = '';
   constructor(private root: HTMLElement, private send: (message: object) => void) {}
@@ -40,6 +42,12 @@ export class GrowthCareerPanel {
   private draw(career: GrowthCareer) {
     this.root.replaceChildren();
     this.root.className = 'visual-armory growth-armory';
+    if (this.smithOpen) {
+      this.root.append(gunsmith(this.draft, career.weaponXp[this.draft.primary] ?? 0, id => {
+        this.draft.attachment = id; this.status = '枪械改装已写入草稿，请保存后出战。'; this.smithOpen = false; this.draw(career);
+      }, () => { this.smithOpen = false; this.draw(career); }));
+      return;
+    }
     const title = document.createElement('h1'); title.textContent = '出战配装';
     const summary = document.createElement('p'); summary.textContent = `${career.matches}局 / ${career.wins}胜 · ${Object.entries(career.mastery).map(([id, xp]) => `${GROWTH_CLASSES[id as GrowthClassId].name}熟练度 Lv.${masteryLevel(xp)}`).join(' · ')}。等级解锁选择，不增加基础伤害或生命。`;
     const slots = document.createElement('div');
@@ -55,10 +63,7 @@ export class GrowthCareerPanel {
     const weapons = document.createElement('select'); weapons.id = 'career-growth-weapon'; weapons.setAttribute('aria-label', '成长构筑主武器');
     for (const id of GROWTH_CLASSES[this.draft.classId].weapons) { const option = document.createElement('option'); option.value = id; option.textContent = id.toUpperCase(); weapons.append(option); }
     weapons.value = this.draft.primary; weapons.onchange = () => { this.draft.primary = weapons.value as GrowthLoadout['primary']; this.draft.attachment = 'none'; this.status = '有未保存的修改，请保存后出战。'; this.draw(career); };
-    const attachments = document.createElement('select'); attachments.id = 'growth-attachment'; attachments.setAttribute('aria-label', '武器配件');
     const weaponXp = career.weaponXp[this.draft.primary] ?? 0;
-    for (const [id, def] of Object.entries(GROWTH_ATTACHMENTS)) { const option = document.createElement('option'); option.value = id; option.textContent = `${def.name} · ${def.description}${weaponXp < def.xp ? `（需${def.xp}武器XP）` : ''}`; option.disabled = weaponXp < def.xp; attachments.append(option); }
-    attachments.value = this.draft.attachment ?? 'none'; attachments.onchange = () => { this.draft.attachment = attachments.value as GrowthAttachment; };
     const mastery = document.createElement('p'); mastery.textContent = `${this.draft.primary.toUpperCase()}熟练度 ${weaponXp} XP；配件不提高单发基础伤害。`;
     const titleSelect = document.createElement('select'); titleSelect.id = 'growth-title'; titleSelect.setAttribute('aria-label', '成就称号');
     for (const id of ['none', ...career.achievements] as const) { const option = document.createElement('option'); option.value = id; option.textContent = id === 'none' ? '不展示称号' : GROWTH_ACHIEVEMENTS[id].name; titleSelect.append(option); }
@@ -127,7 +132,10 @@ export class GrowthCareerPanel {
         card.innerHTML = `${loadoutArt(id, id.toUpperCase())}<strong>${id.toUpperCase()}</strong><span>伤害 ${gun.damage} · 弹匣 ${gun.magazineSize} · 换弹 ${(gun.reloadFrames / 30).toFixed(1)}秒</span><small>${id === this.draft.primary ? '已装配' : '选择武器'}</small>`;
         card.onclick = () => { this.draft.primary = id; this.draft.attachment = 'none'; this.status = '有未保存的修改，请保存后出战。'; this.draw(career); }; grid.append(card);
       }
-      inventory.append(grid, weapons, mastery, attachments);
+      const customize = document.createElement('button'); customize.className = 'smith-entry'; customize.id = 'growth-open-gunsmith';
+      customize.innerHTML = `<strong>枪械改装台 →</strong><span>${this.draft.primary.toUpperCase()} · ${GROWTH_ATTACHMENTS[this.draft.attachment ?? 'none'].name} · 图片选件 / 性能对比</span>`;
+      customize.onclick = () => { this.smithOpen = true; this.draw(career); this.root.scrollIntoView({ block: 'start' }); };
+      inventory.append(grid, weapons, mastery, customize);
       const attachmentHelp = document.createElement('p'); attachmentHelp.textContent = GROWTH_ATTACHMENTS[this.draft.attachment ?? 'none'].description; inventory.append(attachmentHelp);
     }
     if (this.tab === 'skills') {

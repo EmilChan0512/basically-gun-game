@@ -65,3 +65,9 @@ node tools/comfy-ui.mjs generate --id operator-assault --revision v2
 - `npm run test:performance`：生产战斗性能回归。
 
 布局截图保存在 `artifacts/qa/ui-v2-*.png`；仅检查交互布局与可读性，不作为自动选图依据。
+
+## 枪械改装台
+
+出战配装 → 主武器与配件 → 枪械改装台进入独立二级工作页。侧视枪械使用游戏内素材，配件采用代码绘制的 2D 结构图；点击枪管、弹匣标记筛选配件。标准配置、重枪管、短枪管、快拆弹匣均可预览，显示伤害、容量、换弹、散布、射程和移动倍率相对标准配置的变化。枪械参数复用共享计算，预览不授予解锁权限。
+
+返回丢弃本页预览；确认才修改父级草稿，再由现有保存／房间应用流程提交服务器。沿用每把枪一项改装的取舍规则，不暗示枪管和弹匣可同时叠加。未解锁项仍可看图和性能对比，但不能确认。验证入口：`npx playwright test tests/gameplay/gunsmith.spec.ts tests/gameplay/ui-v2.spec.ts`。
