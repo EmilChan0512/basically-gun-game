@@ -32,7 +32,9 @@
     "check": "npm run archaeology:validate && npm run hygiene && npm run check:simulation && npm run test && npm run build",
     "check:simulation": "tsc --project tsconfig.simulation.json && node tools/check-simulation-boundary.mjs",
     "hygiene": "tsx tools/archaeology/hygiene.ts",
-    "server": "tsx server/main.ts"
+    "server": "tsx server/main.ts",
+    "art:gunsmith": "node tools/comfy-ui.mjs generate --collection gunsmith",
+    "art:gunsmith:verify": "node tools/verify-gunsmith-art.mjs"
   },
   "dependencies": {
     "phaser": "^3.90.0",

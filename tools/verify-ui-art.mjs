@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 
-export function verifyUIArt(directory) {
+export function verifyUIArt(directory, expectedIds = null) {
   const manifest = JSON.parse(readFileSync(resolve(directory, 'manifest.json'), 'utf8'));
   const ids = new Set();
   for (const asset of manifest.assets) {
@@ -18,7 +18,7 @@ export function verifyUIArt(directory) {
       if (offset > bytes.length) throw Error('Invalid PNG');
     }
   }
-  if (ids.size !== 16) throw Error('UI v1 requires all 16 assets');
+  if (expectedIds ? ids.size !== expectedIds.length || expectedIds.some(id => !ids.has(id)) : ids.size !== 16) throw Error('Art collection is incomplete or contains unexpected assets');
   return { assets: ids.size, revision: manifest.revision, hashes: 'verified', metadata: 'clean' };
 }
 

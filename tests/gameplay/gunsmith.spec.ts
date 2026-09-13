@@ -9,7 +9,8 @@ test('gunsmith previews locked parts without changing draft, returns and saves, 
   try {
     await page.goto('/?online'); await page.locator('#server').fill(`ws://127.0.0.1:${address.port}`); await registerOnline(page, 'Gunsmith pilot');
     await page.locator('#online-armory-nav').click(); await page.locator('#growth-open-gunsmith').click();
-    await expect(page.locator('.gunsmith')).toBeVisible(); await expect(page.locator('.smith-parts svg')).toHaveCount(4);
+    await expect(page.locator('.gunsmith')).toBeVisible(); await expect(page.locator('.smith-parts img')).toHaveCount(4);
+    await expect.poll(() => page.locator('.smith-part-texture').evaluateAll(nodes => nodes.every(node => (node as HTMLImageElement).complete && (node as HTMLImageElement).naturalWidth === 768))).toBe(true);
     await page.locator('[data-smith-part="heavy"]').click(); await expect(page.locator('[data-smith-apply]')).toBeDisabled();
     await expect(page.locator('.smith-inspector')).toContainText('还需 200 XP');
     await expect(page.locator('.smith-stat').filter({ hasText: '移动倍率' })).toContainText('95%');

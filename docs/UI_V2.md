@@ -68,6 +68,20 @@ node tools/comfy-ui.mjs generate --id operator-assault --revision v2
 
 ## 枪械改装台
 
-出战配装 → 主武器与配件 → 枪械改装台进入独立二级工作页。侧视枪械使用游戏内素材，配件采用代码绘制的 2D 结构图；点击枪管、弹匣标记筛选配件。标准配置、重枪管、短枪管、快拆弹匣均可预览，显示伤害、容量、换弹、散布、射程和移动倍率相对标准配置的变化。枪械参数复用共享计算，预览不授予解锁权限。
+出战配装 → 主武器与配件 → 枪械改装台进入独立二级工作页。侧视枪械使用游戏内素材，配件采用本地 ComfyUI 生成的专用 2D 贴图；点击枪管、弹匣标记筛选配件。标准配置、重枪管、短枪管、快拆弹匣均可预览，显示伤害、容量、换弹、散布、射程和移动倍率相对标准配置的变化。枪械参数复用共享计算，预览不授予解锁权限。
 
 返回丢弃本页预览；确认才修改父级草稿，再由现有保存／房间应用流程提交服务器。沿用每把枪一项改装的取舍规则，不暗示枪管和弹匣可同时叠加。未解锁项仍可看图和性能对比，但不能确认。验证入口：`npx playwright test tests/gameplay/gunsmith.spec.ts tests/gameplay/ui-v2.spec.ts`。
+
+### 改装贴图流水线
+
+`art/gunsmith/assets.json` 定义标准组件、重枪管、短枪管和快拆弹匣四项 768×512 素材，复用 `art/ui-v2/workflow-api.json` 的本地模型流程。每项固定种子、单张输出；已完成任务再次执行只校验并跳过，不重抽。
+
+```powershell
+node tools/comfy-ui.mjs doctor --collection gunsmith
+npm run art:gunsmith
+npm run art:gunsmith:verify
+```
+
+输出位于 `public/assets/gunsmith/v1/`，改装台的选件卡片和右侧详情均引用对应贴图。任务、原图和工作流保存在 `artifacts/comfy-ui/gunsmith/v1/`，不进入发行包。生成状态不明时沿用原 prompt ID 恢复；规格变化须使用新 `--revision v2`，保留首版。
+
+发布只移除 PNG 文字、EXIF 和工作流元数据，不改像素；校验四个指定 ID、尺寸、哈希和元数据。Windows 打包验证也覆盖该集合，来源说明随 licenses/UI-Art-Sources.txt 分发。无需玩家安装 ComfyUI 或模型。

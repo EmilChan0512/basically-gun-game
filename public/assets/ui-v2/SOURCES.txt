@@ -5,3 +5,5 @@ Production PNGs omit workflow/text metadata; pixel data is unchanged.
 Asset dimensions and SHA256 hashes: v1/manifest.json.
 Source workflow and local execution records are maintained in the development workspace, not distributed with the game.
 No model weights, ComfyUI code or Python runtime are included in this package.
+
+Gunsmith v1: four dedicated 768x512 attachment illustrations generated locally with ComfyUI / FLUX.2 Klein 4B. First output of each fixed-seed job; no rerolls. Runtime PNGs contain no source workflow metadata. Generation specification is retained in the development repository.

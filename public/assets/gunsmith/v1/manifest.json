@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "revision": "v1",
+  "generator": "Local ComfyUI / FLUX.2 Klein 4B",
+  "assets": [
+    {
+      "id": "none",
+      "file": "none.png",
+      "width": 768,
+      "height": 512,
+      "sha256": "30b1daf034289bbc866d009dc39c2f778c476ed5dff4a2647521b6f9242a633b"
+    },
+    {
+      "id": "heavy",
+      "file": "heavy.png",
+      "width": 768,
+      "height": 512,
+      "sha256": "a22c5789f58c82d34be5f8e0f132049fb5b7420c3fd2715bf0c8167920290ca5"
+    },
+    {
+      "id": "short",
+      "file": "short.png",
+      "width": 768,
+      "height": 512,
+      "sha256": "9640dcd73aaef2ef8de236d8312a0fd676d9ef70d4b4a0a3c96b8ff4b4776cce"
+    },
+    {
+      "id": "quickmag",
+      "file": "quickmag.png",
+      "width": 768,
+      "height": 512,
+      "sha256": "72590e06e24d7579b89ea15db0da413168490d93665c5bb0710176225a5efae8"
+    }
+  ]
+}

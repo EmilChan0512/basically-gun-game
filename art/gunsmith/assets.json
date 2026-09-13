@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "style": "Original 2D side-scrolling military action game illustration, bold clean ink outlines, angular cel shading, slightly chunky readable proportions, olive and graphite armor with restrained cyan luminous technology and amber accents, near-future tactical science fiction, hand-painted game menu artwork, clear silhouette, crisp graphic shapes, no photorealism, no 3D render, no lettering, no typography, no logos, no watermark.",
+  "models": {
+    "unet": "flux-2-klein-4b.safetensors",
+    "clip": "qwen_3_4b.safetensors",
+    "vae": "flux2-vae.safetensors"
+  },
+  "steps": 4,
+  "assets": [
+    {
+      "id": "none",
+      "width": 768,
+      "height": 512,
+      "prompt": "A factory standard rifle hardware kit: a simple medium length barrel and a standard straight magazine laid separately side by side. A single separate weapon component only, perfectly horizontal orthographic side view facing right, centered with generous margins, on a uniform dark navy graphite background. Detailed machined metal, readable silhouette, illustration for a 2D gunsmith parts inventory. No complete gun, no hands, no labels, no text."
+    },
+    {
+      "id": "heavy",
+      "width": 768,
+      "height": 512,
+      "prompt": "A single long heavy rifle barrel assembly with thick reinforced steel cylinder, machined cooling ribs, olive mounting collar and small amber calibration marks. A single separate weapon component only, perfectly horizontal orthographic side view facing right, centered with generous margins, on a uniform dark navy graphite background. Detailed machined metal, readable silhouette, illustration for a 2D gunsmith parts inventory. No complete gun, no hands, no labels, no text."
+    },
+    {
+      "id": "short",
+      "width": 768,
+      "height": 512,
+      "prompt": "A single short lightweight rifle barrel assembly with compact olive handguard, exposed stubby muzzle and thin graphite steel cylinder. Very short compact proportions. A single separate weapon component only, perfectly horizontal orthographic side view facing right, centered with generous margins, on a uniform dark navy graphite background. Detailed machined metal, readable silhouette, illustration for a 2D gunsmith parts inventory. No complete gun, no hands, no labels, no text."
+    },
+    {
+      "id": "quickmag",
+      "width": 768,
+      "height": 512,
+      "prompt": "A single detachable rifle magazine with quick-release pull tab and reinforced base plate, graphite steel shell with olive panels and small amber accent. Short low-capacity magazine. A single separate weapon component only, perfectly horizontal orthographic side view facing right, centered with generous margins, on a uniform dark navy graphite background. Detailed machined metal, readable silhouette, illustration for a 2D gunsmith parts inventory. No complete gun, no hands, no labels, no text."
+    }
+  ]
+}
