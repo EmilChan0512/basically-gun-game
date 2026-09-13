@@ -10,8 +10,10 @@ test('gunsmith previews locked parts without changing draft, returns and saves, 
     await page.goto('/?online'); await page.locator('#server').fill(`ws://127.0.0.1:${address.port}`); await registerOnline(page, 'Gunsmith pilot');
     await page.locator('#online-armory-nav').click(); await page.locator('#growth-open-gunsmith').click();
     await expect(page.locator('.gunsmith')).toBeVisible(); await expect(page.locator('.smith-parts img')).toHaveCount(4);
-    await expect.poll(() => page.locator('.smith-part-texture').evaluateAll(nodes => nodes.every(node => (node as HTMLImageElement).complete && (node as HTMLImageElement).naturalWidth === 768))).toBe(true);
-    await page.locator('[data-smith-part="heavy"]').click(); await expect(page.locator('[data-smith-apply]')).toBeDisabled();
+    await expect.poll(() => page.locator('.smith-part-texture').evaluateAll(nodes => nodes.every(node => (node as HTMLImageElement).complete && (node as HTMLImageElement).naturalWidth > 0))).toBe(true);
+    await page.locator('[data-smith-part="heavy"]').click();
+    await expect(page.locator('.smith-component-layer')).toHaveAttribute('href', '/assets/gunsmith/v2/m4-heavy.png');
+    await expect(page.locator('[data-smith-apply]')).toBeDisabled();
     await expect(page.locator('.smith-inspector')).toContainText('还需 200 XP');
     await expect(page.locator('.smith-stat').filter({ hasText: '移动倍率' })).toContainText('95%');
     await page.screenshot({ path: 'artifacts/qa/gunsmith-desktop.png', fullPage: true });
@@ -23,7 +25,7 @@ test('gunsmith previews locked parts without changing draft, returns and saves, 
     await expect(page.locator('.smith-inspector')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: 'artifacts/qa/gunsmith-mobile.png', fullPage: true });
-    await page.locator('[data-smith-reset]').click(); await page.locator('[data-smith-apply]').click();
+    await page.locator('[data-smith-reset]').click(); await expect(page.locator('.smith-component-layer')).toHaveCount(0); await page.locator('[data-smith-apply]').click();
     await page.locator('#growth-career-save').click(); await expect(page.locator('[data-growth-save-status]')).toHaveText('配装已由服务器保存。');
     expect(errors).toEqual([]);
   } finally { await server.close(); }
@@ -44,4 +46,23 @@ test('unlocked gunsmith confirms only the chosen modification and supports cance
   await page.locator('[data-smith-part="heavy"]').click(); await page.locator('[data-smith-back]').click();
   await expect(page.locator('main')).toHaveAttribute('data-cancelled', 'true');
   await expect(page.locator('main')).toHaveAttribute('data-confirmed', 'quickmag');
+});
+
+test('all six weapons compose their own three transparent components over the original reference', async ({ page }) => {
+  const failures: string[] = []; page.on('response', r => { if (r.url().includes('/assets/') && !r.ok()) failures.push(r.url()); });
+  await page.goto('/?online');
+  await page.evaluate(async () => {
+    const path='/src/client/presentation/Gunsmith.ts'; const { gunsmithProfile }=await import(path);
+    document.body.innerHTML='<main id="component-sheet" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px"></main>';
+    const host=document.getElementById('component-sheet')!;
+    for(const gun of ['m4','famas','mp5','shotgun','scout','saw'])for(const part of ['heavy','short','quickmag']){
+      const card=document.createElement('article');card.style.cssText='padding:12px;background:#233640;border:1px solid #64828e';
+      card.innerHTML=`<p>${gun} / ${part}</p>`+gunsmithProfile(gun,part);host.append(card);
+    }
+    await Promise.all(Array.from(document.querySelectorAll('svg image')).map(node=>new Promise<void>((resolve,reject)=>{const img=new Image();img.onload=()=>resolve();img.onerror=reject;img.src=node.getAttribute('href')!;})));
+  });
+  await expect(page.locator('.smith-component-layer')).toHaveCount(18);
+  await expect(page.locator('.smith-original-layer')).toHaveCount(18);
+  await page.screenshot({path:'artifacts/qa/gunsmith-component-sheet.png',fullPage:true});
+  expect(failures).toEqual([]);
 });

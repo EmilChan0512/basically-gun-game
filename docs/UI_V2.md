@@ -72,7 +72,7 @@ node tools/comfy-ui.mjs generate --id operator-assault --revision v2
 
 返回丢弃本页预览；确认才修改父级草稿，再由现有保存／房间应用流程提交服务器。沿用每把枪一项改装的取舍规则，不暗示枪管和弹匣可同时叠加。未解锁项仍可看图和性能对比，但不能确认。验证入口：`npx playwright test tests/gameplay/gunsmith.spec.ts tests/gameplay/ui-v2.spec.ts`。
 
-### 改装贴图流水线
+### 改装贴图流水线（v1 历史方案，已停用）
 
 `art/gunsmith/assets.json` 定义标准组件、重枪管、短枪管和快拆弹匣四项 768×512 素材，复用 `art/ui-v2/workflow-api.json` 的本地模型流程。每项固定种子、单张输出；已完成任务再次执行只校验并跳过，不重抽。
 
@@ -85,3 +85,11 @@ npm run art:gunsmith:verify
 输出位于 `public/assets/gunsmith/v1/`，改装台的选件卡片和右侧详情均引用对应贴图。任务、原图和工作流保存在 `artifacts/comfy-ui/gunsmith/v1/`，不进入发行包。生成状态不明时沿用原 prompt ID 恢复；规格变化须使用新 `--revision v2`，保留首版。
 
 发布只移除 PNG 文字、EXIF 和工作流元数据，不改像素；校验四个指定 ID、尺寸、哈希和元数据。Windows 打包验证也覆盖该集合，来源说明随 licenses/UI-Art-Sources.txt 分发。无需玩家安装 ComfyUI 或模型。
+
+### 按原枪参考生成组件（v2，当前使用）
+
+v1 通用文生图已停用。当前独立入口 `npm run art:gunsmith` 执行 `tools/gunsmith-components.py`，规格和独立参考图工作流位于 `art/gunsmith-v2/`。先通过 `tools/gunsmith-reference.mjs` 将 SIDE PROFILE 使用的六把原始 SVG 渲染为参考图，再按该枪的枪管／弹匣安装区域裁切，上传本地 ComfyUI。LoadImage → VAEEncode → ReferenceLatent 将真实原图编码接入条件，非仅在提示词中提及原图。每把枪三个组件，共18个单次生成任务。
+
+生成后移除白色背景得到透明 RGBA，按原枪颜色调色板映射颜色，裁切透明边缘；原始输出、参考图、prompt ID、源图哈希和工作流保存在 `artifacts/gunsmith-v2/`。运行环境需 Node、Playwright、Python、Pillow、numpy 和本地 ComfyUI 的现有模型，不下载或调用云服务。发布产物在 `public/assets/gunsmith/v2/`，清单记录原枪 SHA256、组件 SHA256、替换矩形及安装坐标。
+
+SIDE PROFILE 使用原 SVG 层、原部件遮罩、新透明组件层合成，选择配件立即更新该枪组合；恢复标准配置去除遮罩与组件。卡片也按当前枪械选取对应组件。验证 `npm run art:gunsmith:verify` 检查18项RGBA资源、原图哈希、组件哈希、锚点和无工作流元数据。该功能是改装台预览，不修改战斗中的角色持枪动画。

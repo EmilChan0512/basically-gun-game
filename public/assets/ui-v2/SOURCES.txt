@@ -7,3 +7,5 @@ Source workflow and local execution records are maintained in the development wo
 No model weights, ComfyUI code or Python runtime are included in this package.
 
 Gunsmith v1: four dedicated 768x512 attachment illustrations generated locally with ComfyUI / FLUX.2 Klein 4B. First output of each fixed-seed job; no rerolls. Runtime PNGs contain no source workflow metadata. Generation specification is retained in the development repository.
+
+Gunsmith v2: 18 reference-conditioned components for six original weapon SVGs. Generated locally with ComfyUI ReferenceLatent / FLUX.2 Klein 4B, one output per component; white matte removed and palette mapped to its original weapon, then anchored for layered armory preview. Runtime PNGs exclude workflow metadata. Original reference asset provenance follows the existing character asset manifest.

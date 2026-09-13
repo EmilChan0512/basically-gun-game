@@ -1,0 +1,365 @@
+{
+  "version": 2,
+  "weapons": {
+    "m4": {
+      "source": "/assets/characters/m4.svg",
+      "sourceSha256": "a7e81a41219dc3f95732f3a29c110b6b1b136d663953c12c009b8a450401ffbb",
+      "width": 1024,
+      "height": 413,
+      "parts": {
+        "heavy": {
+          "file": "m4-heavy.png",
+          "sha256": "b32d8dad45a126eb966ea473fbba0ea181cdbeda5c5b0e69727637d2242ebe4a",
+          "width": 426,
+          "height": 135,
+          "replace": [
+            604,
+            0,
+            420,
+            413
+          ],
+          "target": [
+            592,
+            83,
+            482,
+            161
+          ],
+          "referenceSha256": "2513f2d278da61693d3406a54c40ad3c5c452291a7bed87bea7711ac5157f3f4"
+        },
+        "short": {
+          "file": "m4-short.png",
+          "sha256": "ca018a3b01bf01e9af5eeea25127a9a70a3011acaa1a4b03b30ebcfeadb89c50",
+          "width": 411,
+          "height": 49,
+          "replace": [
+            604,
+            0,
+            420,
+            413
+          ],
+          "target": [
+            592,
+            83,
+            314,
+            161
+          ],
+          "referenceSha256": "2513f2d278da61693d3406a54c40ad3c5c452291a7bed87bea7711ac5157f3f4"
+        },
+        "quickmag": {
+          "file": "m4-quickmag.png",
+          "sha256": "e60648747e316bb8048bc84fd4f7b06c29b8be4acd2c047db64c264c8f1da2cc",
+          "width": 158,
+          "height": 111,
+          "replace": null,
+          "target": [
+            451,
+            227,
+            123,
+            132
+          ],
+          "referenceSha256": "379b6a45d87e8ff79aaf9400ee1010afa301d549baa2afecb23555ee4694ace9"
+        }
+      }
+    },
+    "famas": {
+      "source": "/assets/characters/famas.svg",
+      "sourceSha256": "6e8162c9e00f4a5589670a07db2729df348e87bb31003b22dd10a004cdf42aff",
+      "width": 1024,
+      "height": 413,
+      "parts": {
+        "heavy": {
+          "file": "famas-heavy.png",
+          "sha256": "d66cdade09ee465169524712b5f0f3137db87780beb29adadee5684c7bce66a2",
+          "width": 425,
+          "height": 91,
+          "replace": [
+            870,
+            0,
+            154,
+            413
+          ],
+          "target": [
+            858,
+            116,
+            184,
+            78
+          ],
+          "referenceSha256": "4534649737ec3d2df9fe6cb68551cbb58329e548dfee5e56e18e65cbb789ce64"
+        },
+        "short": {
+          "file": "famas-short.png",
+          "sha256": "dc7d4f4b98688b7a9c7a334615f29738a6c727e8aa1c7208b30a0ad7be09c7b9",
+          "width": 237,
+          "height": 46,
+          "replace": [
+            870,
+            0,
+            154,
+            413
+          ],
+          "target": [
+            858,
+            116,
+            123,
+            78
+          ],
+          "referenceSha256": "4534649737ec3d2df9fe6cb68551cbb58329e548dfee5e56e18e65cbb789ce64"
+        },
+        "quickmag": {
+          "file": "famas-quickmag.png",
+          "sha256": "1553aebbd8bff16e5c46257501736d7edbc05b9e939d11d93c4251cbb4f6439c",
+          "width": 195,
+          "height": 142,
+          "replace": null,
+          "target": [
+            389,
+            235,
+            123,
+            112
+          ],
+          "referenceSha256": "a331eb81e40cc8b92f3079689341829c59cb18b47044cc76d34b24a82f369f57"
+        }
+      }
+    },
+    "mp5": {
+      "source": "/assets/characters/mp5.svg",
+      "sourceSha256": "b11669af9b58f701590b7d4d3285d23d1e9a615e93b40deef3275abdbe2dc2fe",
+      "width": 1024,
+      "height": 467,
+      "parts": {
+        "heavy": {
+          "file": "mp5-heavy.png",
+          "sha256": "19ad938ab82cfd481f8293ddb44e4b9f5a024849584d7fc5aee7673dad67264a",
+          "width": 436,
+          "height": 103,
+          "replace": [
+            645,
+            0,
+            379,
+            467
+          ],
+          "target": [
+            633,
+            75,
+            356,
+            159
+          ],
+          "referenceSha256": "60cfbca60f3ecae652ed32924496df647024a646a736da90bbc30da20c39263a"
+        },
+        "short": {
+          "file": "mp5-short.png",
+          "sha256": "937b3761c78615a9d0a739ba0ac51cab6ce75ff8240cd3bd3204d950144b87cb",
+          "width": 185,
+          "height": 83,
+          "replace": [
+            645,
+            0,
+            379,
+            467
+          ],
+          "target": [
+            633,
+            75,
+            233,
+            159
+          ],
+          "referenceSha256": "60cfbca60f3ecae652ed32924496df647024a646a736da90bbc30da20c39263a"
+        },
+        "quickmag": {
+          "file": "mp5-quickmag.png",
+          "sha256": "33e32f425d3cfc224e2f043bea9b5c3db1eb28c07b46394cddac72cfc12a74ed",
+          "width": 239,
+          "height": 110,
+          "replace": null,
+          "target": [
+            471,
+            229,
+            123,
+            150
+          ],
+          "referenceSha256": "814c39d3e87921bcc354192803f43e8c8fc7de108c99aa6218d0c9425d5663b8"
+        }
+      }
+    },
+    "shotgun": {
+      "source": "/assets/characters/shotgun.svg",
+      "sourceSha256": "cbaca1b17f7e8efdda035ef04cdb36905fbeb6adb8aed18b924a5a0e14ee2168",
+      "width": 1024,
+      "height": 314,
+      "parts": {
+        "heavy": {
+          "file": "shotgun-heavy.png",
+          "sha256": "55407c6e7fb2ab3a7145dc353b61982e6e350f118bbc238f5e21010e916e832a",
+          "width": 449,
+          "height": 123,
+          "replace": [
+            512,
+            0,
+            512,
+            314
+          ],
+          "target": [
+            500,
+            22,
+            574,
+            138
+          ],
+          "referenceSha256": "a3cfcca5c2db69a3e2e9166ef7f3a54894acd81a9ded6774fb89bbfeb3a4a307"
+        },
+        "short": {
+          "file": "shotgun-short.png",
+          "sha256": "e9b8dbdcb070ceb69aca0323f5e8fc253242608f633a0e7f1eb4b51c3fbdb966",
+          "width": 443,
+          "height": 77,
+          "replace": [
+            512,
+            0,
+            512,
+            314
+          ],
+          "target": [
+            500,
+            22,
+            373,
+            138
+          ],
+          "referenceSha256": "a3cfcca5c2db69a3e2e9166ef7f3a54894acd81a9ded6774fb89bbfeb3a4a307"
+        },
+        "quickmag": {
+          "file": "shotgun-quickmag.png",
+          "sha256": "235df8920001f619ff47e28d1e65e40e1407c63701f9f7e2916a5060dead6210",
+          "width": 354,
+          "height": 47,
+          "replace": null,
+          "target": [
+            543,
+            122,
+            348,
+            33
+          ],
+          "referenceSha256": "9f2489a8939e6137d0865c4db58ee900cc1e43bd5d34e256cb126f337f433b96"
+        }
+      }
+    },
+    "scout": {
+      "source": "/assets/characters/scout.svg",
+      "sourceSha256": "82fdc3f44d19b0ea74efdd35fedd5df6b9989e808795420c328059f3c9ed5dc9",
+      "width": 1024,
+      "height": 235,
+      "parts": {
+        "heavy": {
+          "file": "scout-heavy.png",
+          "sha256": "f8da614a6d708a6a1f1d007d1e207eb441d40c7212fdd4d509d8256eb720066e",
+          "width": 425,
+          "height": 108,
+          "replace": [
+            594,
+            0,
+            430,
+            235
+          ],
+          "target": [
+            582,
+            14,
+            482,
+            101
+          ],
+          "referenceSha256": "ecd2ca4a47122975e1006b78ad39fb7b04c9d684da431e24183cc1b7bc799fc9"
+        },
+        "short": {
+          "file": "scout-short.png",
+          "sha256": "9a805c66bb0edc1178a53c426ecbd8ae939cab2b7b67af8e4ee2cc5cb8ce8777",
+          "width": 385,
+          "height": 94,
+          "replace": [
+            594,
+            0,
+            430,
+            235
+          ],
+          "target": [
+            582,
+            14,
+            314,
+            101
+          ],
+          "referenceSha256": "ecd2ca4a47122975e1006b78ad39fb7b04c9d684da431e24183cc1b7bc799fc9"
+        },
+        "quickmag": {
+          "file": "scout-quickmag.png",
+          "sha256": "d10d1024d92117b75c063812c9479945b824fea24b6f3bd21b3a431bf63593d3",
+          "width": 309,
+          "height": 117,
+          "replace": null,
+          "target": [
+            358,
+            101,
+            143,
+            56
+          ],
+          "referenceSha256": "0764b27eff862f5e4fd9051a90b69089d743c38dfa83c60b72dfd675cf3466e4"
+        }
+      }
+    },
+    "saw": {
+      "source": "/assets/characters/saw.svg",
+      "sourceSha256": "1d76baed946d5db80daff7bee2b76a52f6bae2ddf6e7243bf3d2465e3b05a782",
+      "width": 1024,
+      "height": 432,
+      "parts": {
+        "heavy": {
+          "file": "saw-heavy.png",
+          "sha256": "38ea2bfb7c3ccee6e36c54eb96123a6782acb2b329427137045be1947b6a21fc",
+          "width": 393,
+          "height": 133,
+          "replace": [
+            655,
+            151,
+            369,
+            281
+          ],
+          "target": [
+            643,
+            156,
+            425,
+            160
+          ],
+          "referenceSha256": "aba5782a8066792128c159228c38a00467ab415a6ea2866e59830a1a2663adfa"
+        },
+        "short": {
+          "file": "saw-short.png",
+          "sha256": "5c1b3eaada92b283d71a26c28c5341150b3a2c6925787e6800f861284b645641",
+          "width": 372,
+          "height": 56,
+          "replace": [
+            655,
+            151,
+            369,
+            281
+          ],
+          "target": [
+            643,
+            156,
+            278,
+            160
+          ],
+          "referenceSha256": "aba5782a8066792128c159228c38a00467ab415a6ea2866e59830a1a2663adfa"
+        },
+        "quickmag": {
+          "file": "saw-quickmag.png",
+          "sha256": "693e26b935b3689ba18baa2f1f94815a5319d6633a0d5299c8095e7c38e0eea8",
+          "width": 254,
+          "height": 91,
+          "replace": null,
+          "target": [
+            532,
+            272,
+            205,
+            104
+          ],
+          "referenceSha256": "40e05daf2217260c2875420594cf8b83e310433ae577c52217dc16f25afbc3a5"
+        }
+      }
+    }
+  }
+}
