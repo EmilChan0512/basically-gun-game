@@ -61,6 +61,11 @@ export function renderGrowthLoadout(root: HTMLElement, loadout: GrowthLoadout, s
   classes.onchange = () => { const classId = classes.value as GrowthLoadout['classId']; send({ classId, primary: GROWTH_CLASSES[classId].primary }); };
   weapons.onchange = () => send({ ...loadout, primary: weapons.value as GrowthLoadout['primary'] });
   const note = document.createElement('p'); note.textContent = GROWTH_CLASSES[loadout.classId].description + ' 更换配装后需重新准备。所有基础武器免费开放。';
+  root.append(classes, weapons, note);
+  renderGrowthGuide(root, loadout);
+}
+
+export function renderGrowthGuide(root: HTMLElement, loadout: GrowthLoadout) {
   const guide = document.createElement('details'); guide.id = 'growth-room-guide';
   const summary = document.createElement('summary'); summary.textContent = '第一次玩成长模式：规则与职业路线'; guide.append(summary);
   const routes: Record<GrowthLoadout['classId'], string[]> = {
@@ -73,9 +78,9 @@ export function renderGrowthLoadout(root: HTMLElement, loadout: GrowthLoadout, s
     '击杀、助攻和据点贡献获得局内经验；Medic 实际治疗队友也可获得有限经验。Lv.1→Lv.5 共四次三选一，每局可刷新一次。',
     '选卡不暂停战斗，可以稍后选择，也可以死亡时选。多个升级依次处理；提交后等待服务器确认。死亡保留成长，下一局全部重置。',
     '第12分钟自动开放职业 Ultimate，不占四次选卡；15分钟结算。单人可对战机器人，多人开局由真人席位组队。',
-    '在房间外展开“成长配装与解锁”，设置3个基础 Perk 和8张成长池。账号/职业熟练度只解锁替代选择与配装槽；同一配装不会因账号等级增加伤害或生命。',
+    '在“出战配装”的成长对战页设置3个基础 Perk 和8张成长池。账号/职业熟练度只解锁替代选择与配装槽；同一配装不会因账号等级增加伤害或生命。',
     ...routes[loadout.classId],
     '这些路线用于比较打法，不保证每局都能抽齐。结合当局候选、武器和战况选择。',
   ]) { const line = document.createElement('p'); line.textContent = text; guide.append(line); }
-  root.append(classes, weapons, note, guide);
+  root.append(guide);
 }

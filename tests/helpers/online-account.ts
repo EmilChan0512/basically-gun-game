@@ -10,6 +10,7 @@ export async function registerOnline(page: Page, name: string) {
 export async function openOnlineArmory(page: Page) {
   await page.locator('#online-armory-nav').click();
   await expect(page.locator('#online-preflight')).toBeVisible();
+  if (await page.locator('#armory-rule-classic').isEnabled()) await page.locator('#armory-rule-classic').click();
 }
 
 export async function selectOnlineClass(page: Page, id: string) {

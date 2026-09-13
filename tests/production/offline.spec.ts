@@ -35,6 +35,8 @@ test('packaged production game loads and plays without Internet or development h
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/?offline');
   await enterOffline(page);
+  await expect(page.locator('.menu-panel')).toHaveCSS('background-image', /campaign-table\.png/);
+  await page.screenshot({ path: 'artifacts/qa/ui-v2-offline-menu.png', fullPage: true });
   await page.locator('#continue-campaign').click(); await page.locator('#deploy').click();
   await expect(page.locator('#player-ammo')).toHaveText('M4  30 / 78');
   expect(await page.evaluate(() => window.__strikeCampaign)).toBeUndefined();

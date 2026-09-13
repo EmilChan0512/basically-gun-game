@@ -16,16 +16,23 @@ test('Medic lobby loadout heals a teammate through the real skill input and disp
       await page.goto('/?online'); await page.locator('#server').fill(`ws://127.0.0.1:${address.port}`); await registerOnline(page, `Clinic ${i}`);
     }
     const page = pages[0]; await page.locator('#create-growth').click(); await expect(page.locator('#online-map')).toBeVisible();
-    await page.locator('#online-map').selectOption('signal'); await page.locator('#growth-class').selectOption('medic');
-    await expect(page.locator('#growth-weapon')).toHaveValue('famas');
+    await page.locator('#online-map').selectOption('signal');
+    await page.locator('#growth-room-armory').click();
+    await page.locator('#career-growth-class').selectOption('medic');
+    await expect(page.locator('#career-growth-weapon')).toHaveValue('famas');
+    await page.locator('#growth-career-save').click();
+    await expect(page.locator('[data-growth-save-status]')).toHaveText('本房间配装已确认，请重新准备。');
+    await page.locator('#growth-tab-skills').click();
     await page.locator('#growth-room-guide > summary').click();
     await expect(page.locator('#growth-room-guide')).toContainText('贴近队友救援');
     await expect(page.locator('#growth-room-guide')).toContainText('第12分钟');
+    await page.locator('#online-lobby-nav').click();
     const room = [...server.rooms.values()][0];
     for (const other of pages.slice(1)) { await other.locator('#code').fill(room.id); await other.locator('#join').click(); }
     for (const other of pages) { await expect(other.locator('#online-ready')).toBeVisible(); await other.locator('#online-ready').click(); }
     await expect(page.locator('#lobby')).not.toContainText('未准备'); await page.locator('#online-start').click();
     await expect(page.locator('#growth-panel')).toContainText('Medic');
+    await expect(page.locator('#online-game')).toHaveAttribute('aria-busy', 'false');
     await page.locator('canvas').click();
     const battle = room.session!.battle, medic = battle.player;
     const ally = battle.actors.find(a => a.team === medic.team && a !== medic)!, enemy = battle.actors.find(a => a.team !== medic.team)!;
@@ -46,7 +53,7 @@ test('career build is acknowledged, used by the room and retained after signing 
   try {
     await page.goto('/?online'); await page.locator('#server').fill(`ws://127.0.0.1:${address.port}`);
     await registerOnline(page, 'Career journey');
-    await page.locator('#growth-career-section > summary').click();
+    await page.locator('#online-armory-nav').click();
     await page.locator('#career-growth-class').selectOption('tank');
     await page.locator('#career-growth-weapon').selectOption('shotgun');
     await page.locator('#growth-career-save').click();
@@ -55,12 +62,14 @@ test('career build is acknowledged, used by the room and retained after signing 
     await page.locator('#growth-career-save').click();
     await expect(page.locator('#growth-career-save')).toBeEnabled();
     await expect(page.locator('[data-growth-save-status]')).toHaveText('配装已由服务器保存。');
+    await page.locator('#online-lobby-nav').click();
     await page.locator('#create-growth').click();
     await expect(page.locator('#online-start')).toBeVisible();
     const room = [...server.rooms.values()][0];
     expect([...room.players.values()][0].growthLoadout).toMatchObject({ classId: 'tank', primary: 'shotgun' });
     await page.locator('#online-start').click();
     await expect(page.locator('#growth-panel')).toContainText('Lv.1');
+    await expect(page.locator('#online-game')).toHaveAttribute('aria-busy', 'false');
     expect(room.session!.battle.player.growth).toMatchObject({ classId: 'tank', primary: 'shotgun' });
     const battle = room.session!.battle;
     // Authority fixture shortens the match; player activity still traverses the real browser/socket path.
@@ -73,21 +82,28 @@ test('career build is acknowledged, used by the room and retained after signing 
     await expect(page.locator('#growth-panel')).toContainText('服务器自动发放账号与职业经验');
     await page.locator('#growth-leave').click();
     await expect(page.locator('#create-growth')).toBeEnabled();
+    await page.locator('#online-armory-nav').click();
     await expect(page.locator('#growth-career-content')).toContainText('1局 / 1胜');
+    await page.locator('#growth-tab-pool').click();
     await expect(page.locator('[data-growth-option="coolant"]')).toBeEnabled();
     await page.locator('[data-growth-option="brace"]').uncheck();
     await page.locator('[data-growth-option="coolant"]').check();
     await page.locator('#growth-career-save').click();
     await expect(page.locator('[data-growth-save-status]')).toHaveText('配装已由服务器保存。');
+    await page.locator('#online-lobby-nav').click();
     await page.locator('#account-logout').click();
     await page.locator('#account-name').fill('Career journey');
     await page.locator('#account-password').fill('test-password-123');
     await page.locator('#account-signin').click();
     await expect(page.locator('#account-status')).toContainText('Career journey · 金币');
+    await page.locator('#online-armory-nav').click();
+    await page.locator('#growth-tab-weapons').click();
     await expect(page.locator('#career-growth-class')).toHaveValue('tank');
     await expect(page.locator('#career-growth-weapon')).toHaveValue('shotgun');
+    await page.locator('#growth-tab-pool').click();
     await expect(page.locator('[data-growth-option="coolant"]')).toBeChecked();
     await expect(page.locator('[data-growth-option="brace"]')).not.toBeChecked();
+    await page.locator('#online-lobby-nav').click();
     await page.locator('#create-growth').click();
     await expect(page.locator('#online-start')).toBeVisible();
     const nextRoom = [...server.rooms.values()].find(value => value.players.size > 0)!;

@@ -81,17 +81,9 @@ test('pre-entry equipment, purchases, account isolation and saved progress survi
     await expect(page.locator('#tab-primary')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('#slot-primary')).toContainText('Scout');
     await page.screenshot({ path: 'artifacts/qa/online-account-preflight.png', fullPage: true });
-    await expect(page.locator('#online-preflight select')).toHaveCount(0);
-    await expect(page.locator('.operator-art')).toBeVisible();
-    const animation = await page.locator('.operator-art').evaluate(svg => {
-      const frames = (time: number) => {
-        svg.getAnimations({ subtree: true }).forEach(a => { a.pause(); a.currentTime = time; });
-        return Array.from(svg.querySelectorAll('image')).map(image => getComputedStyle(image).transform);
-      };
-      const start = frames(0), middle = frames(1000), end = frames(2000);
-      return { count: svg.getAnimations({ subtree: true }).length, changed: JSON.stringify(start) !== JSON.stringify(middle), loops: JSON.stringify(start) === JSON.stringify(end) };
-    });
-    expect(animation.count).toBeGreaterThan(10); expect(animation.changed).toBe(true); expect(animation.loops).toBe(true);
+    await expect(page.locator('#preflight-armory select')).toHaveCount(0);
+    await expect(page.locator('#preflight-armory .generated-operator')).toBeVisible();
+    expect(await page.locator('#preflight-armory .generated-operator').evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
     await expect(page.locator('#online-gear-grid [role=img], #online-gear-grid img')).toHaveCount(6);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.screenshot({ path: 'artifacts/qa/online-armory-mobile.png', fullPage: true });

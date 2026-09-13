@@ -48,7 +48,7 @@ test('two isolated browsers create, join, ready, start and independently switch 
     [...server.wss.clients][1].terminate();
     await contexts[1].setOffline(false);
     await expect(pages[1].locator('#status')).toContainText('连接已断开');
-    await pages[1].locator('#reconnect').click();
+    await pages[1].getByRole('button', { name: '断线重连', exact: true }).click();
     await expect(pages[1].locator('#status')).toContainText('房间码');
     await expect(pages[1].locator('#lobby')).toBeHidden();
     await expect.poll(() => [...server.rooms.values()][0].players.get(id)?.connected).toBe(true);

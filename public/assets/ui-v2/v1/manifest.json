@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "revision": "v1",
+  "generator": "Local ComfyUI / FLUX.2 Klein 4B",
+  "assets": [
+    {
+      "id": "command-deck",
+      "file": "command-deck.png",
+      "width": 1536,
+      "height": 864,
+      "sha256": "20a97e7de9a6b659bff61eddd182ea91f4cc99439f7a3fb82db33b83221842ca"
+    },
+    {
+      "id": "armory-bay",
+      "file": "armory-bay.png",
+      "width": 1536,
+      "height": 864,
+      "sha256": "24a69ac081473e8234f88c667127f98413a54234cd896898a62ab62b5d5de99f"
+    },
+    {
+      "id": "campaign-table",
+      "file": "campaign-table.png",
+      "width": 1536,
+      "height": 864,
+      "sha256": "267f9a72a7fc7bda3f33af9bd6355a9470c4972a268858f87be778258e59e010"
+    },
+    {
+      "id": "operator-assault",
+      "file": "operator-assault.png",
+      "width": 768,
+      "height": 1024,
+      "sha256": "23d310dd376996646b789f5c4ed77a5440d17c5cf8965dac7a6e48e1aa5481b9"
+    },
+    {
+      "id": "operator-tank",
+      "file": "operator-tank.png",
+      "width": 768,
+      "height": 1024,
+      "sha256": "30d24eb5cb827b5fedddb62d9f2fcd2edf6cbca116f78e8d37e9ce6ccc188d30"
+    },
+    {
+      "id": "operator-sniper",
+      "file": "operator-sniper.png",
+      "width": 768,
+      "height": 1024,
+      "sha256": "6fea962890b114b22c310d348fe88599989df494a307ca4fc60091ef77e6032a"
+    },
+    {
+      "id": "operator-medic",
+      "file": "operator-medic.png",
+      "width": 768,
+      "height": 1024,
+      "sha256": "0abd15ad46ea399d9a4b50d39de2413c9d6c8105d8998bfd2f05077f94bfcffe"
+    },
+    {
+      "id": "category-ability",
+      "file": "category-ability.png",
+      "width": 512,
+      "height": 512,
+      "sha256": "ddd7314066bd0e34713f3c15da1990d8441063f5ae92cab2a03973c5b64bb2f8"
+    },
+    {
+      "id": "category-mobility",
+      "file": "category-mobility.png",
+      "width": 512,
+      "height": 512,
+      "sha256": "6b501a39e3c918c98a07de1088c5eedf1eade49a26da7b5e783b8f620941581b"
+    },
+    {
+      "id": "category-weapon",
+      "file": "category-weapon.png",
+      "width": 512,
+      "height": 512,
+      "sha256": "c96ae5ab63bd3dc1376388365815f7cdab0cb845cc01afdbcf2c13c92064ef5f"
+    },
+    {
+      "id": "category-defense",
+      "file": "category-defense.png",
+      "width": 512,
+      "height": 512,
+      "sha256": "627083ae7d64da2431c03dc0c1abee0c1fcf1f3f72a222cd31a7a96a6814923b"
+    },
+    {
+      "id": "category-utility",
+      "file": "category-utility.png",
+      "width": 512,
+      "height": 512,
+      "sha256": "417cf6b9e53f4e3720b82e8c9947cd0805d045c85da883729a0e5cb5c3369453"
+    },
+    {
+      "id": "mode-growth",
+      "file": "mode-growth.png",
+      "width": 1024,
+      "height": 576,
+      "sha256": "abb742a209b09e7d2059a03075db446cb8d9cf9d028657e2c764572342f135f8"
+    },
+    {
+      "id": "mode-classic",
+      "file": "mode-classic.png",
+      "width": 1024,
+      "height": 576,
+      "sha256": "6b4ecc9afa07d4ddbfaacaca7c69dbdc57cbab4cb7da977f70ac3ba4a9f7d62b"
+    },
+    {
+      "id": "mode-coop",
+      "file": "mode-coop.png",
+      "width": 1024,
+      "height": 576,
+      "sha256": "e9dc6bf25872b1f8a8a42a31c88d2afb890b3d0213a8fb110e85ddeb4e43215f"
+    },
+    {
+      "id": "strike-emblem",
+      "file": "strike-emblem.png",
+      "width": 512,
+      "height": 512,
+      "sha256": "65f761ddd464555ec1242f69c5a614dd97ead261fd8f12d8ed4ba96776b6c3f6"
+    }
+  ]
+}

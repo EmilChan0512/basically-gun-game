@@ -2,8 +2,10 @@ import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { once } from 'node:events';
+import { verifyUIArt } from './verify-ui-art.mjs';
 
 const folder = resolve(process.argv[2]);
+console.log(`Portable UI art: ${JSON.stringify(verifyUIArt(join(folder, 'dist/assets/ui-v2/v1')))}`);
 const child = spawn(join(folder, 'runtime/node.exe'), ['tools/start-friends.mjs', '--test', '--solo'],
   { cwd: folder, windowsHide: true, env: { ...process.env, PATH: '' }, stdio: ['ignore', 'pipe', 'pipe'] });
 const closed = once(child, 'exit');

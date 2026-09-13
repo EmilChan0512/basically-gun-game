@@ -1,0 +1,7 @@
+Project Strike UI v2 — locally generated 2D menu artwork
+Generated with local ComfyUI and FLUX.2 Klein 4B; Qwen 3 4B text encoder; Flux2 VAE.
+Each of the 16 v1 assets has one generated output. No automated selection or reroll was performed.
+Production PNGs omit workflow/text metadata; pixel data is unchanged.
+Asset dimensions and SHA256 hashes: v1/manifest.json.
+Source workflow and local execution records are maintained in the development workspace, not distributed with the game.
+No model weights, ComfyUI code or Python runtime are included in this package.

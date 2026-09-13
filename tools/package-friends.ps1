@@ -24,6 +24,7 @@ Copy-Item -LiteralPath (Join-Path $taskRoot 'node_modules/phaser/LICENSE.md') -D
 Copy-Item -LiteralPath (Join-Path $taskRoot 'node_modules/eventemitter3/LICENSE') -Destination (Join-Path $taskFolder 'licenses/EventEmitter3-MIT.txt')
 Copy-Item -LiteralPath (Join-Path $taskRoot 'public/assets/audio/SOURCES.txt') -Destination (Join-Path $taskFolder 'licenses/Audio-Sources.txt')
 Copy-Item -LiteralPath (Join-Path $taskRoot 'public/assets/audio/Kenney-CC0.txt') -Destination (Join-Path $taskFolder 'licenses/Kenney-CC0.txt')
+Copy-Item -LiteralPath (Join-Path $taskRoot 'public/assets/ui-v2/SOURCES.txt') -Destination (Join-Path $taskFolder 'licenses/UI-Art-Sources.txt')
 $taskCache = Join-Path $taskRoot "tools/vendor/node-$($taskRuntime.version)-LICENSE.txt"
 if (!(Test-Path -LiteralPath $taskCache)) {
   New-Item -ItemType Directory -Path (Split-Path -Parent $taskCache) -Force | Out-Null

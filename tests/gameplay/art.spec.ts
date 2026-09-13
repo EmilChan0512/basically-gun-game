@@ -3,7 +3,7 @@ import { enterOffline } from '../helpers/offline-ui';
 
 test('curated textures load in campaign and sandbox without missing assets', async ({ page }) => {
   const failures: string[] = [];
-  page.on('response', r => { if (r.url().includes('/assets/') && !r.ok()) failures.push(r.url()); });
+  page.on('response', r => { if (r.url().includes('/assets/') && !r.ok() && r.status() !== 304) failures.push(`${r.status()} ${r.url()}`); });
   page.on('pageerror', e => failures.push(e.message));
   await page.goto('/?offline');
   await page.waitForFunction(() => !!window.__strikeCampaign);

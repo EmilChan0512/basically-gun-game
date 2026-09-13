@@ -6,6 +6,8 @@ import { startServer } from '../../server/server';
 import { CONTENT_VERSION } from '../../src/shared/protocol/ContentVersion';
 import { MatchSession } from '../../src/shared/simulation/MatchSession';
 import { idleInput } from '../../src/game/campaign/Battle';
+import { registerOnline } from '../helpers/online-account';
+import { authorizeSocket } from '../helpers/network-account';
 
 test('production browser frame cadence under 8 player plus 16 AI load', async ({ page, browser }) => {
   expect(JSON.parse(readFileSync('artifacts/project-strike-local/manifest.json', 'utf8')).contentVersion).toBe(CONTENT_VERSION);
@@ -31,6 +33,7 @@ test('production browser frame cadence under 8 player plus 16 AI load', async ({
   try {
     await page.goto('/?online');
     await page.locator('#server').fill(`ws://127.0.0.1:${address.port}`);
+    await registerOnline(page, 'Render host');
     await page.locator('#create').click(); await expect(page.locator('#online-mode')).toBeVisible();
     await page.locator('#online-map').selectOption('hijack');
     await page.locator('#online-mode').selectOption('coop');
@@ -44,6 +47,7 @@ test('production browser frame cadence under 8 player plus 16 AI load', async ({
         if (message.type === 'error' || message.type === 'rejected') errors.push(JSON.stringify(message));
       });
       await new Promise<void>(resolve => socket.once('open', resolve));
+      await authorizeSocket(server, socket, `Render load ${i}`);
       send(socket, { type: 'join', code: room.id, name: `Render load ${i}` });
       await wait(() => room.players.size === i + 2);
       send(socket, { type: 'ready', ready: true });
@@ -52,6 +56,7 @@ test('production browser frame cadence under 8 player plus 16 AI load', async ({
     await expect(page.locator('#lobby')).not.toContainText('未准备');
     await page.locator('#online-start').click();
     await expect(page.locator('canvas')).toBeVisible();
+    await expect(page.locator('#online-game')).toHaveAttribute('aria-busy', 'false');
     await expect(page.locator('#lobby')).toBeHidden();
     await page.evaluate(() => scrollTo(0, 0));
     const bounds = await page.locator('canvas').boundingBox();
