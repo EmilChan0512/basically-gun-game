@@ -30,8 +30,8 @@ export function startCampaign() {
     <header><div class="brand"><span class="mark">S</span><div><h1>PROJECT STRIKE</h1><p>OPERATION DAYBREAK / 单人战役</p></div></div><nav class="campaign-nav"><button id="campaign-home">任务地图</button><button id="armory-nav">职业与军械库</button><a id="account-nav" href="/?online">联网账号与资产</a><button id="sound">声音：开</button><a href="?rules=original">训练场</a></nav></header>
     <section class="campaign-title"><div><p class="eyebrow">一支小队 · 四场行动</p><h2 id="campaign-heading">破晓行动</h2></div><span id="save-status"></span></section>
     <section class="campaign-stage"><div id="game" aria-label="单人横版射击战役"></div>
-      <div id="battle-top" hidden><span id="mission-label"></span><div class="scoreline"><b id="blue-score">0</b><span id="goal-label"></span><b id="red-score">0</b></div><span id="battle-time"></span><button id="battle-pause">暂停 Esc</button></div>
-      <div id="battle-bottom" hidden><div><strong id="player-health"></strong><span id="player-ammo"></span></div><p id="abilities"></p><p id="battle-message"></p><p id="kill-feed"></p></div>
+      <div id="battle-top" hidden><span id="mission-label"></span><div class="scoreline"><b id="blue-score">0</b><div class="hud-score-center"><small id="goal-label"></small><strong id="battle-time"></strong></div><b id="red-score">0</b></div><button id="battle-pause">暂停 Esc</button></div>
+      <div id="battle-bottom" hidden><div class="hud-vitals"><small>OPERATOR / VITALS</small><strong id="player-health"></strong><div class="hud-health-track"><i id="campaign-health-fill"></i></div></div><div class="hud-ability"><img src="/assets/ui-v2/v1/category-ability.png" alt=""><div><small>E / G · 战术系统</small><p id="abilities"></p></div></div><div class="hud-equipment"><small>Q 切换 · R 换弹</small><strong id="player-ammo"></strong></div><div class="hud-notices"><p id="battle-message"></p><p id="kill-feed"></p></div></div>
       <div id="campaign-overlay" aria-live="polite"></div>
     </section>
     <section class="campaign-help"><p><kbd>A D / ← →</kbd> 移动 <kbd>W / 空格</kbd> 跳跃 <kbd>S / ↓</kbd> 蹲伏 <kbd>鼠标 / F</kbd> 射击 <kbd>Q</kbd> 切枪 <kbd>R / L</kbd> 换弹 <kbd>E</kbd> 职业技能 <kbd>G</kbd> 道具 <kbd>Esc / P</kbd> 暂停</p><p>青色是队友，橙色是敌人。阵亡会复活；出生区补给箱可补充备用弹药。单机免登录，进度只保存在这台设备；联网账号资产由服务器独立管理。</p></section>`;
@@ -41,7 +41,7 @@ export function startCampaign() {
     $('account-nav').textContent = '联网账号与资产';
   }
   const radar = document.createElement('div'); radar.id = 'campaign-radar'; radar.hidden = true;
-  radar.style.cssText = 'position:absolute;right:12px;top:66px;width:230px;max-width:30%;z-index:2;pointer-events:none';
+  radar.style.cssText = 'position:absolute;right:12px;top:12px;width:230px;max-width:30%;z-index:2;pointer-events:none';
   document.querySelector('.campaign-stage')!.append(radar);
   let radarBattle: Battle | undefined, radarFrame = -1, reveal = new RevealPolicy();
   function bind(id: string, action: () => void) { $(id).onclick = () => { action(); (document.activeElement as HTMLElement)?.blur(); }; }
@@ -148,6 +148,8 @@ export function startCampaign() {
       const seconds = Math.max(0, Math.ceil(b.mission.seconds - b.frame / 30));
       $('battle-time').textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
       $('player-health').textContent = p.life.alive ? `生命 ${Math.ceil(p.life.health)} / ${p.life.maxHealth}` : `阵亡 · ${((p.life.respawnFrames + 1) / 30).toFixed(1)} 秒后复活`;
+      document.getElementById('campaign-health-fill')!.style.width = String(Math.max(0, Math.min(100, p.life.health / p.life.maxHealth * 100))) + '%';
+      document.getElementById('battle-bottom')!.dataset.health = p.life.health / p.life.maxHealth <= .3 ? 'critical' : 'normal';
       const offhand = p.offhand?.view();
       $('player-ammo').textContent = offhand?.equipped && offhand.kind !== 'firearm'
         ? offhand.kind === 'melee' ? `${SPECIAL_OFFHANDS[offhand.id ?? 'knife'].name} · ${offhand.age < 0 ? '点击攻击挥刀' : '挥击中'} · Q切换`

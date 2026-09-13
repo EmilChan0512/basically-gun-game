@@ -6,7 +6,8 @@ export function installAudioUI() {
     (['master','effects','voice'] as const).map((key, i) => `<label class="audio-slider"><span>${['总音量','音效音量','角色语音'][i]}</span><input aria-label="${['总音量','音效音量','角色语音'][i]}" type="range" min="0" max="100" data-audio="${key}"><output data-volume="${key}"></output></label>`).join('') +
     '<label><input type="checkbox" data-audio="subtitles">中文字幕</label><button type="button" id="audio-preview">试听角色语音</button></div>';
   const subtitle = document.createElement('div'); subtitle.id = 'audio-subtitle'; subtitle.setAttribute('role','status'); subtitle.setAttribute('aria-live','polite');
-  document.body.append(root, subtitle);
+  document.body.append(root);
+  (document.getElementById('online-game') ?? document.querySelector('.campaign-stage') ?? document.body).append(subtitle);
   gameAudio.onSubtitle = text => { subtitle.textContent = text; subtitle.hidden = !text; };
   const refresh = () => {
     root.querySelectorAll<HTMLInputElement>('[data-audio]').forEach(input => {

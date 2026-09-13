@@ -1,0 +1,52 @@
+.tactical-hud{position:absolute;inset:0;z-index:8;pointer-events:none;color:#e7f4f4;font-family:'Segoe UI','Microsoft YaHei',sans-serif;container-type:inline-size}
+.tactical-hud [hidden]{display:none!important}
+.tactical-hud-top,#battle-top{position:absolute;inset:12px 12px auto;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;pointer-events:none;background:none;padding:0;border:0}
+.tactical-hud-top{right:28%}
+.hud-mission{display:grid;gap:5px;padding:10px 14px;max-width:48%;background:#081720e8;border-left:3px solid #6dd5d9}
+.hud-mission small,.hud-score small,.tactical-hud-bottom small,#battle-bottom small{font-size:9px;letter-spacing:1.7px;color:#91b5bf}
+.hud-mission strong{font-size:15px}.hud-mission>span{font-size:11px;color:#b5cbd0;line-height:1.4}
+.hud-score,.scoreline{display:flex;align-items:center;gap:16px;background:#081720e8;border:1px solid #3d6874;padding:8px 16px;box-shadow:0 3px 20px #0004}
+.hud-score>b,.scoreline>b{font-size:27px;color:#77e1e5;min-width:25px;text-align:center;font-variant-numeric:tabular-nums}
+.hud-score>b:last-child,.scoreline>b:last-child{color:#f5a187}
+.hud-score>div{display:grid;text-align:center;gap:2px}.hud-score strong{font-size:16px;font-variant-numeric:tabular-nums;color:#eaf5e3}
+.tactical-hud-bottom,#battle-bottom{position:absolute;inset:auto 12px 12px;display:grid;grid-template-columns:minmax(135px,1fr) minmax(180px,1.4fr) minmax(135px,1fr);gap:10px;background:none;padding:0;align-items:end;pointer-events:none}
+.hud-vitals,.hud-equipment,.hud-ability{padding:10px 13px;background:linear-gradient(130deg,#102a35ed,#07141feb);border:1px solid #365966;box-shadow:inset 0 2px #79d9dc44;min-width:0}
+.hud-vitals>strong,.hud-equipment>strong{display:block;font-size:18px;margin:5px 0;font-variant-numeric:tabular-nums}
+.hud-vitals>span,.hud-equipment>span,.hud-ability span{font-size:11px;color:#cce398}
+.hud-health-track{height:5px;background:#1e3e4a;margin:8px 0 3px;overflow:hidden}.hud-health-track i{display:block;height:100%;background:#78e0cc;transition:width .12s linear}
+[data-health='critical'] .hud-health-track i{background:#ff8d7e}
+.hud-equipment{text-align:right;border-right:3px solid #c6d58b}.hud-ability{display:flex;gap:10px;align-items:center}
+.hud-ability img{width:40px;height:40px;object-fit:cover;border:1px solid #466772}
+.hud-ability strong,.hud-ability p{display:block;font-size:11px!important;line-height:1.55;margin:4px 0!important;color:#e2eff0!important}
+.hud-network{position:absolute;top:105px;left:50%;transform:translateX(-50%);padding:8px 16px;background:#402515f0;border:1px solid #dba06c;color:#ffcc9b;font-size:12px}
+#online-hud{position:absolute!important;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;margin:0!important;padding:0!important}
+#online-radar,#campaign-radar{border:1px solid #3e6774;background:#071722b8;box-shadow:inset 0 2px #7ddbdd55}
+#online-radar svg,#campaign-radar svg{display:block;width:100%;height:auto}
+#battle-top{right:28%;z-index:8;color:#e6f2f1}
+#battle-top #mission-label{background:#081720e8;border-left:3px solid #6dd5d9;padding:10px;font-size:12px;max-width:35%}
+#battle-top .scoreline{gap:12px;padding:6px 12px}#battle-top #goal-label{font-size:10px;color:#adc7cb}
+#battle-top #battle-time{background:#081720e8;padding:12px;font-size:17px;font-variant-numeric:tabular-nums}
+#battle-top #battle-pause{pointer-events:auto;font-size:10px;max-width:90px}
+#battle-bottom{z-index:8}#battle-bottom #player-health,#battle-bottom #player-ammo{font-size:16px;display:block;color:#eef9f5}
+#battle-bottom .hud-notices{position:absolute;bottom:100%;left:0;right:0;padding-bottom:7px;pointer-events:none;text-align:center}
+#battle-bottom #battle-message,#battle-bottom #kill-feed{font-size:11px;margin:2px;color:#d1e6e8;text-shadow:0 1px 3px #000}
+.combat-feedback .combat-status{top:auto;bottom:115px;left:12px;border-left:2px solid #6dd5d9;font-size:10px;background:#0a1d29db}
+.combat-feedback .combat-death{border:1px solid #dc8b7b;background:linear-gradient(140deg,#071722ef,#251820d9);backdrop-filter:blur(3px)}
+.combat-feedback .combat-observe{border-color:#74dbe0;color:#b9f5ef;background:#142c39}
+.combat-feedback .combat-death.observing{left:25%;right:25%;bottom:110px;border-top:2px solid #d98d7d;padding:10px}
+@container(max-width:800px){.hud-mission>span{display:none}.hud-mission{padding:7px 10px}.hud-score{gap:8px;padding:7px 10px}.hud-score>b{font-size:22px}.tactical-hud-bottom{gap:5px;inset:auto 7px 7px;grid-template-columns:1fr 1.2fr 1fr}.hud-vitals,.hud-equipment,.hud-ability{padding:7px}.hud-vitals>strong,.hud-equipment>strong{font-size:13px}.hud-ability img{display:none}.tactical-hud-bottom small{font-size:8px;letter-spacing:.5px}.hud-ability strong{font-size:9px!important}}
+@media(max-width:700px){#battle-top{right:12px;gap:4px}#battle-top #mission-label{display:none}#battle-top .scoreline b{font-size:17px}#battle-bottom{grid-template-columns:1fr 1fr;gap:4px;inset:auto 7px 7px}#battle-bottom .hud-ability{grid-column:1/-1;grid-row:1;padding:5px 8px}#battle-bottom .hud-ability img,#battle-bottom .hud-ability small{display:none}#battle-bottom .hud-ability p{font-size:9px!important;margin:0!important}#battle-bottom .hud-equipment{grid-column:2;grid-row:2}#battle-bottom #player-health,#battle-bottom #player-ammo{font-size:11px}.combat-feedback .combat-death.observing{left:10%;right:10%;bottom:90px}.combat-feedback .combat-status{bottom:95px}}
+@media(prefers-reduced-motion:reduce){.hud-health-track i{transition:none}}
+.tactical-hud-top{right:12px}.tactical-hud-top .hud-score{position:absolute;left:50%;transform:translateX(-50%)}
+.tactical-hud-top .hud-mission{max-width:28%}
+#battle-bottom>.hud-vitals,#battle-bottom>.hud-equipment{display:block}
+#battle-bottom .hud-health-track{display:block;width:100%;height:5px;margin:8px 0 3px}
+#battle-bottom .hud-health-track i{display:block;height:100%;margin:0}
+#battle-bottom .hud-ability{display:flex;justify-content:flex-start;text-align:left}
+#battle-bottom .hud-ability>div{display:block}
+#battle-bottom>.hud-notices{display:block}
+#battle-top{right:12px}#battle-top .scoreline{position:absolute;left:50%;transform:translateX(-50%)}
+#battle-top .hud-score-center{display:grid;gap:2px;text-align:center}#battle-top .scoreline #battle-time{padding:0;background:none;font-size:16px}#battle-top #battle-pause{position:absolute;left:0;top:48px}
+#online-game #audio-subtitle,.campaign-stage #audio-subtitle{position:absolute;bottom:110px;max-width:65%;font-size:13px;padding:6px 12px}
+@container(max-width:480px){.hud-mission small{display:none}.hud-mission strong{font-size:10px}.hud-mission{padding:5px}.hud-score{gap:5px;padding:5px}.hud-score>b{font-size:16px}.hud-score strong{font-size:12px}.hud-score small{font-size:7px}.hud-vitals>strong,.hud-equipment>strong{font-size:10px}.hud-ability strong{font-size:8px!important}.tactical-hud-bottom small{font-size:7px}.tactical-hud-bottom{gap:3px}.hud-vitals,.hud-equipment,.hud-ability{padding:5px}}
+@media(max-width:600px){#online-radar{max-width:24%!important}.growth-playing #audio-settings{position:relative;inset:auto;margin:10px 20px 20px auto;width:max-content}.growth-playing #audio-subtitle{bottom:80px;font-size:10px}.combat-feedback .combat-status{font-size:8px;padding:3px 5px;bottom:80px}}

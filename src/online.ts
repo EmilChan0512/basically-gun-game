@@ -1,7 +1,7 @@
 import { GrowthCareerPanel } from './client/presentation/GrowthCareerPanel';
 import { GROWTH_CLASSES, defaultGrowthLoadout, type GrowthClassId } from './shared/content/GrowthCatalog';
 import { GrowthPanel } from './client/presentation/GrowthPanel';
-import './client/presentation/GrowthPanel.css';
+import './client/presentation/GrowthMatchView.css';
 import { renderOnlineArmory, renderOnlineLoadoutSummary } from './client/presentation/OnlineArmory';
 import { starterEquipment } from './shared/content/OnlineProgress';
 import type { EquipmentLoadout } from './shared/content/Equipment';
@@ -28,6 +28,7 @@ import { skillStatus } from './client/presentation/SkillStatus';
 import { isConcealed } from './shared/simulation/Stealth';
 import { CombatFeedback } from './client/presentation/CombatFeedback';
 import { CombatFeedbackView } from './client/presentation/CombatFeedbackView';
+import { BattleHUD } from './client/presentation/BattleHUD';
 
 function abilityText(actor: { growth?: { classId: GrowthClassId }; classId?: string | null; stealthFrames?: number; skill?: SkillId | null; skillCooldown: number; skillFrames: number; item?: ItemId | null; itemCharges: number }) {
   if (actor.growth) return `E ${GROWTH_CLASSES[actor.growth.classId].ability} · ${actor.skillFrames ? `生效中（${Math.ceil(actor.skillFrames / 30)}秒）` : actor.skillCooldown ? Math.ceil(actor.skillCooldown / 30) + '秒' : '就绪'} | G 手雷 ×${actor.itemCharges}`;
@@ -299,7 +300,7 @@ class OnlineScene extends Phaser.Scene {
   private audioPresentation = new AudioPresentation();
   private rig!: ReferenceArt;
   private graphics!: Phaser.GameObjects.Graphics;
-  private hud!: Phaser.GameObjects.Text;
+  private hud!: BattleHUD;
   private keys = new Set<string>();
   private elapsed = 0;
   private animationFrame = 0;
@@ -326,9 +327,9 @@ class OnlineScene extends Phaser.Scene {
     for (const t of map.terrain) background.fillStyle(map.palette.wall).fillRect(t.x, t.y, t.width, t.height);
     if (map.artwork) { const a = map.artwork; this.add.image(a.x, a.y, `ref-${a.id}`).setOrigin(0).setDisplaySize(a.width, a.height); }
     this.vision = new VisionOverlay(this, new CollisionWorld(map.terrain, map.collisionMask).solid);
-    this.add.text(16, 592, '共享视野 · 阴影内敌人不可见 · 开火或携包会暴露位置', { fontSize: '13px', color: '#d7e5ef', backgroundColor: '#10202dcc', padding: { x: 8, y: 4 } }).setScrollFactor(0).setDepth(10);
     this.rig = new ReferenceArt(this); this.graphics = this.add.graphics().setDepth(3);
-    this.hud = this.add.text(16, 16, '', { fontSize: '18px', backgroundColor: '#10202dcc', padding: { x: 10, y: 10 } }).setScrollFactor(0).setDepth(10);
+    this.hud = new BattleHUD(document.getElementById('online-game')!);
+    this.events.once('shutdown', () => this.hud.destroy());
     const down = (e: KeyboardEvent) => {
       if (!document.getElementById('online-preflight')?.hidden || (e.target as HTMLElement)?.closest('input,button,select,a')) return;
       if (e.code === 'Tab' && this.feedback.dead) { e.preventDefault(); if (!e.repeat) this.feedback.cycle(); return; }
@@ -349,6 +350,15 @@ class OnlineScene extends Phaser.Scene {
     };
     const focus = (event: FocusEvent) => { if ((event.target as HTMLElement)?.closest('#lobby, #online-account, #online-preflight, #growth-panel')) blur(); };
     window.addEventListener('focusin', focus);
+    const surface = document.getElementById('online-game')!;
+    let surfaceSize = '';
+    const resize = new ResizeObserver(() => {
+      const next = `${surface.clientWidth}:${surface.clientHeight}`;
+      if (next === surfaceSize || !surface.clientWidth || !surface.clientHeight) return;
+      surfaceSize = next; this.scale.getParentBounds(); this.scale.refresh();
+    });
+    resize.observe(surface);
+    this.events.once('shutdown', () => resize.disconnect());
     window.addEventListener('online-view-change', viewChanged);
     viewChanged();
     window.addEventListener('keydown', down); window.addEventListener('keyup', up); window.addEventListener('blur', blur);
@@ -414,7 +424,11 @@ class OnlineScene extends Phaser.Scene {
       .map(a => ({ id: a.id, ...(positions.get(a.id) ?? a) })));
     const wave = message.state.waves;
     const heading = wave ? `第${wave.wave}/${wave.scenario.waves.length}波 · 待增援${wave.remaining} · 团队复活${wave.revives} · ${wave.spawnBlocked ? '增援入口受阻，请离开入口' : wave.phase === 'intermission' ? '休整中' : '战斗中'}` : message.state.scores.join(' : ');
-    this.hud.setText(`${message.mode === 'ctf' ? '公文包 · 先交付3次获胜 · ' : ''}${heading}  |  ${this.network.room?.debug ? '公共调试 · 无时限' : `${message.state.seconds}s`}\n${self ? `HP ${Math.ceil(self.life.health)}  ${equipmentText(self)}\n${abilityText(self)}` : `观战：${message.poses.find(p => p.id === followed?.id)?.name ?? '等待角色'} · Tab切换`}`);
-    if (now - this.network.lastStateAt > 500) this.hud.setText(this.hud.text + '\n网络停顿，等待服务器更新…');
+    this.hud.render({ mode: this.network.room?.debug ? '公共调试 · 无时限' : `${message.growth ? '成长 / ' : ''}${message.mode === 'coop' ? '合作生存' : message.mode === 'dom' ? '据点争夺' : message.mode === 'ctf' ? '公文包争夺' : '团队交火'}`,
+      objective: wave ? heading : message.mode === 'ctf' ? '先交付3次获胜' : '共享视野 · 敌方阴影不可见', seconds: message.state.seconds, scores: message.state.scores,
+      health: self?.life.health ?? 0, maxHealth: self?.maxHealth ?? 100, alive: self?.life.alive ?? false, armor: message.growth?.armor ?? 0,
+      operator: self?.growth ? GROWTH_CLASSES[self.growth.classId].name : self?.classId ? CLASSES[self.classId].name : 'OPERATOR',
+      weapon: self ? equipmentText(self) : '正在观察战场', ability: self ? abilityText(self) : `跟随 ${message.poses.find(p => p.id === followed?.id)?.name ?? '等待角色'}`,
+      reload: self?.reload ?? 0, cooldown: self?.skillCooldown ?? 0, spectator: !self, networkStalled: now - this.network.lastStateAt > 500 });
   }
 }
