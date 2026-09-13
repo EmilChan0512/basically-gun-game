@@ -24,3 +24,20 @@
 .growth-choice-heading{margin-top:8px;padding-top:8px}.growth-command-strip .growth-avatar{height:44px}
 @media(min-width:601px) and (max-height:850px){#growth-panel{padding:8px 14px!important;margin:8px 0!important}.growth-command-strip{gap:12px}.growth-command-strip .growth-avatar{height:32px;width:28px}.growth-rank small{display:none}#growth-panel .growth-rank h2{font-size:15px}.growth-build-line{margin-top:5px}.growth-choice-heading{margin-top:5px;padding-top:5px}.growth-choice-heading small{display:none}.growth-choice-heading h3{font-size:16px;margin:0}.growth-cards{margin:8px 0;gap:10px}.growth-card-art{height:50px}.growth-card-copy{padding:8px 12px;gap:4px}.growth-card-copy>strong{font-size:17px}.growth-card-copy>span{font-size:11px;line-height:1.45;min-height:32px}.growth-card-action{padding:4px 0}.growth-choice-footer>button{padding:6px 10px}.growth-playing:has(.growth-cards) #online-game{width:min(100%,calc(max(180px,100vh - 450px) * 1.80645))}}
 @media(max-width:600px){.growth-playing #status{max-width:none}.growth-playing #growth-session-controls{position:static;margin:5px 0}.growth-playing #audio-settings{position:relative;inset:auto}.growth-card-art{height:100%}}
+
+/* The match surface is independent of every overlay's dimensions. */
+#online-game[hidden]{display:none!important}
+body.online-match-playing{overflow:hidden}
+body.online-match-playing .online-app{max-width:none;padding:0}
+body.online-match-playing #online-game{position:fixed!important;max-width:none!important;inset:8px;width:calc(100vw - 16px)!important;height:calc(100dvh - 16px)!important;aspect-ratio:auto;margin:0!important;z-index:20;overflow:hidden;background:#081720}
+body.online-match-playing #online-game canvas{position:absolute;inset:0;width:100%!important;height:100%!important;margin:0!important}
+body.online-match-playing #growth-session-controls{position:fixed;inset:115px auto auto 22px;z-index:40;margin:0}
+body.online-match-playing #audio-settings{position:fixed;inset:auto 24px 112px auto;z-index:40;margin:0}
+body.online-match-playing #status{display:none}
+#online-game #growth-panel{position:absolute;z-index:25;left:50%;bottom:108px;transform:translateX(-50%);width:min(980px,calc(100% - 32px));max-height:calc(100% - 210px);overflow:auto;box-sizing:border-box;margin:0!important;pointer-events:auto}
+#online-game #growth-panel:not(:has(.growth-cards)):not(:has(.growth-match-result)){width:min(750px,calc(100% - 32px));padding:6px 12px!important;background:#0a1823dd!important}
+#online-game #growth-panel:not(:has(.growth-cards)) .growth-avatar,#online-game #growth-panel:not(:has(.growth-cards)) .growth-rank small{display:none}
+#online-game .growth-cards>button:hover:not(:disabled){transform:none}
+@media(max-width:600px){body.online-match-playing #online-game{inset:0;width:100vw!important;height:100dvh!important}#online-game #growth-panel{bottom:90px;max-height:calc(100% - 205px);width:calc(100% - 16px)}body.online-match-playing #growth-session-controls{top:65px;left:8px}body.online-match-playing #audio-settings{bottom:auto;top:100px;right:8px}#online-game .growth-command-strip{gap:6px}#online-game .growth-build-line{font-size:10px}}
+
+body.online-match-playing #online-game #audio-subtitle{bottom:auto;top:78px;z-index:24}

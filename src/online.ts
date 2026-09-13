@@ -44,7 +44,7 @@ function equipmentText(actor: { weapon: string; ammo: number; reserve: number; o
 }
 
 export function startOnline() {
-  document.body.innerHTML = `<main class="online-app"><header class="online-header"><a class="online-brand" href="/"><span class="online-mark">S</span><span>PROJECT STRIKE<small>ONLINE OPERATIONS</small></span></a><nav aria-label="联机主导航"><a id="online-lobby-nav" href="#lobby">联机大厅</a><a href="/?offline">单机免登录</a><a id="online-armory-nav" href="#loadout">出战配装</a></nav><span id="online-profile-chip">游客档案</span></header><p id="status" role="status">连接服务器后可创建或加入房间。</p><div id="online-lobby-page"><div class="online-lobby-title"><p class="arsenal-eyebrow">MULTIPLAYER / BRIEFING</p><h1>联机大厅</h1><p>整备你的装备，和队友一起出发。</p></div><section id="online-account"><h2>联机账号</h2><p>账号等级、金币和装备权益由服务器保存。单机可免登录，离线进度不计入联网资产。</p><div class="loadout" id="account-login"><label>账号<input id="account-name" autocomplete="username" maxlength="24"></label><label>密码<input id="account-password" type="password" autocomplete="current-password" minlength="8" maxlength="128"></label><button id="account-register">注册联机账号</button><button id="account-signin">登录</button></div><p id="account-status" role="status">普通联机需登录；公共调试房间可直接试玩。</p><button id="account-logout" hidden>退出账号</button><button id="online-leave" hidden>离开房间 / 返回配装</button></section><div id="online-loadout-brief"></div><section id="online-connection"><h2>加入行动</h2><div class="loadout"><label>服务器<input id="server" value="ws://43.142.165.82:4180"></label><label>调试昵称<input id="name" value="玩家" maxlength="24"></label><label>房间码<input id="code"></label></div><div class="online-room-actions"><button id="create">创建房间</button><button id="create-growth">创建成长对战房间</button><button id="join">加入房间</button><button id="join-debug">加入公共调试房间</button><button id="reconnect">断线重连</button></div></section><div id="lobby"></div><div id="growth-session-controls" hidden><button id="growth-leave">离开成长房间</button><button id="growth-reconnect">断线重连</button></div><p id="online-hud" aria-live="off"></p><div id="online-game"></div><section id="growth-panel" hidden aria-label="局内成长"></section><p class="online-keys">A/D移动 · 空格跳跃 · S蹲伏 · 鼠标射击 · Q切枪 · R换弹 · E技能 · G道具</p></div><section id="online-preflight" hidden><div class="armory-rule-tabs" aria-label="配装规则"><button id="armory-rule-growth" aria-pressed="true">成长对战</button><button id="armory-rule-classic" aria-pressed="false">经典配装 · 装备与技能</button></div><p id="growth-armory-login" hidden>登录后可配置成长职业、武器、技能与成长池。<a href="#lobby">前往大厅登录 →</a></p><div id="growth-career-section" hidden><div id="growth-career-content"></div></div><div id="preflight-armory"></div></section></main>`;
+  document.body.innerHTML = `<main class="online-app"><header class="online-header"><a class="online-brand" href="/"><span class="online-mark">S</span><span>PROJECT STRIKE<small>ONLINE OPERATIONS</small></span></a><nav aria-label="联机主导航"><a id="online-lobby-nav" href="#lobby">联机大厅</a><a href="/?offline">单机免登录</a><a id="online-armory-nav" href="#loadout">出战配装</a></nav><span id="online-profile-chip">游客档案</span></header><p id="status" role="status">连接服务器后可创建或加入房间。</p><div id="online-lobby-page"><div class="online-lobby-title"><p class="arsenal-eyebrow">MULTIPLAYER / BRIEFING</p><h1>联机大厅</h1><p>整备你的装备，和队友一起出发。</p></div><section id="online-account"><h2>联机账号</h2><p>账号等级、金币和装备权益由服务器保存。单机可免登录，离线进度不计入联网资产。</p><div class="loadout" id="account-login"><label>账号<input id="account-name" autocomplete="username" maxlength="24"></label><label>密码<input id="account-password" type="password" autocomplete="current-password" minlength="8" maxlength="128"></label><button id="account-register">注册联机账号</button><button id="account-signin">登录</button></div><p id="account-status" role="status">普通联机需登录；公共调试房间可直接试玩。</p><button id="account-logout" hidden>退出账号</button><button id="online-leave" hidden>离开房间 / 返回配装</button></section><div id="online-loadout-brief"></div><section id="online-connection"><h2>加入行动</h2><div class="loadout"><label>服务器<input id="server" value="ws://43.142.165.82:4180"></label><label>调试昵称<input id="name" value="玩家" maxlength="24"></label><label>房间码<input id="code"></label></div><div class="online-room-actions"><button id="create">创建房间</button><button id="create-growth">创建成长对战房间</button><button id="join">加入房间</button><button id="join-debug">加入公共调试房间</button><button id="reconnect">断线重连</button></div></section><div id="lobby"></div><div id="growth-session-controls" hidden><button id="growth-leave">离开成长房间</button><button id="growth-reconnect">断线重连</button></div><p id="online-hud" aria-live="off"></p><div id="online-game" hidden><section id="growth-panel" hidden aria-label="局内成长"></section></div><p class="online-keys">A/D移动 · 空格跳跃 · S蹲伏 · 鼠标射击 · Q切枪 · R换弹 · E技能 · G道具</p></div><section id="online-preflight" hidden><div class="armory-rule-tabs" aria-label="配装规则"><button id="armory-rule-growth" aria-pressed="true">成长对战</button><button id="armory-rule-classic" aria-pressed="false">经典配装 · 装备与技能</button></div><p id="growth-armory-login" hidden>登录后可配置成长职业、武器、技能与成长池。<a href="#lobby">前往大厅登录 →</a></p><div id="growth-career-section" hidden><div id="growth-career-content"></div></div><div id="preflight-armory"></div></section></main>`;
   const el = (id: string) => document.getElementById(id)!;
   if (import.meta.env.DEV && ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname)) {
     (el('server') as HTMLInputElement).value = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.hostname}:4180`;
@@ -145,7 +145,8 @@ export function startOnline() {
     current.onChange = () => {
       if (network !== current) return;
       const profile = current.profile, room = current.room;
-      growthPanel.render(current.state);
+      growthPanel.render(room ? current.state : null);
+      el('online-game').hidden = !room || !current.state;
       if (room) armoryRule = room.rules === 'growth' ? 'growth' : 'classic';
       (el('armory-rule-growth') as HTMLButtonElement).disabled = !!room;
       (el('armory-rule-classic') as HTMLButtonElement).disabled = !!room;
@@ -153,7 +154,7 @@ export function startOnline() {
       growthCareer.render(profile?.growth, !canEdit() || armoryRule !== 'growth', growthRoom());
       const growthPlaying = room?.rules === 'growth' && room.phase === 'playing';
       document.body.classList.toggle('growth-playing', growthPlaying);
-      const matchPlaying = !!room && !room.debug && room.phase === 'playing' && !current.state?.result;
+      const matchPlaying = !!room && !!current.state && room.phase === 'playing';
       document.body.classList.toggle('online-match-playing', matchPlaying);
       el('growth-session-controls').hidden = !matchPlaying && !growthPlaying;
       el('growth-leave').textContent = growthPlaying ? '离开成长房间' : '离开对局 / 返回大厅';
@@ -176,7 +177,9 @@ export function startOnline() {
       if (nextArmory !== armorySignature) { armorySignature = nextArmory; renderPreflight(); }
       if (!room) {
         if (game) { game.destroy(true); game = undefined; }
-        el('lobby').replaceChildren(); el('online-hud').textContent = ''; radar.hidden = true; signature = '';
+        el('lobby').replaceChildren(); el('lobby').hidden = false; el('online-hud').textContent = ''; radar.hidden = true; signature = '';
+        el('online-game').querySelectorAll('.tactical-hud, .combat-feedback').forEach(node => node.remove());
+        el('audio-subtitle').hidden = true;
         return;
       }
       el('lobby').hidden = !room.debug && room.phase !== 'lobby' && !current.state?.result;
@@ -313,7 +316,8 @@ class OnlineScene extends Phaser.Scene {
   preload() { preloadReferenceArt(this); }
   create() {
     this.feedbackView = new CombatFeedbackView(document.getElementById('online-game')!, this.feedback);
-    this.events.once('shutdown', () => this.feedbackView?.destroy());
+    const destroyFeedback = () => this.feedbackView?.destroy();
+    this.events.once('shutdown', destroyFeedback); this.events.once('destroy', destroyFeedback);
     if (document.getElementById('lobby')?.contains(document.activeElement)) (document.activeElement as HTMLElement)?.blur();
     document.getElementById('online-game')?.setAttribute('aria-busy', 'false');
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
@@ -329,7 +333,8 @@ class OnlineScene extends Phaser.Scene {
     this.vision = new VisionOverlay(this, new CollisionWorld(map.terrain, map.collisionMask).solid);
     this.rig = new ReferenceArt(this); this.graphics = this.add.graphics().setDepth(3);
     this.hud = new BattleHUD(document.getElementById('online-game')!);
-    this.events.once('shutdown', () => this.hud.destroy());
+    const destroyHud = () => this.hud.destroy();
+    this.events.once('shutdown', destroyHud); this.events.once('destroy', destroyHud);
     const down = (e: KeyboardEvent) => {
       if (!document.getElementById('online-preflight')?.hidden || (e.target as HTMLElement)?.closest('input,button,select,a')) return;
       if (e.code === 'Tab' && this.feedback.dead) { e.preventDefault(); if (!e.repeat) this.feedback.cycle(); return; }
@@ -355,14 +360,16 @@ class OnlineScene extends Phaser.Scene {
     const resize = new ResizeObserver(() => {
       const next = `${surface.clientWidth}:${surface.clientHeight}`;
       if (next === surfaceSize || !surface.clientWidth || !surface.clientHeight) return;
-      surfaceSize = next; this.scale.getParentBounds(); this.scale.refresh();
+      surfaceSize = next; this.scale.setGameSize(Math.round(620 * surface.clientWidth / surface.clientHeight), 620); this.scale.getParentBounds(); this.scale.refresh();
     });
     resize.observe(surface);
     this.events.once('shutdown', () => resize.disconnect());
+    this.events.once('destroy', () => resize.disconnect());
     window.addEventListener('online-view-change', viewChanged);
     viewChanged();
     window.addEventListener('keydown', down); window.addEventListener('keyup', up); window.addEventListener('blur', blur);
-    this.events.once('shutdown', () => { this.audioPresentation.reset(); gameAudio.pause(false); window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', blur); window.removeEventListener('focusin', focus); window.removeEventListener('online-view-change', viewChanged); });
+    const cleanupInput = () => { this.audioPresentation.reset(); gameAudio.pause(false); window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', blur); window.removeEventListener('focusin', focus); window.removeEventListener('online-view-change', viewChanged); };
+    this.events.once('shutdown', cleanupInput); this.events.once('destroy', cleanupInput);
   }
   update(_time: number, delta: number) {
     const message = this.network.state; if (!message) { this.audioPresentation.reset(); return; }
@@ -397,7 +404,7 @@ class OnlineScene extends Phaser.Scene {
     const predicted = self && followed?.id === self.id ? this.network.prediction.position(renderAlpha, delta) ?? self
       : followed && this.network.interpolation.position(followed, now);
     const geometry = MAPS.find(m => m.id === message.mapId)!.geometry;
-    this.cameras.main.setZoom(mapView ? Math.min(1, 1120 / geometry.width, 620 / (geometry.height ?? 700)) : 1);
+    this.cameras.main.setZoom(mapView ? Math.min(1, this.scale.width / geometry.width, this.scale.height / (geometry.height ?? 700)) : 1);
     if (mapView) this.cameras.main.centerOn(geometry.width / 2, (geometry.height ?? 700) / 2);
     else if (predicted) this.cameras.main.centerOn(predicted.x, predicted.y - 150);
     this.rig.begin(); this.graphics.clear();

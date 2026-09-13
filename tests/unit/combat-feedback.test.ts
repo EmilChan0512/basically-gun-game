@@ -18,7 +18,7 @@ it('uses authoritative countdown, nine-tick freeze, sixty-tick observation and r
   a.life.respawnFrames = 141; f.accept('round', 10, [], a); expect(f.frozen).toBe(false); expect(f.canObserve).toBe(false);
   a.life.respawnFrames = 90; f.accept('round', 61, [], a); expect(f.canObserve).toBe(true); expect(f.seconds).toBe(3);
   const ally = { ...actor(), id: 'ally' }, enemy = { ...actor(), id: 'enemy', team: 2 };
-  f.cycle(); expect(f.follow(a, [a, ally, enemy]).id).toBe('ally'); f.cycle(); expect(f.follow(a, [a, ally, enemy]).id).toBe(a.id);
+  expect(f.follow(a, [a, ally, enemy]).id).toBe('ally'); f.cycle(); expect(f.follow(a, [a, ally, enemy]).id).toBe(a.id);
   a.life.alive = true; f.accept('round', 152, [], a); expect(f.dead).toBe(false); expect(f.observing).toBe(0);
 });
 
@@ -42,7 +42,7 @@ it('coalesces repeated hit feedback, expires it and leaves low health mechanics 
 it('warns at strictly under 25%, prioritizes zero reserve and excludes equipped melee', () => {
   const a = actor(); a.ammo = 8; expect(ammoWarning(a)).toBe(''); a.ammo = 7; expect(ammoWarning(a)).toContain('25%');
   a.weapon = 'usp'; a.ammo = 3; expect(ammoWarning(a)).toBe(''); a.ammo = 2; expect(ammoWarning(a)).toContain('LOW');
-  a.reserve = 0; a.reload = 12; expect(ammoWarning(a)).toContain('NO RESERVE');
+  a.reload = 12; expect(ammoWarning(a)).toBe(''); a.reserve = 0; expect(ammoWarning(a)).toContain('NO RESERVE');
   a.offhand = { kind: 'melee', equipped: true, age: -1, facing: { x: 1, y: 0 }, durability: 0, deployed: false };
   expect(ammoWarning(a)).toBe('');
 });

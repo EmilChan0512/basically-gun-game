@@ -18,17 +18,20 @@ export class VisionOverlay {
   }
   draw(observers: readonly (Point & { id: string })[]) {
     const camera = this.scene.cameras.main;
+    const width = this.scene.scale.width, height = this.scene.scale.height;
+    this.image.setDisplaySize(width, height);
+    const sx = 560 / width, sy = 310 / height;
     const ctx = this.texture.context;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalCompositeOperation = 'source-over'; ctx.clearRect(0, 0, 560, 310);
     ctx.fillStyle = 'rgba(5, 12, 23, 0.76)'; ctx.fillRect(0, 0, 560, 310);
-    ctx.setTransform(0.5, 0, 0, 0.5, -camera.scrollX * 0.5, -camera.scrollY * 0.5);
+    ctx.setTransform(sx, 0, 0, sy, -camera.scrollX * sx, -camera.scrollY * sy);
     ctx.globalCompositeOperation = 'destination-out';
     const active = new Set(observers.map(o => o.id));
     for (const id of this.cache.keys()) if (!active.has(id)) this.cache.delete(id);
     for (const observer of observers) {
-      if (observer.x + VISION_RADIUS < camera.scrollX || observer.x - VISION_RADIUS > camera.scrollX + 1120
-        || observer.y + VISION_RADIUS < camera.scrollY || observer.y - VISION_RADIUS > camera.scrollY + 620) continue;
+      if (observer.x + VISION_RADIUS < camera.scrollX || observer.x - VISION_RADIUS > camera.scrollX + width
+        || observer.y + VISION_RADIUS < camera.scrollY || observer.y - VISION_RADIUS > camera.scrollY + height) continue;
       let cached = this.cache.get(observer.id);
       if (!cached || Math.hypot(cached.origin.x - observer.x, cached.origin.y - observer.y) >= 4) {
         cached = { origin: { x: observer.x, y: observer.y }, polygon: visionPolygon(observer, this.wall) };

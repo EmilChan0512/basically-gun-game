@@ -23,11 +23,15 @@ test('campaign damage, phased status, ammo warnings and full respawn flow', asyn
   });
   await expect(page.locator('.combat-count')).toHaveText('RESPAWN IN 5');
   await expect(page.locator('.combat-observe')).toBeDisabled();
+  await expect(page.locator('.death-grayscale')).toBeVisible();
+  const deathBox = await page.locator('.combat-death').boundingBox();
   await expect(page.locator('.combat-killer')).toContainText('击杀者');
   await page.screenshot({ path: 'artifacts/qa/combat-death.png', fullPage: true });
   await expect(page.locator('.combat-observe')).toBeEnabled({ timeout: 4000 });
-  await page.locator('.combat-observe').click();
-  await expect(page.locator('.combat-hint')).toContainText('地图总览');
+  await expect(page.locator('.combat-hint')).toContainText('正在观察');
+  await expect(page.locator('.death-grayscale')).toHaveCount(0);
+  const observeBox = await page.locator('.combat-death').boundingBox();
+  expect(observeBox!.y).toBe(deathBox!.y); expect(observeBox!.height).toBe(deathBox!.height);
   await page.screenshot({ path: 'artifacts/qa/combat-observe.png', fullPage: true });
   await expect(page.locator('.combat-death')).toBeHidden({ timeout: 5000 });
   expect(await page.evaluate(() => window.__strikeCampaign!.battle.player.life.alive)).toBe(true);
@@ -51,8 +55,7 @@ test('online authoritative damage and death show feedback on the live canvas', a
     await expect(page.locator('.combat-cause')).toHaveText('战场环境');
     await page.screenshot({ path: 'artifacts/qa/combat-online-death.png', fullPage: true });
     await expect(page.locator('.combat-observe')).toBeEnabled({ timeout: 4000 });
-    await page.locator('.combat-observe').click();
-    await expect(page.locator('.combat-hint')).toContainText('地图总览');
+    await expect(page.locator('.combat-hint')).toContainText('正在观察');
     await expect(page.locator('.combat-death')).toBeHidden({ timeout: 7000 });
     expect(p.life.alive).toBe(true);
   } finally { await page.goto('about:blank'); await server.close(); }

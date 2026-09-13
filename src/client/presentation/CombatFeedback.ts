@@ -10,7 +10,7 @@ export interface FeedbackActor {
 export function ammoWarning(actor: FeedbackActor) {
   if (!actor.life.alive || actor.offhand?.equipped && actor.offhand.kind !== 'firearm') return '';
   if (actor.reserve === 0) return 'NO RESERVE AMMO · 无备用弹药';
-  if (actor.reload) return 'RELOADING · 换弹中';
+  if (actor.reload) return '';
   const size = WEAPONS[actor.weapon as keyof typeof WEAPONS]?.config.magazineSize ?? 1;
   return actor.ammo / size < .25 ? 'LOW MAGAZINE · 弹匣不足 25% · R 换弹' : '';
 }
@@ -24,7 +24,7 @@ export class CombatFeedback {
   stage = ''; ammo = ''; killer = ''; cause = ''; observing = 0; noRevive = false;
   get hitStrength() { return Math.max(0, Math.min(1, (this.hitUntil - this.tick) / 8)); }
   get punch() { return this.hitStrength * 9; }
-  reset() { this.scope = ''; this.cursor = 0; this.hitUntil = this.suppressedUntil = this.deathTick = -1; this.wasAlive = true; this.hits.clear(); this.observing = 0; }
+  reset() { this.scope = ''; this.cursor = 0; this.hitUntil = this.suppressedUntil = this.deathTick = -1; this.wasAlive = true; this.hits.clear(); this.observing = 0; this.canObserve = false; }
   accept(scope: string, tick: number, events: SimulationEvent[], self?: FeedbackActor, noRevive = false) {
     const newScope = this.scope !== scope;
     if (newScope) { this.reset(); this.scope = scope; this.cursor = Math.max(0, ...events.map(e => e.id)); }
@@ -47,7 +47,9 @@ export class CombatFeedback {
     if (!this.dead) { this.deathTick = -1; this.observing = 0; }
     this.wasAlive = !this.dead;
     this.frozen = this.dead && tick - this.deathTick < 9;
+    const couldObserve = this.canObserve;
     this.canObserve = this.dead && tick - this.deathTick >= 60;
+    if (this.canObserve && !couldObserve) this.observing = 1;
     this.seconds = self ? Math.min(5, Math.max(0, Math.ceil(self.life.respawnFrames / 30))) : 0;
     this.ammo = self ? ammoWarning(self) : '';
     this.stage = !self || this.dead ? '' : tick < this.suppressedUntil ? '受压 · 寻找掩体'

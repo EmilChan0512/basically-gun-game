@@ -29,13 +29,23 @@ test('illustrated upgrade cards retain keyboard focus during HUD updates and sho
       await page.screenshot({ path: `artifacts/qa/battle-hud-cards-${width}.png`, fullPage: true });
     }
     await page.setViewportSize({ width: 1440, height: 1050 });
+    const surfaceBefore = await page.locator('#online-game canvas').boundingBox();
     await page.locator('[data-growth-toggle]').click(); await expect(choices).toHaveCount(0);
+    expect(await page.locator('#online-game canvas').boundingBox()).toEqual(surfaceBefore);
+    expect(surfaceBefore!.width).toBeGreaterThan(1400);
+    expect(surfaceBefore!.height).toBeGreaterThan(1000);
     await page.screenshot({ path: 'artifacts/qa/battle-hud-deferred.png', fullPage: true });
     await page.locator('[data-growth-toggle]').click();
     const selected = await choices.first().getAttribute('data-upgrade'); await choices.first().click();
     await expect.poll(() => growth.selected).toContain(selected);
     await expect(page.locator('.growth-build-chip')).toHaveCount(1);
     await expect(page.locator('.growth-picks')).toContainText('1 / 4');
-    await expect(choices).toHaveCount(0); expect(errors).toEqual([]);
+    await expect(choices).toHaveCount(0);
+    await page.locator('#growth-leave').click();
+    await expect(page.locator('#online-game')).toBeHidden();
+    await expect(page.locator('.tactical-hud, .combat-feedback')).toHaveCount(0);
+    await expect(page.locator('#growth-panel')).toBeHidden();
+    await expect(page.locator('#create-growth')).toBeVisible();
+    expect(errors).toEqual([]);
   } finally { await server.close(); }
 });
