@@ -187,3 +187,33 @@ it('medic selfcare starts at 180 ticks, pulses every 30 ticks and clamps to 47.5
   b.damage(a,10,enemy);const wounded=a.life.health;step(b,179);expect(a.life.health).toBe(wounded);
   step(b);expect(a.life.health).toBe(wounded+2);
 });
+
+it('destroying a real enemy beacon with bullets does not trigger assault awakening or kill credit',()=>{
+  const room=new Room('awakening-facility','signal','tdm',false,'growth');
+  room.join('client','Assault',undefined,defaultGrowthLoadoutV3('assault'));
+  room.join('peer','Sniper',undefined,defaultGrowthLoadoutV3('sniper'));
+  for(const id of room.players.keys())room.ready(id,true);room.start('client',91);
+  const b=room.session!.battle,a=b.player,enemy=b.actors.find(other=>other.team!==a.team)!;
+  for(const actor of b.actors){actor.human=true;actor.life.spawnProtectionFrames=0;actor.movement.reset(actor===a?480:1500,599.5);}
+  step(b,21600);
+  const p=b.growthV3!.participant(a.id);expect(p.progression.ultimate).toBe(true);
+  a.life.health=50;enemy.movement.reset(520,599.5);
+  expect(b.useItem({x:540,y:599.5},enemy)).toBe(true);step(b,28);
+  const entity=b.growthV3!.gadgets.entities()[0];expect(entity.gadgetId).toBe('sn_beacon');
+  enemy.movement.reset(1500,599.5);
+  for(let i=0;i<40;i++)b.tickPlayers(new Map([[a.id,{...idleInput(),fire:true,aim:{x:540,y:587.5}}]]));
+  expect(b.journal.since(0).some(e=>e.kind==='deployableDestroyed'&&e.entityId===entity.id)).toBe(true);
+  expect(p.metrics.shots).toBeGreaterThan(0);expect(a.kills).toBe(0);expect(a.life.health).toBe(50);
+  expect(p.cooldowns.berserker).toBeUndefined();expect(p.buffs.berserker).toBeUndefined();
+});
+
+it('medical revival restarts the passive delay even when subsequent damage is environmental',()=>{
+  const b=fixture('medic'),a=b.player,p=b.growthV3!.participant(a.id);
+  step(b,200);b.damage(a,9999);step(b,150);
+  expect(a.life.alive).toBe(true);expect(p.lastDamage).toBe(b.frame);
+  step(b,75);b.damage(a,55);expect(a.life.health).toBe(40);
+  const restored=Battle.restore(b.checkpoint());step(b,104);step(restored,104);
+  expect(a.life.health).toBe(40);expect(restored.checkpoint()).toEqual(b.checkpoint());
+  step(b);step(restored);expect(a.life.health).toBe(42);
+  expect(restored.checkpoint()).toEqual(b.checkpoint());expect(p.metrics.healingXp).toBe(0);
+});

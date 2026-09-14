@@ -43,6 +43,77 @@ it('rejects the same out-of-map aim in prediction and use, without consuming inv
   f.actors[0].position={x:0,y:567};expect(sim.throwAim('blue',Math.PI)).toBeNull();
 });
 
+it('defensively caps restored flights at 32 and includes reserved throw windups in admission',()=>{
+  const f=fixture(),sim=new GadgetSimulation(f.port);
+  sim.register('blue','assault','as_frag');sim.register('red','assault','as_frag');
+  expect(sim.use('blue',{x:600,y:500},0)).toBe(true);for(let t=0;t<=6;t++)sim.step(t);
+  const state=sim.checkpoint(),flight=state.flying[0];
+  // Synthetic restore boundary, not a claim that normal cooldowns allow 32 concurrent throws.
+  state.flying=Array.from({length:31},(_,i)=>({...structuredClone(flight),id:`fixture-flight-${i}`}));
+  state.actors.find(a=>a.id==='blue')!.readyTick=0;
+  const restored=GadgetSimulation.restore(f.port,state);
+  expect(restored.use('red',{x:600,y:500},7)).toBe(true);
+  expect(restored.use('blue',{x:600,y:500},7)).toBe(false);
+  expect(restored.inventory('blue').charges).toBe(1);
+  expect(f.events.at(-1)).toMatchObject({kind:'error',reason:'capacity'});
+  restored.cancelCast('red');expect(restored.use('blue',{x:600,y:500},7)).toBe(true);
+  state.flying.push({...structuredClone(flight),id:'fixture-flight-31'});
+  expect(GadgetSimulation.restore(f.port,state).flying()).toHaveLength(32);
+  state.flying.push({...structuredClone(flight),id:'fixture-flight-32'});
+  expect(()=>GadgetSimulation.restore(f.port,state)).toThrow('exceeds capacity');
+});
+
+it('eight owners can deploy eight covers but an extra charge cannot bypass the per-owner slot',()=>{
+  const f=fixture(),sim=new GadgetSimulation(f.port);
+  for(let i=2;i<8;i++)f.actors.push({...structuredClone(f.actors[0]),id:`tank-${i}`});
+  f.actors.forEach((a,i)=>{a.team=1;a.position={x:200+i*100,y:567};a.feet={x:a.position.x,y:600};sim.register(a.id,'tank','tk_cover');});
+  expect(()=>sim.register('ninth','tank','tk_cover')).toThrow();
+  expect(sim.extraCharge('blue')).toBe(true);
+  for(const a of f.actors)expect(sim.use(a.id,a.feet,0)).toBe(true);
+  for(let t=0;t<=42;t++)sim.step(t);
+  expect(sim.entities()).toHaveLength(8);expect(new Set(sim.entities().map(e=>e.sourceId)).size).toBe(8);
+  expect(sim.use('blue',f.actors[0].feet,42)).toBe(false);expect(sim.inventory('blue').charges).toBe(1);
+  expect(f.events.at(-1)).toMatchObject({kind:'error',reason:'existing_deployable'});
+  const cover=sim.entities().find(e=>e.sourceId==='blue')!;
+  sim.damageEntity(cover.id,120,2,42);expect(sim.entities()).toHaveLength(7);
+  expect(sim.inventory('blue').charges).toBe(1);expect(sim.use('blue',f.actors[0].feet,42)).toBe(true);
+  for(let t=43;t<=54;t++)sim.step(t);
+  expect(sim.entities()).toHaveLength(8);expect(sim.inventory('blue').charges).toBe(0);
+});
+
+it('eight smoke slots count active regions, windups and flying throws without consuming a rejected charge',()=>{
+  const f=fixture(),sim=new GadgetSimulation(f.port);
+  for(let i=2;i<8;i++)f.actors.push({...structuredClone(f.actors[0]),id:`medic-${i}`});
+  for(const a of f.actors)sim.register(a.id,'medic','md_smoke');
+  const aim={x:600,y:500};
+  for(const a of f.actors.slice(0,7))expect(sim.use(a.id,aim,0)).toBe(true);
+  for(let t=0;t<=36;t++)sim.step(t);expect(sim.smoke()).toHaveLength(7);
+  const last=f.actors[7].id;
+  expect(sim.use(last,aim,36)).toBe(true);
+  expect(sim.use('blue',aim,36)).toBe(false);expect(sim.inventory('blue').charges).toBe(1);
+  sim.cancelCast(last);expect(sim.use('blue',aim,36)).toBe(true);
+  for(let t=37;t<=42;t++)sim.step(t);expect(sim.flying()).toHaveLength(1);
+  expect(sim.use(last,aim,42)).toBe(false);expect(sim.inventory(last).charges).toBe(2);
+  for(let t=43;t<=66;t++)sim.step(t);expect(sim.smoke()).toHaveLength(8);
+  expect(sim.use(last,aim,66)).toBe(false);expect(sim.inventory(last).charges).toBe(2);
+  for(let t=67;t<=180;t++)sim.step(t);expect(sim.smoke()).toHaveLength(1);
+  expect(sim.use(last,aim,180)).toBe(true);
+  expect(f.events.filter(e=>e.kind==='error'&&e.reason==='capacity')).toHaveLength(3);
+});
+
+it('predicts a released grenade impact before and after movement without changing its flight',()=>{
+  const f=fixture(),sim=new GadgetSimulation(f.port);sim.register('blue','assault','as_frag');
+  expect(sim.use('blue',{x:600,y:567},0)).toBe(true);
+  for(let t=0;t<=12;t++)sim.step(t);
+  const projectile=sim.flying()[0],before=sim.checkpoint();
+  const predicted=sim.predictFlyingImpact(projectile.id)!;
+  expect(sim.checkpoint()).toEqual(before);expect(sim.predictFlyingImpact('missing')).toBeNull();
+  sim.beginTick(13);expect(sim.predictFlyingImpact(projectile.id)).toEqual(predicted);sim.finishMovement(13);
+  expect(sim.predictFlyingImpact(projectile.id)).toEqual(predicted);
+  for(let t=14;t<=33;t++)sim.step(t);
+  expect(f.events.find(e=>e.kind==='explosion')!.position).toEqual(predicted);
+});
+
 it('exclusive registration and finite G inventory survive death/checkpoint and allow only one G1 charge grant',()=>{
   const f=fixture(),sim=new GadgetSimulation(f.port);
   expect(()=>sim.register('bad','assault','md_smoke')).toThrow('not_owner_class');

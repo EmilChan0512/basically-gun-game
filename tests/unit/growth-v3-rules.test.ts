@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { GROWTH_CLASS_IDS } from '../../src/shared/content/growth-v3/Core';
 import { GROWTH_V3_WEAPONS, type GrowthWeaponId } from '../../src/shared/content/growth-v3/Weapons';
 import { GROWTH_V3_ATTACHMENTS, growthReloadTicks, resolveGrowthWeapon, validateAttachments, type GrowthAttachmentId } from '../../src/shared/content/growth-v3/Attachments';
@@ -66,6 +67,36 @@ describe('growth v3 specification content and loadout authority', () => {
 });
 
 describe('growth v3 weapon and damage specification assertions', () => {
+  it('matches all eighteen spread, recovery, visual kick and pellet fan rows to specification 5.1',()=>{
+    const spec=readFileSync('docs/COMBAT_DEVELOPMENT_SPEC_V1.md','utf8').split('### 5.1')[1].split('### 5.2')[0];
+    const rows=spec.split('\n').filter(line=>/^\| \w+ \| [\d.]+ \|/.test(line));
+    expect(rows).toHaveLength(18);const seen=new Set<string>();
+    for(const row of rows){
+      const cells=row.split('|').slice(1,-1).map(s=>s.trim()),id=cells[0];seen.add(id);
+      const [bloomPerShot,bloomCap]=cells[2].split('/').map(Number);
+      const [recoverWait,recoverPerTick]=cells[3].split('/').map(Number);
+      expect(GROWTH_V3_WEAPONS[id as GrowthWeaponId],id).toMatchObject({spread:Number(cells[1]),bloomPerShot,bloomCap,
+        recoverWait,recoverPerTick,visualKick:Number(cells[4]),fanDegrees:Number(cells[5])});
+    }
+    expect([...seen].sort()).toEqual(Object.keys(GROWTH_V3_WEAPONS).sort());
+  });
+  it('matches every basic weapon column against the approved development document',()=>{
+    const spec=readFileSync('docs/COMBAT_DEVELOPMENT_SPEC_V1.md','utf8');
+    const rows=spec.split('\n').filter(line=>/^\| \w+ \/ (AR|SMG|SG|PREC|LMG|SIDE) \/ P[25] \|/.test(line));
+    expect(rows).toHaveLength(18);const seen=new Set<string>();
+    for(const row of rows){
+      const cells=row.split('|').slice(1,-1).map(s=>s.trim());
+      const [id,family,stage]=cells[0].split(' / ');seen.add(id);
+      const [damage,pellets,headMultiplier]=cells[1].match(/[\d.]+/g)!.map(Number);
+      const timing=cells[2].match(/\d+/g)!.map(Number),mode=cells[2].startsWith('三连发')?'burst':cells[2].startsWith('自动')?'auto':'semi';
+      const [magazine,totalAmmo]=cells[3].split('/').map(Number),[reload,emptyReload]=cells[4].split('/').map(Number);
+      const [falloffStart,falloffEnd,maxRange,minDamageScale]=cells[5].match(/[\d.]+/g)!.map(Number);
+      expect(GROWTH_V3_WEAPONS[id as GrowthWeaponId],id).toMatchObject({family,stage:Number(stage.slice(1)),damage,pellets,headMultiplier,
+        mode,interval:timing[0],burstGap:mode==='burst'?timing[1]:0,magazine,totalAmmo,reload,emptyReload,
+        falloffStart,falloffEnd,maxRange,minDamageScale,prepare:Number(cells[6])});
+    }
+    expect([...seen].sort()).toEqual(Object.keys(GROWTH_V3_WEAPONS).sort());
+  });
   it.each([['m4',10,36],['famas',13,36],['burst_ar',9,38]] as const)('N01-N03 uses actual %s trigger scheduling', (weaponId, count, killTick) => {
     const loadout = { ...defaultGrowthLoadoutV3(), primary: weaponId }, gun = new GrowthArsenalV3(loadout);
     let health = 100000; const shots: number[] = [];

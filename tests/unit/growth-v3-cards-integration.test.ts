@@ -156,6 +156,18 @@ it.each([[80,117],[81,110]] as const)('as_C3 enemy death at %s pixels supplies o
   expect(f.p.scavenged).toHaveLength(distance===80?1:0);
 });
 
+it.each([[179,117],[180,110]] as const)('as_C3 first visits an enemy death point after %s ticks', (age,total)=>{
+  const f=fixture('assault','as_C3');f.shootTo(20);
+  f.b.actors[1].movement.reset(500,499.5);f.b.damage(f.b.actors[1],999,f.b.player);
+  const deathTick=f.b.frame;
+  while(f.b.frame<deathTick+age-1)f.b.tickPlayers(new Map());
+  expect(f.gun.current.ammo+f.gun.current.reserve).toBe(110);
+  f.b.player.movement.reset(480,499.5);
+  const restored=Battle.restore(f.b.checkpoint());f.b.tickPlayers(new Map());restored.tickPlayers(new Map());
+  expect(f.b.frame).toBe(deathTick+age);expect(f.gun.current.ammo+f.gun.current.reserve).toBe(total);
+  expect(restored.checkpoint()).toEqual(f.b.checkpoint());
+});
+
 it.each([[30,190],[48,200]] as const)('tk_C4 actual kill replenishes ten main reserve rounds with capacity cap (ammo=%s)', (ammo,total)=>{
   const f=fixture('tank','tk_C4');f.shootTo(ammo);
   f.b.damage(f.b.actors[1],999,f.b.player);
@@ -219,6 +231,29 @@ it.each([[false,false],[true,false],[true,true]] as const)('tk_B3 gives nearest 
   expect(f.b.growthV3!.participant(target.id).armor.remaining).toBe(!cancel&&ally?10000:0);
 });
 
+it.each(['boundary','outside','nearest','tie','hidden'] as const)('tk_B3 shield exhaustion selects a legal recipient (%s)',scenario=>{
+  const build=changeGrowthAbility(defaultGrowthLoadoutV3('tank'),'tk_shield');
+  build.pool=['tk_B3' as const,...legalGrowthCards('tank','tk_shield').filter(id=>id!=='tk_B3')].slice(0,8);
+  const mission={...new GrowthRangeSession(build,{distance:1800,health:100,armor:0}).battle.mission,enemies:3};
+  let b=new Battle(mission,'normal','m4',seededRandom(92311));
+  b.enableGrowthV3(Object.fromEntries(b.actors.map(a=>[a.id,a.id==='player'?build:defaultGrowthLoadoutV3()])),5);
+  b.actors.forEach((a,i)=>{a.human=true;a.life.spawnProtectionFrames=0;a.movement.reset(i?500+i*100:120,499.5);});
+  b.actors[1].team=1;b.actors[2].team=1;
+  const positions={boundary:[240,1000],outside:[241,1000],nearest:[220,180],tie:[220,20],hidden:[200,20]}[scenario];
+  b.actors[1].movement.reset(positions[0],499.5);b.actors[2].movement.reset(positions[1],499.5);
+  const p=b.growthV3!.participant('player');awardGrowthV3(p.progression,p.loadout,200,0,()=>0);
+  expect(b.growthChoice('player',p.progression.offer!.batch,'tk_B3')).toBe(true);
+  if(scenario==='hidden'){
+    const state=b.checkpoint();state.growthV3!.gadgets.smoke.push({id:'relay-smoke',sourceId:'enemy-2',team:2,gadgetId:'md_smoke',position:{x:200,y:466.5},radius:20,expiresTick:100});
+    b=Battle.restore(state);
+  }
+  b.player.aim={x:1000,y:466.5};b.useSkill();for(let i=0;i<7;i++)b.tickPlayers(new Map());
+  b.damage(b.player,100,b.actors[3]);b.damage(b.player,100,b.actors[3]);b.tickPlayers(new Map());
+  expect(b.player.life.alive).toBe(true);expect(b.growthV3!.abilities.actorState('player').active).toBeNull();
+  const recipient=scenario==='outside'?'player':scenario==='nearest'||scenario==='hidden'?'enemy-1':'enemy-0';
+  for(const actor of b.actors)expect(b.growthV3!.participant(actor.id).armor.remaining).toBe(actor.id===recipient?10000:0);
+});
+
 it('md_B2 pauses damaged real chain until fifteen damage-free ticks and never catches up skipped pulses',()=>{
   const f=fixture('medic','md_B2','md_link');f.b.damage(f.b.player,50,f.b.actors[1]);
   f.b.useSkill();for(let i=0;i<20;i++)f.r.step();
@@ -227,6 +262,23 @@ it('md_B2 pauses damaged real chain until fifteen damage-free ticks and never ca
   expect(f.b.player.life.health).toBe(59);
   expect(f.b.journal.since(0).filter(e=>e.kind==='heal').map(e=>e.tick)).toEqual([37,52,67,82,97]);
   expect(f.b.growthV3!.abilities.actorState('player').active).toBeNull();
+});
+
+it.each([[37,[52,67,82,97],54],[38,[67,82,97],51]] as const)('md_B2 repeated damage last at tick %s resets the quiet interval without delaying expiry', (lastHit,pulses,health)=>{
+  const f=fixture('medic','md_B2','md_link');f.b.damage(f.b.player,50,f.b.actors[1]);
+  f.b.useSkill();
+  for(const tick of [20,30,lastHit]){
+    while(f.b.frame<tick)f.b.tickPlayers(new Map());
+    f.b.damage(f.b.player,1,f.b.actors[1]);
+    expect(f.b.growthV3!.abilities.actorState('player').active!.pauseUntil).toBe(tick+15);
+  }
+  expect(f.b.journal.since(0).filter(e=>e.kind==='heal')).toEqual([]);
+  const restored=Battle.restore(f.b.checkpoint());
+  while(f.b.frame<97){f.b.tickPlayers(new Map());restored.tickPlayers(new Map());}
+  expect(f.b.journal.since(0).filter(e=>e.kind==='heal').map(e=>e.tick)).toEqual(pulses);
+  expect(f.b.player.life.health).toBe(health);
+  expect(f.b.growthV3!.abilities.actorState('player').active).toBeNull();
+  expect(restored.checkpoint()).toEqual(f.b.checkpoint());
 });
 
 it.each([

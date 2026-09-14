@@ -142,6 +142,13 @@ export class GadgetSimulation {
     const actor=this.actor(id),s=this.inventory(id),def=resolveGadget(s.gadgetId,s.upgraded);
     return !!actor&&def.kind==='deploy'&&this.validPlacement(actor,target,def);
   }
+  /** Predict only an existing observed projectile; never advances authoritative state. */
+  predictFlyingImpact(entityId:string):CombatPoint|null {
+    const existing=this.state.flying.find(f=>f.id===entityId);if(!existing)return null;
+    const predicted={...existing,position:{...existing.position}};
+    for(let tick=this.state.finishedTick+1;tick<=predicted.detonateTick;tick++)this.move(predicted);
+    return {...predicted.position};
+  }
   hasDeploymentReservation(id:string) {
     return this.state.entities.some(e=>e.sourceId===id)||this.state.flying.some(e=>e.sourceId===id&&e.definition.reservesDeploySlot)
       ||this.state.actors.some(a=>a.id===id&&a.cast?.definition.reservesDeploySlot);

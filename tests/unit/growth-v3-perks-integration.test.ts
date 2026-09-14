@@ -73,6 +73,25 @@ function shotOffset(r:GrowthRangeSession){
   return Math.atan2(end.y-origin.y,end.x-origin.x)-Math.atan2(aim.y-origin.y,aim.x-origin.x);
 }
 
+it('pk_supplyrun activates from a real allied medical ammo box only when ammunition is received',()=>{
+  const mission=fixture().b.mission,b=new Battle(mission,'normal','m4',seededRandom(43191));
+  const recipient=defaultGrowthLoadoutV3();recipient.perks[0]='pk_supplyrun';
+  const medic=defaultGrowthLoadoutV3('medic');medic.gadgetId='md_ammo';
+  b.enableGrowthV3({player:recipient,'enemy-0':medic},5);
+  b.actors.forEach((a,i)=>{a.human=true;a.team=1;a.life.spawnProtectionFrames=0;a.movement.reset(200+i*40,499.5);});
+  const owner=b.actors[1],p=b.growthV3!.participant('player'),gun=b.growthV3!.weapons.get('player')!;
+  expect(b.useItem({x:220,y:499.5},owner)).toBe(true);
+  for(let i=0;i<28;i++)b.tickPlayers(new Map());
+  const box=b.growthV3!.gadgets.entities()[0];expect(box.gadgetId).toBe('md_ammo');
+  expect(box.recipients).not.toContain('player');expect(p.buffs.supplyrun).toBeUndefined();
+  b.tickPlayers(new Map([['player',{...idleInput(),fire:true,aim:{x:1200,y:100}}]]));
+  expect(gun.current.ammo+gun.current.reserve).toBe(119);
+  b.tickPlayers(new Map());expect(gun.current.ammo+gun.current.reserve).toBe(120);
+  expect(box.recipients).toContain('player');expect(p.buffs.supplyrun).toBe(b.frame+60);
+  expect(p.cooldowns.supplyrun).toBe(b.frame+360);
+  expect(b.player.itemCharges).toBe(2);expect(owner.itemCharges).toBe(0);
+});
+
 it('pk_firstshot reduces actual shot angle by ten percent only after thirty ticks without firing',()=>{
   const a=fixture('pk_sidewalk','pk_firstshot'),z=fixture('pk_sidewalk','pk_sidefeed');
   for(let tick=1;tick<=35;tick++){

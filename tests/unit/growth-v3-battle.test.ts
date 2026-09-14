@@ -7,6 +7,7 @@ import { GrowthArsenalV3 } from '../../src/shared/simulation/growth-v3/WeaponRul
 import { GadgetSimulation } from '../../src/shared/simulation/growth-v3/GadgetSimulation';
 import { visibleState } from '../../src/shared/protocol/VisibleState';
 import type { StateMessage } from '../../src/shared/protocol/State';
+import { awardGrowthV3 } from '../../src/shared/simulation/growth-v3/Progression';
 
 function fixture(loadouts: GrowthLoadoutV3[] = [defaultGrowthLoadoutV3(), defaultGrowthLoadoutV3()],mode:Mission['mode']='tdm') {
   const mission: Mission = { id: 'v3-test', title: '', location: '', brief: '', debrief: '', mode, goal: 100,
@@ -19,6 +20,177 @@ function fixture(loadouts: GrowthLoadoutV3[] = [defaultGrowthLoadoutV3(), defaul
   return battle;
 }
 const advance = (battle: Battle, n: number) => { for (let i = 0; i < n; i++) battle.tickPlayers(new Map()); };
+
+it.each([true,false])('sniper AI places its beacon only at a reachable transit junction (reachable=%s)',reachable=>{
+  const original=fixture([defaultGrowthLoadoutV3('sniper'),defaultGrowthLoadoutV3()]);advance(original,31);
+  const state=original.checkpoint();
+  state.mission.navigation=reachable?[
+    {x:500,y:599.5,links:[1]},{x:560,y:599.5,links:[0,2]},{x:700,y:599.5,links:[1]},
+  ]:[
+    {x:600,y:599.5,links:[1]},{x:700,y:599.5,links:[0]},
+    {x:560,y:599.5,links:[3,4]},{x:400,y:599.5,links:[2]},{x:300,y:599.5,links:[2]},
+  ];
+  const b=Battle.restore(state);b.player.movement.reset(600,599.5);b.actors[1].movement.reset(780,599.5);
+  const g=b.growthV3!.gadgets;expect(g.canPlace('player',{x:560,y:599.5})).toBe(true);
+  b.player.human=false;advance(b,1);const inventory=g.inventory('player');
+  if(reachable){expect(inventory.cast!.target).toEqual({x:560,y:599.5});advance(b,12);expect(inventory.charges).toBe(0);expect(g.entities()[0].gadgetId).toBe('sn_beacon');}
+  else {expect(inventory.cast).toBeNull();expect(inventory.charges).toBe(1);}
+});
+
+it.each([-1,1])('tank AI puts cover on the visible threat side (%s)',direction=>{
+  const b=fixture([defaultGrowthLoadoutV3('tank'),defaultGrowthLoadoutV3()]);advance(b,31);
+  b.player.movement.reset(600,599.5);b.actors[1].movement.reset(600+direction*180,599.5);
+  b.player.human=false;advance(b,1);
+  const inventory=b.growthV3!.gadgets.inventory('player');expect(inventory.cast).not.toBeNull();
+  expect((inventory.cast!.target.x-b.player.movement.x)*direction).toBeGreaterThan(0);
+  advance(b,12);const cover=b.growthV3!.gadgets.entities().find(e=>e.gadgetId==='tk_cover')!;
+  expect(cover).toBeDefined();expect((cover.position.x-b.player.movement.x)*direction).toBeGreaterThan(0);
+  expect(inventory.charges).toBe(0);
+});
+
+it('tank AI retains cover when only positions behind it are legal',()=>{
+  const original=fixture([defaultGrowthLoadoutV3('tank'),defaultGrowthLoadoutV3()],'dom');advance(original,31);
+  const state=original.checkpoint();state.mission.objective={x:550,y:599.5};
+  const b=Battle.restore(state);b.player.movement.reset(600,599.5);b.actors[1].movement.reset(420,599.5);
+  const g=b.growthV3!.gadgets;
+  expect(g.canPlace('player',{x:560,y:599.5})).toBe(false);expect(g.canPlace('player',{x:545,y:599.5})).toBe(false);
+  expect(g.canPlace('player',{x:640,y:599.5})).toBe(true);
+  b.player.human=false;advance(b,1);
+  expect(g.inventory('player').cast).toBeNull();expect(g.inventory('player').charges).toBe(1);
+});
+
+it('AI respects the evolved roll charge gap even with an available second charge',()=>{
+  const b=fixture(),r=b.growthV3!,p=r.participant('player');
+  awardGrowthV3(p.progression,p.loadout,1200,0,()=>0);
+  for(let i=0;i<3;i++){
+    const card=p.progression.offer!.cards.find(c=>c.startsWith('as_A'))!;
+    expect(b.growthChoice('player',p.progression.offer!.batch,card)).toBe(true);
+  }
+  expect(b.growthChoice('player',p.progression.offer!.batch,'as_EV_A')).toBe(true);
+  advance(b,360);expect(r.abilities.actorState('player').charges).toBe(2);
+  b.useSkill();advance(b,1);expect(r.abilities.actorState('player').useReadyTick).toBe(421);
+  advance(b,29);b.player.life.health=39;b.actors[1].movement.reset(b.player.movement.x+180,599.5);
+  b.player.human=false;const cursor=b.journal.cursor;advance(b,1);
+  expect(b.frame).toBe(391);expect(r.abilities.actorState('player').charges).toBe(1);
+  expect(b.journal.since(cursor).filter(e=>e.kind==='error'&&e.actorId==='player')).toEqual([]);
+  advance(b,30);expect(b.frame).toBe(421);expect(r.abilities.actorState('player').charges).toBe(0);
+  expect(r.abilities.actorState('player').active!.startTick).toBe(421);
+});
+
+it('AI starts avoiding a real enemy charge exactly when it becomes armed',()=>{
+  const attacker=defaultGrowthLoadoutV3();attacker.gadgetId='as_charge';
+  const b=fixture([defaultGrowthLoadoutV3(),attacker]),enemy=b.actors[1];enemy.movement.reset(520,599.5);
+  expect(b.useItem({x:540,y:599.5},enemy)).toBe(true);advance(b,13);
+  const charge=b.growthV3!.gadgets.entities()[0];enemy.movement.reset(1300,599.5);
+  while(b.frame<charge.armedTick-2)advance(b,1);
+  b.player.movement.reset(480,599.5);b.player.human=false;advance(b,1);
+  expect(b.frame).toBe(charge.armedTick-1);expect(b.player.brain.state).not.toBe('evade');
+  const x=b.player.movement.x;advance(b,1);
+  expect(b.frame).toBe(charge.armedTick);expect(b.player.brain.state).toBe('evade');expect(b.player.movement.x).toBeLessThan(x);
+  expect(b.growthV3!.gadgets.entities().some(e=>e.id===charge.id)).toBe(true);
+});
+
+it('AI also escapes its own real grenade despite matching its team',()=>{
+  const b=fixture();expect(b.useItem({x:700,y:567},b.player)).toBe(true);advance(b,7);
+  const g=b.growthV3!.gadgets,flight=g.flying()[0],impact=g.predictFlyingImpact(flight.id)!;
+  while(b.frame<flight.detonateTick-18)advance(b,1);
+  b.player.movement.reset(impact.x-20,599.5);b.actors[1].movement.reset(1300,599.5);
+  b.player.human=false;advance(b,1);expect(b.player.brain.state).toBe('evade');
+  while(b.frame<=flight.detonateTick)advance(b,1);
+  expect(g.flying()).toHaveLength(0);expect(b.player.life.health).toBe(100);expect(b.player.life.spawnProtectionFrames).toBe(0);
+});
+
+it.each(['as_frag','as_concussion'] as const)('AI escapes the actual %s blast instead of advancing into it',gadget=>{
+  const attacker=defaultGrowthLoadoutV3();attacker.gadgetId=gadget;
+  const b=fixture([defaultGrowthLoadoutV3(),attacker]),enemy=b.actors[1];
+  expect(b.useItem({x:300,y:567},enemy)).toBe(true);advance(b,7);
+  const g=b.growthV3!.gadgets,flight=g.flying()[0],impact=g.predictFlyingImpact(flight.id)!;
+  while(b.frame<flight.detonateTick-18)advance(b,1);
+  const start=impact.x-20;b.player.movement.reset(start,599.5);enemy.movement.reset(1300,599.5);
+  b.player.human=false;advance(b,1);
+  expect(b.player.brain.state).toBe('evade');expect(b.player.movement.x).toBeLessThan(start);
+  const restored=Battle.restore(b.checkpoint());
+  while(b.frame<=flight.detonateTick){advance(b,1);advance(restored,1);}
+  expect(b.player.life.health).toBe(100);expect(b.player.life.spawnProtectionFrames).toBe(0);
+  expect(g.flying()).toHaveLength(0);expect(restored.checkpoint()).toEqual(b.checkpoint());
+});
+
+it.each(['friendly','hidden','harmless'] as const)('AI does not evade a %s projectile',kind=>{
+  const attacker=defaultGrowthLoadoutV3(kind==='harmless'?'sniper':'assault');
+  if(kind==='harmless')attacker.gadgetId='sn_emp';
+  const b=fixture([defaultGrowthLoadoutV3(),attacker]),enemy=b.actors[1];
+  if(kind==='friendly')enemy.team=b.player.team;
+  expect(b.useItem({x:300,y:567},enemy)).toBe(true);advance(b,7);
+  const flight=b.growthV3!.gadgets.flying()[0],impact=b.growthV3!.gadgets.predictFlyingImpact(flight.id)!;
+  while(b.frame<flight.detonateTick-18)advance(b,1);
+  b.player.movement.reset(impact.x-20,599.5);enemy.movement.reset(1300,599.5);
+  const checkpoint=b.checkpoint();
+  if(kind==='hidden')checkpoint.growthV3!.gadgets.smoke.push({id:'danger-smoke',sourceId:enemy.id,team:2,gadgetId:'md_smoke',position:{...flight.position},radius:150,expiresTick:200});
+  const restored=Battle.restore(checkpoint);restored.player.human=false;advance(restored,1);
+  expect(restored.player.brain.state).not.toBe('evade');
+});
+
+it.each(['wall','ledge'] as const)('AI rejects an escape route through a %s',kind=>{
+  const b=fixture(),enemy=b.actors[1];
+  expect(b.useItem({x:300,y:567},enemy)).toBe(true);advance(b,7);
+  const flight=b.growthV3!.gadgets.flying()[0],impact=b.growthV3!.gadgets.predictFlyingImpact(flight.id)!;
+  while(b.frame<flight.detonateTick-18)advance(b,1);
+  const start=impact.x-20;b.player.movement.reset(start,599.5);enemy.movement.reset(1300,599.5);
+  const checkpoint=b.checkpoint();
+  if(kind==='wall')checkpoint.mission.terrain.push({x:start-30,y:500,width:14,height:100});
+  else checkpoint.mission.terrain=[{x:start-10,y:600,width:1400-start+10,height:100}];
+  const restored=Battle.restore(checkpoint);restored.player.human=false;advance(restored,1);
+  expect(restored.player.brain.state).toBe('evade');expect(restored.player.movement.x).toBeGreaterThan(start);
+});
+
+it('AI acquires and shoots a visible enemy facility when its owner has left sight',()=>{
+  const b=fixture([defaultGrowthLoadoutV3(),defaultGrowthLoadoutV3('sniper')]),enemy=b.actors[1];
+  enemy.movement.reset(520,599.5);
+  expect(b.useItem({x:540,y:599.5},enemy)).toBe(true);advance(b,28);
+  const entity=b.growthV3!.gadgets.entities()[0];expect(entity.gadgetId).toBe('sn_beacon');
+  enemy.movement.reset(1300,599.5);b.player.human=false;advance(b,1);
+  expect(b.player.brain.target).toBe(entity.id);
+  const restored=Battle.restore(b.checkpoint());advance(b,60);advance(restored,60);
+  expect(restored.checkpoint()).toEqual(b.checkpoint());
+  expect(b.growthV3!.gadgets.entities().some(e=>e.id===entity.id)).toBe(false);
+  expect(b.journal.since(0).some(e=>e.kind==='deployableDestroyed'&&e.entityId===entity.id)).toBe(true);
+  expect(b.growthV3!.participant('player').shots).toBeGreaterThan(0);
+});
+
+it('AI prioritizes a visible enemy over a nearer destructible facility',()=>{
+  const b=fixture([defaultGrowthLoadoutV3(),defaultGrowthLoadoutV3('sniper')]),enemy=b.actors[1];
+  enemy.movement.reset(520,599.5);
+  expect(b.useItem({x:540,y:599.5},enemy)).toBe(true);advance(b,28);
+  enemy.movement.reset(700,599.5);b.player.human=false;advance(b,1);
+  expect(b.player.brain.target).toBe(enemy.id);
+});
+
+it.each(['friendly','smoke'] as const)('AI does not acquire a %s facility',kind=>{
+  const b=fixture([defaultGrowthLoadoutV3(),defaultGrowthLoadoutV3('sniper')]),owner=b.actors[1];
+  if(kind==='friendly')owner.team=b.player.team;
+  owner.movement.reset(520,599.5);
+  expect(b.useItem({x:540,y:599.5},owner)).toBe(true);advance(b,28);
+  const entity=b.growthV3!.gadgets.entities()[0];owner.movement.reset(1300,599.5);
+  const checkpoint=b.checkpoint();
+  if(kind==='smoke')checkpoint.growthV3!.gadgets.smoke.push({id:'facility-smoke',sourceId:owner.id,team:2,gadgetId:'md_smoke',position:{x:540,y:550},radius:150,expiresTick:200});
+  const restored=Battle.restore(checkpoint);restored.player.human=false;advance(restored,17);
+  expect(restored.player.brain.target).not.toBe(entity.id);
+  expect(restored.growthV3!.participant('player').shots).toBe(0);
+  expect(restored.growthV3!.gadgets.entities().find(e=>e.id===entity.id)!.health).toBe(entity.health);
+});
+
+it.each(['tk_barrier','tk_shield'] as const)('%s AI does not suppress its attack with an unusable protected skill',ability=>{
+  const tank=changeGrowthAbility(defaultGrowthLoadoutV3('tank'),ability);
+  const b=fixture([tank,defaultGrowthLoadoutV3(),defaultGrowthLoadoutV3()]);
+  b.player.life.spawnProtectionFrames=75;b.player.human=false;
+  advance(b,17);
+  expect(b.journal.since(0).filter(e=>e.kind==='error'&&e.actorId==='player')).toEqual([]);
+  expect(b.player.life.spawnProtectionFrames).toBe(0);
+  expect(b.growthV3!.abilities.actorState('player').charges).toBe(1);
+  expect(b.growthV3!.gadgets.inventory('player').charges).toBe(1);
+  advance(b,14);
+  expect(b.growthV3!.abilities.actorState('player').pending).not.toBeNull();
+});
 
 it('AI waits thirty ticks between tactical evaluations when conditions become newly valid',()=>{
   const build=defaultGrowthLoadoutV3('tank');build.gadgetId='tk_plate';
@@ -282,6 +454,15 @@ it('armor-only damage does not establish damage-assist eligibility',()=>{
   expect(b.growthV3!.participant(b.player.id).progression.xp).toBe(0);
 });
 
+it.each([[800,100],[1200,110]] as const)('v3 catch-up includes self in the match average for an opponent with %i XP', (opponentXp,reward)=>{
+  const b=fixture(),r=b.growthV3!,p=r.participant('player'),enemy=b.actors[1],other=r.participant(enemy.id);
+  awardGrowthV3(other.progression,other.loadout,opponentXp,0,()=>0);
+  expect(p.progression.level).toBe(1);expect(other.progression.level).toBe(opponentXp===800?4:5);
+  b.damage(enemy,9999,b.player);
+  expect(p.progression.xp).toBe(reward);expect(b.player.kills).toBe(1);
+  expect(p.contributions.support).toBe(0);
+});
+
 it('real domination grants 2 XP per 30 held ticks, stops on contest/death and preserves its budget',()=>{
   const b=fixture(undefined,'dom'),p=b.growthV3!.participant(b.player.id),enemy=b.actors[1];
   b.player.movement.reset(900,599.5);enemy.movement.reset(1200,599.5);
@@ -414,6 +595,24 @@ it('resolves simultaneous lethal shots and awards both kills without healing a d
   expect(battle.actors.map(a => a.life.alive)).toEqual([false, false]);
   expect(battle.actors.map(a => a.kills)).toEqual([1, 1]); expect(battle.scores).toEqual([1, 1]);
   expect([...battle.growthV3!.participants.values()].map(p => p.progression.xp)).toEqual([100, 100]);
+});
+
+it('same-tick combat outcomes and event order ignore input, participant and non-player actor insertion order',()=>{
+  const original=fixture([defaultGrowthLoadoutV3(),defaultGrowthLoadoutV3(),defaultGrowthLoadoutV3()]);
+  original.actors.forEach((a,i)=>{a.life.health=10;a.movement.reset(400+i*180,599.5);});
+  const reordered=Battle.restore(original.checkpoint());
+  // Keep Battle.player at index zero; only reorder the other actors and map insertion order.
+  reordered.actors.splice(1,2,...reordered.actors.slice(1).reverse());
+  const participants=[...reordered.growthV3!.participants.entries()].reverse();
+  reordered.growthV3!.participants.clear();for(const [id,p]of participants)reordered.growthV3!.participants.set(id,p);
+  const inputs=original.actors.map(a=>[a.id,{...idleInput(),fire:true,aim:{x:a.id==='player'?580:400,y:567}}] as const);
+  original.tickPlayers(new Map(inputs));reordered.tickPlayers(new Map([...inputs].reverse()));
+  const result=(b:Battle)=>b.actors.map(a=>({id:a.id,alive:a.life.alive,hp:a.life.health,kills:a.kills,
+    xp:b.growthV3!.participant(a.id).progression.xp,shots:b.growthV3!.participant(a.id).metrics.shots})).sort((a,b)=>a.id.localeCompare(b.id));
+  expect(result(reordered)).toEqual(result(original));expect(reordered.scores).toEqual(original.scores);
+  expect(reordered.journal.since(0)).toEqual(original.journal.since(0));
+  expect(original.actors.filter(a=>!a.life.alive)).toHaveLength(2);
+  expect(original.actors.every(a=>original.growthV3!.participant(a.id).metrics.shots===1)).toBe(true);
 });
 
 it('uses M4 independent damage/clock: 10 body hits at ticks 1..37', () => {

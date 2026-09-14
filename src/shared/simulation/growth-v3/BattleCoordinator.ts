@@ -585,34 +585,60 @@ export class GrowthBattleCoordinator {
     const enemies = this.actors().filter(b => b.team !== a.team && b.life.alive && visiblePoint(chest(b)))
       .sort((b, c) => distance(chest(a), chest(b)) - distance(chest(a), chest(c)) || byId(b, c));
     const target = enemies[0], dist = target ? distance(chest(a), chest(target)) : Infinity;
-    if (brain.target !== (target?.id ?? null)) { brain.target = target?.id ?? null; brain.acquired = this.tick; }
+    const structures = this.gadgets.entities().filter(g => g.team !== a.team && visiblePoint(g.position));
+    const structure = !target ? structures.filter(g => this.gadgets.clearRay(chest(a), g.position, true))
+      .sort((b, c) => distance(chest(a), b.position) - distance(chest(a), c.position) || byId(b, c))[0] : undefined;
+    const attackPoint = target ? chest(target) : structure?.position, attackId = target?.id ?? structure?.id ?? null;
+    if (brain.target !== attackId) { brain.target = attackId; brain.acquired = this.tick; }
     const difficulty = this.battle.difficulty, reaction = { easy: 24, normal: 16, hard: 9 }[difficulty];
     if (this.tick % 12 === 0) brain.offset = (this.ports.random() * 2 - 1) * { easy: 90, normal: 55, hard: 28 }[difficulty];
     const def = resolveGrowthWeapon(gun.selectedId, p.loadout.attachments[gun.selectedSlot]);
     const primary = gun.checkpoint().guns.primary, secondary = gun.checkpoint().guns.secondary;
     const empty = primary.ammo + primary.reserve + secondary.ammo + secondary.reserve === 0;
     const destination = empty ? this.battle.mission.spawns[a.team - 1][0]
-      : this.battle.mission.mode === 'dom' ? this.battle.mission.objective : target?.movement ?? this.battle.mission.objective;
+      : this.battle.mission.mode === 'dom' ? this.battle.mission.objective : target?.movement ?? structure?.position ?? this.battle.mission.objective;
     const waypoint = this.battle.mission.collisionMask
       ? trackedWaypoint(this.battle.mission.navigation, m, destination, brain.route ??= {})
       : nextWaypoint(this.battle.mission.navigation, m, destination);
     const holding = this.battle.mission.mode === 'dom' && distance(m, destination) < 45;
-    const stop = !empty && !m.jumping && (holding || !!target && dist < Math.min(def.falloffStart, 450));
+    const stop = !empty && !m.jumping && (holding || !!attackPoint && distance(chest(a), attackPoint) < Math.min(def.falloffStart, 450));
     const dx = waypoint.x - m.x;
     brain.stuck = !stop && Math.abs(m.x - brain.lastX) < .5 ? brain.stuck + 1 : 0; brain.lastX = m.x;
     const input: BattleInput = { left: !stop && dx < -8, right: !stop && dx > 8, crouch: stop && !!target && this.tick % 120 < 35,
       jump: !stop && !m.jumping && (traversalJump(m, waypoint, this.battle.wall) || brain.stuck > 12),
-      fire: !!target && this.tick - brain.acquired >= reaction && this.tick % 54 < 32 && (def.mode === 'auto' || this.tick % Math.max(2, def.interval) === 0),
-      aim: target ? { x: target.movement.x, y: chest(target).y + brain.offset } : { x: m.x + Math.sign(dx || (a.team === 1 ? 1 : -1)) * 300, y: chest(a).y } };
-    brain.state = empty ? 'resupply' : holding ? 'hold' : target ? 'engage' : 'advance';
+      fire: !!attackPoint && this.tick - brain.acquired >= reaction && this.tick % 54 < 32 && (def.mode === 'auto' || this.tick % Math.max(2, def.interval) === 0),
+      aim: attackPoint ? { x: attackPoint.x, y: attackPoint.y + (target ? brain.offset : brain.offset * .1) } : { x: m.x + Math.sign(dx || (a.team === 1 ? 1 : -1)) * 300, y: chest(a).y } };
+    brain.state = empty ? 'resupply' : holding ? 'hold' : attackPoint ? 'engage' : 'advance';
     if (p.progression.offer) this.choice(id, p.progression.offer.batch, p.progression.offer.cards[Math.floor(this.ports.random() * p.progression.offer.cards.length)]);
+    const danger = this.gadgets.flying().filter(f => (f.team !== a.team || f.sourceId === id)
+      && f.definition.damageMax > 0 && f.detonateTick - this.tick <= 18 && visiblePoint(f.position))
+      .map(f => ({ position: this.gadgets.predictFlyingImpact(f.id)!, radius: f.definition.radius }));
+    for (const entity of structures) if (entity.gadgetId === 'as_charge' && entity.armedTick <= this.tick)
+      danger.push({ position: entity.position, radius: entity.definition.radius });
+    const nearby = danger.filter(d => distance(chest(a), d.position) <= d.radius + 40 && this.gadgets.clearRay(chest(a), d.position));
+    if (nearby.length) {
+      const clearance = (point: Point) => Math.min(...nearby.map(d => distance(point, d.position) - d.radius));
+      const directions = [-1, 1].filter(direction => [8, 16, 24].every(offset => {
+        const x = m.x + direction * offset;
+        return x >= 14 && x <= this.battle.mission.width - 14 && !this.battle.wall(x, m.y - 33)
+          && !this.battle.wall(x, m.y - 4) && (m.jumping || this.battle.wall(x, m.y + 4));
+      })).sort((b, c) => clearance({ x: m.x + c * 96, y: chest(a).y }) - clearance({ x: m.x + b * 96, y: chest(a).y }) || b - c);
+      const direction = directions[0];
+      input.left = direction === -1; input.right = direction === 1; input.crouch = false;
+      input.jump = direction === undefined && !m.jumping;
+      brain.state = 'evade';
+      // Keep ordinary fire and action locks; evasion never teleports or grants invulnerability.
+      return input;
+    }
     if (!this.ready(id, 'aiEval')) return input;
     p.cooldowns.aiEval = this.tick + 30;
+    // Protected actors cannot cast. Preserve fire so ordinary attack input can end protection.
+    if (a.life.spawnProtectionFrames > 0) return input;
     const e = this.abilities.actorState(id), injured = allies.filter(b => b.life.health < b.life.maxHealth && this.gadgets.clearRay(chest(a), chest(b), true))
       .sort((b, c) => b.life.health / b.life.maxHealth - c.life.health / c.life.maxHealth || byId(b, c));
     const near = injured.filter(b => b !== a && distance(chest(a), chest(b)) <= 180);
     let skill = false;
-    if (!e.active && !e.pending && e.charges && !this.gadgets.inventory(id).cast) {
+    if (!e.active && !e.pending && e.charges && this.tick >= e.useReadyTick && !this.gadgets.inventory(id).cast) {
       switch (p.loadout.abilityId) {
         case 'as_roll': skill = dist <= 400 && (a.life.health < 40 || this.tick - p.lastDamage <= 30); break;
         case 'as_reloadrush': skill = !!target && def.magazine - gun.current.ammo >= 4 && gun.current.reserve > 0; break;
@@ -631,7 +657,6 @@ export class GrowthBattleCoordinator {
     if (skill) { this.enqueue(id, 'skill'); input.fire = false; return input; }
     const inventory = this.gadgets.inventory(id);
     if (inventory.cast || this.abilities.locks(id, this.tick).gadget || inventory.readyTick > this.tick) return input;
-    const structures = this.gadgets.entities().filter(g => g.team !== a.team && visiblePoint(g.position));
     const own = this.gadgets.entities().find(g => g.sourceId === id);
     if (p.loadout.gadgetId === 'as_charge' && own) {
       if (this.tick >= own.armedTick && distance(own.position, chest(a)) > 80
@@ -640,7 +665,8 @@ export class GrowthBattleCoordinator {
     }
     if (!inventory.charges || this.gadgets.hasDeploymentReservation(id)) return input;
     const defensive = this.battle.mission.mode === 'dom' && distance(m, this.battle.mission.objective) < 240 || !!target;
-    const deployment = [40, -40, 55, -55].map(x => ({ x: m.x + x, y: m.y })).find(point => this.gadgets.canPlace(id, point));
+    const deployment = [40, -40, 55, -55].map(x => ({ x: m.x + x, y: m.y })).find(point => this.gadgets.canPlace(id, point)
+      && (p.loadout.gadgetId !== 'tk_cover' || !target || (point.x - m.x) * (target.movement.x - m.x) > 0));
     const endangered = injured.find(b => b !== a && b.life.health < 35 && this.tick - this.participant(b.id).lastDamage <= 30);
     const electronic = structures.find(g => g.definition.electronic);
     let goal: Point | undefined;
@@ -648,7 +674,20 @@ export class GrowthBattleCoordinator {
       case 'tk_cover': if (defensive && deployment) this.enqueue(id, 'item', deployment); break;
       case 'tk_interceptor': if (deployment && this.gadgets.flying().some(f => f.team !== a.team && visiblePoint(f.position))) this.enqueue(id, 'item', deployment); break;
       case 'tk_plate': if (a.life.health < 70 && p.armor.remaining < 15000 && this.tick - p.lastDamage > 30) this.enqueue(id, 'item', chest(a)); break;
-      case 'sn_beacon': if (defensive && deployment) this.enqueue(id, 'item', deployment); break;
+      case 'sn_beacon': {
+        const nodes = this.battle.mission.navigation;
+        if (!nodes.length) break;
+        const start = nodes.reduce((best, node, index) => Math.hypot(node.x-m.x, (node.y-m.y)*2)
+          < Math.hypot(nodes[best].x-m.x, (nodes[best].y-m.y)*2) ? index : best, 0);
+        const reachable = new Set<number>([start]), pending = [start];
+        for (let i=0;i<pending.length;i++) for (const next of nodes[pending[i]].links)
+          if (nodes[next] && !reachable.has(next)) { reachable.add(next); pending.push(next); }
+        const junction = [...reachable].filter(index => nodes[index].links.length >= 2)
+          .sort((left,right) => distance(chest(a),nodes[left])-distance(chest(a),nodes[right]) || left-right)
+          .map(index => ({ x:nodes[index].x, y:nodes[index].y })).find(point => this.gadgets.canPlace(id,point));
+        if (junction) this.enqueue(id,'item',junction);
+        break;
+      }
       case 'md_station': if (deployment && near.reduce((sum, b) => sum + b.life.maxHealth - b.life.health, 0) >= 25) this.enqueue(id, 'item', deployment); break;
       case 'md_ammo': if (deployment && allies.some(b => {
         if (distance(chest(a), chest(b)) > 140) return false;
