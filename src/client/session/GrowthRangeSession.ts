@@ -47,7 +47,7 @@ export class GrowthRangeSession {
       if(effect.trace.hit?.type==='unit'&&effect.trace.hit.target==='enemy-0')this.hits++;
       this.damage+=effect.damage;
     }
-    for(const effect of this.presentation().effects)if(effect.frame===b.frame&&effect.actorId==='player')
+    for(const effect of this.presentation().effects)if(effect.frame===b.frame&&effect.actorId==='player'&&effect.trace.hit)
       this.impacts.push({...effect.trace.end,damage:effect.damage,tick:b.frame});
     if(this.impacts.length>600)this.impacts.splice(0,this.impacts.length-600);
     if(!b.actors[1].life.alive)this.killTick=b.frame;

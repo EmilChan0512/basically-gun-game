@@ -2,7 +2,7 @@ import { expect, it } from 'vitest';
 import { RevealPolicy, type RevealActor } from '../../src/shared/simulation/RevealPolicy';
 const actor = (id: string, team: 1 | 2, x: number): RevealActor => ({ id, team, movement: { x, y: 100 }, life: { alive: true }, kit: null, skillFrames: 0 });
 it('shares living teammates sight but hides occluded or distant enemies', () => {
-  const actors = [actor('self', 1, 0), actor('ally', 1, 1000), actor('near', 2, 1100), actor('far', 2, 2000)];
+  const actors = [actor('self', 1, 0), actor('ally', 1, 1000), actor('near', 2, 1100), actor('far', 2, 2100)];
   const reveal = new RevealPolicy();
   expect([...reveal.visible(actors, 0, [], () => false, 1)]).toEqual(['self', 'ally', 'near']);
   expect([...reveal.visible(actors, 0, [], () => true, 1)]).toEqual(['self', 'ally']);

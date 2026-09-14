@@ -9,7 +9,7 @@ if (!['127.0.0.1', 'localhost', '[::1]'].includes(endpoint.hostname) || endpoint
 const revision = option('--revision', 'v1'), only = option('--id', null);
 if (!/^v[1-9][0-9]*$/.test(revision)) throw Error('Revision must be v1, v2, ...');
 const collection = option('--collection', 'ui-v2');
-if (!['ui-v2', 'gunsmith'].includes(collection)) throw Error('Unknown art collection');
+if (!['ui-v2', 'gunsmith', 'architecture'].includes(collection)) throw Error('Unknown art collection');
 const manifest = JSON.parse(readFileSync(`art/${collection}/assets.json`, 'utf8'));
 const template = JSON.parse(readFileSync('art/ui-v2/workflow-api.json', 'utf8'));
 const directory = resolve('artifacts/comfy-ui', ...(collection === 'ui-v2' ? [] : [collection]), revision), publicDirectory = resolve('public/assets', collection, revision);

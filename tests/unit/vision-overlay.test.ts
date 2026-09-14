@@ -5,7 +5,7 @@ import { VisionOverlay } from '../../src/client/presentation/VisionOverlay';
 it('reuses a static visibility texture but redraws for camera movement, observer movement, death and viewport changes', () => {
   const refresh=vi.fn(), context:Record<string,unknown>={};
   for(const name of ['setTransform','clearRect','fillRect','beginPath','lineTo','moveTo','closePath','stroke','fill'])context[name]=vi.fn();
-  const image={setOrigin:vi.fn().mockReturnThis(),setScrollFactor:vi.fn().mockReturnThis(),setDepth:vi.fn().mockReturnThis(),setDisplaySize:vi.fn().mockReturnThis()};
+  const image={setPosition:vi.fn().mockReturnThis(),setOrigin:vi.fn().mockReturnThis(),setScrollFactor:vi.fn().mockReturnThis(),setDepth:vi.fn().mockReturnThis(),setDisplaySize:vi.fn().mockReturnThis()};
   const scene={textures:{createCanvas:()=>({context,refresh})},add:{image:()=>image},events:{once:vi.fn()},
     cameras:{main:{scrollX:0,scrollY:0,zoom:1}},scale:{width:1120,height:620}};
   const overlay=new VisionOverlay(scene as unknown as ConstructorParameters<typeof VisionOverlay>[0],()=>false);

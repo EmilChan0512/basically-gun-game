@@ -20,13 +20,17 @@ export class VisionOverlay {
   draw(observers: readonly (Point & { id: string })[]) {
     const camera = this.scene.cameras.main;
     const width = this.scene.scale.width, height = this.scene.scale.height;
-    this.image.setDisplaySize(width, height);
+    const zoom = camera.zoom;
+    const left = camera.scrollX + width * (1 - 1/zoom) / 2;
+    const top = camera.scrollY + height * (1 - 1/zoom) / 2;
+    this.image.setDisplaySize(width/zoom, height/zoom);
+    this.image.setPosition(width*(1-1/zoom)/2, height*(1-1/zoom)/2);
     const visible: { id: string; origin: Point; polygon: Point[] }[] = [];
     const active = new Set(observers.map(o => o.id));
     for (const id of this.cache.keys()) if (!active.has(id)) this.cache.delete(id);
     for (const observer of observers) {
-      if (observer.x + VISION_RADIUS < camera.scrollX || observer.x - VISION_RADIUS > camera.scrollX + width
-        || observer.y + VISION_RADIUS < camera.scrollY || observer.y - VISION_RADIUS > camera.scrollY + height) continue;
+      if (observer.x + VISION_RADIUS < left || observer.x - VISION_RADIUS > left + width/zoom
+        || observer.y + VISION_RADIUS < top || observer.y - VISION_RADIUS > top + height/zoom) continue;
       let cached = this.cache.get(observer.id);
       if (!cached || Math.hypot(cached.origin.x - observer.x, cached.origin.y - observer.y) >= 4) {
         cached = { origin: { x: observer.x, y: observer.y }, polygon: visionPolygon(observer, this.wall) };
@@ -45,7 +49,7 @@ export class VisionOverlay {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalCompositeOperation = 'source-over'; ctx.clearRect(0, 0, 560, 310);
     ctx.fillStyle = 'rgba(5, 12, 23, 0.76)'; ctx.fillRect(0, 0, 560, 310);
-    ctx.setTransform(sx, 0, 0, sy, -camera.scrollX * sx, -camera.scrollY * sy);
+    ctx.setTransform(sx*zoom, 0, 0, sy*zoom, -left*sx*zoom, -top*sy*zoom);
     ctx.globalCompositeOperation = 'destination-out';
     for (const cached of visible) {
       ctx.beginPath(); cached.polygon.forEach((p, index) => index ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.closePath();

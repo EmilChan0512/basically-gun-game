@@ -27,7 +27,7 @@ export function startCampaign() {
   let scene: CampaignScene | undefined, screen: Screen = 'menu', selected = progress.unlocked;
   document.querySelector('main')!.className = 'campaign-app';
   document.querySelector('main')!.innerHTML = `
-    <header><div class="brand"><span class="mark">S</span><div><h1>PROJECT STRIKE</h1><p>OPERATION DAYBREAK / 单人战役</p></div></div><nav class="campaign-nav"><button id="campaign-home">任务地图</button><button id="armory-nav">职业与军械库</button><a id="offline-growth-nav" href="/?offline&growth">四干员成长训练</a><a id="account-nav" href="/?online">联网账号与资产</a><button id="sound">声音：开</button><a href="?rules=original">训练场</a></nav></header>
+    <header><div class="brand"><span class="mark">S</span><div><h1>PROJECT STRIKE</h1><p>OPERATION DAYBREAK / 单人战役</p></div></div><nav class="campaign-nav"><button id="campaign-home">任务地图</button><button id="armory-nav">职业与军械库</button><a id="offline-growth-nav" href="/?offline&growth">四干员成长训练</a><a id="account-nav" href="/?online">联网账号与资产</a><button id="sound">声音：开</button><a href="/?lab">成长实验室</a></nav></header>
     <section class="campaign-title"><div><p class="eyebrow">一支小队 · 四场行动</p><h2 id="campaign-heading">破晓行动</h2></div><span id="save-status"></span></section>
     <section class="campaign-stage"><div id="game" aria-label="单人横版射击战役"></div>
       <div id="battle-top" hidden><span id="mission-label"></span><div class="scoreline"><b id="blue-score">0</b><div class="hud-score-center"><small id="goal-label"></small><strong id="battle-time"></strong></div><b id="red-score">0</b></div><button id="battle-pause">暂停 Esc</button></div>

@@ -53,7 +53,7 @@ function equipmentText(actor: { weapon: string; ammo: number; reserve: number; o
 }
 
 export function startOnline() {
-  document.body.innerHTML = `<main class="online-app"><header class="online-header"><a class="online-brand" href="/"><span class="online-mark">S</span><span>PROJECT STRIKE<small>ONLINE OPERATIONS</small></span></a><nav aria-label="联机主导航"><a id="online-lobby-nav" href="#lobby">联机大厅</a><a href="/?offline">单机免登录</a><a id="online-armory-nav" href="#loadout">出战配装</a></nav><span id="online-profile-chip">游客档案</span></header><p id="status" role="status">连接服务器后可创建或加入房间。</p><div id="online-lobby-page"><div class="online-lobby-title"><p class="arsenal-eyebrow">MULTIPLAYER / BRIEFING</p><h1>联机大厅</h1><p>整备你的装备，和队友一起出发。</p></div><section id="online-account"><h2>联机账号</h2><p>账号等级、金币和装备权益由服务器保存。单机可免登录，离线进度不计入联网资产。</p><div class="loadout" id="account-login"><label>账号<input id="account-name" autocomplete="username" maxlength="24"></label><label>密码<input id="account-password" type="password" autocomplete="current-password" minlength="8" maxlength="128"></label><button id="account-register">注册联机账号</button><button id="account-signin">登录</button></div><p id="account-status" role="status">普通联机需登录；公共调试房间可直接试玩。</p><button id="account-logout" hidden>退出账号</button><button id="online-leave" hidden>离开房间 / 返回配装</button></section><div id="online-loadout-brief"></div><section id="online-connection"><h2>加入行动</h2><div class="loadout"><label>服务器<input id="server" value="ws://43.142.165.82:4180"></label><label>调试昵称<input id="name" value="玩家" maxlength="24"></label><label>房间码<input id="code"></label></div><div class="online-room-actions"><button id="create">创建房间</button><button id="create-growth">创建成长对战房间</button><button id="join">加入房间</button><button id="join-debug">加入公共调试房间</button><button id="reconnect">断线重连</button></div></section><div id="lobby"></div><div id="growth-session-controls" hidden><button id="growth-leave">离开成长房间</button><button id="growth-reconnect">断线重连</button></div><p id="online-hud" aria-live="off"></p><div id="online-game" hidden><section id="growth-panel" hidden aria-label="局内成长"></section></div><p class="online-keys">A/D移动 · 空格跳跃 · S蹲伏 · 鼠标射击 · Q切枪 · R换弹 · E技能 · G道具</p></div><section id="online-preflight" hidden><div class="armory-rule-tabs" aria-label="配装规则"><button id="armory-rule-growth" aria-pressed="true">成长对战</button><button id="armory-rule-classic" aria-pressed="false">经典配装 · 装备与技能</button></div><p id="growth-armory-login" hidden>登录后可配置成长职业、武器、技能与成长池。<a href="#lobby">前往大厅登录 →</a></p><div id="growth-career-section" hidden><div id="growth-career-content"></div></div><div id="preflight-armory"></div></section></main>`;
+  document.body.innerHTML = `<main class="online-app"><header class="online-header"><a class="online-brand" href="/"><span class="online-mark">S</span><span>PROJECT STRIKE<small>ONLINE OPERATIONS</small></span></a><nav aria-label="联机主导航"><a id="online-lobby-nav" href="#lobby">联机大厅</a><a href="/?offline">单机免登录</a><a href="/?lab">成长实验室</a><a id="online-armory-nav" href="#loadout">出战配装</a></nav><span id="online-profile-chip">游客档案</span></header><p id="status" role="status">连接服务器后可创建或加入房间。</p><div id="online-lobby-page"><div class="online-lobby-title"><p class="arsenal-eyebrow">MULTIPLAYER / BRIEFING</p><h1>联机大厅</h1><p>整备你的装备，和队友一起出发。</p></div><section id="online-account"><h2>联机账号</h2><p>账号等级、金币和装备权益由服务器保存。单机可免登录，离线进度不计入联网资产。</p><div class="loadout" id="account-login"><label>账号<input id="account-name" autocomplete="username" maxlength="24"></label><label>密码<input id="account-password" type="password" autocomplete="current-password" minlength="8" maxlength="128"></label><button id="account-register">注册联机账号</button><button id="account-signin">登录</button></div><p id="account-status" role="status">普通联机需登录；公共调试房间可直接试玩。</p><button id="account-logout" hidden>退出账号</button><button id="online-leave" hidden>离开房间 / 返回配装</button></section><div id="online-loadout-brief"></div><section id="online-connection"><h2>加入行动</h2><div class="loadout"><label>服务器<input id="server" value="ws://43.142.165.82:4180"></label><label>调试昵称<input id="name" value="玩家" maxlength="24"></label><label>房间码<input id="code"></label></div><div class="online-room-actions"><button id="create">创建房间</button><button id="create-growth">创建成长对战房间</button><button id="join">加入房间</button><button id="join-debug">加入公共调试房间</button><button id="reconnect">断线重连</button></div></section><div id="lobby"></div><div id="growth-session-controls" hidden><button id="growth-leave">离开成长房间</button><button id="growth-reconnect">断线重连</button></div><p id="online-hud" aria-live="off"></p><div id="online-game" hidden><section id="growth-panel" hidden aria-label="局内成长"></section></div><p class="online-keys">A/D移动 · 空格跳跃 · S蹲伏 · 鼠标射击 · Q切枪 · R换弹 · E技能 · G道具</p></div><section id="online-preflight" hidden><div class="armory-rule-tabs" aria-label="配装规则"><button id="armory-rule-growth" aria-pressed="true">成长对战</button><button id="armory-rule-classic" aria-pressed="false">经典配装 · 装备与技能</button></div><p id="growth-armory-login" hidden>登录后可配置成长职业、武器、技能与成长池。<a href="#lobby">前往大厅登录 →</a></p><div id="growth-career-section" hidden><div id="growth-career-content"></div></div><div id="preflight-armory"></div></section></main>`;
   const el = (id: string) => document.getElementById(id)!;
   installCombatMotionControl(el('growth-session-controls'));
   if (import.meta.env.DEV && ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname)) {
@@ -330,7 +330,7 @@ export class OnlineScene extends Phaser.Scene {
   private feedback = new CombatFeedback();
   private feedbackView?: CombatFeedbackView;
   constructor(private network: BattlePresentationSession) { super('Online'); }
-  preload() { preloadReferenceArt(this); }
+  preload() { preloadReferenceArt(this); this.load.image('atrium-depth', '/assets/architecture/v1/atrium-depth.png'); }
   create() {
     this.feedbackView = new CombatFeedbackView(document.getElementById('online-game')!, this.feedback);
     const destroyFeedback = () => this.feedbackView?.destroy();
@@ -344,9 +344,25 @@ export class OnlineScene extends Phaser.Scene {
     this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => { if (!pointer.leftButtonDown()) this.fire.edge(false, performance.now()); });
     const map = MAPS.find(m => m.id === this.network.state!.mapId)!.geometry;
     this.cameras.main.setBounds(0, 0, map.width, map.height ?? 700).setBackgroundColor(map.palette.sky);
+    if (this.network.state!.mapId === 'atrium') {
+      this.add.image(-180, -100, 'atrium-depth').setOrigin(0).setDisplaySize(3600, 1500).setScrollFactor(.88);
+      const walls = this.add.graphics();
+      for (let x=160; x<3200; x+=400) {
+        walls.fillStyle(0x09141d,.45).fillRect(x,100,26,1180);
+        walls.fillStyle(0x76b8c4,.18).fillRect(x+26,100,4,1180);
+      }
+    }
     const background = this.add.graphics();
     for (const t of map.terrain) background.fillStyle(map.palette.wall).fillRect(t.x, t.y, t.width, t.height);
     if (map.artwork) { const a = map.artwork; this.add.image(a.x, a.y, `ref-${a.id}`).setOrigin(0).setDisplaySize(a.width, a.height); }
+    if (this.network.state!.mapId === 'atrium') {
+      for (const t of map.terrain) {
+        background.fillStyle(0x07111b,.65).fillRect(t.x+12,t.y+t.height,t.width,18);
+        background.fillStyle(0x9ac7ce).fillRect(t.x,t.y,t.width,4);
+        background.fillStyle(0x527383).fillRect(t.x,t.y+5,t.width,7);
+        for(let x=t.x+25;x<t.x+t.width-20;x+=80) background.fillStyle(0xd4ac67,.8).fillRect(x,t.y+16,28,3);
+      }
+    }
     this.vision = new VisionOverlay(this, new CollisionWorld(map.terrain, map.collisionMask).solid);
     this.rig = new ReferenceArt(this); this.graphics = this.add.graphics().setDepth(3);
     this.hud = new BattleHUD(document.getElementById('online-game')!);
@@ -431,7 +447,7 @@ export class OnlineScene extends Phaser.Scene {
     const predicted = self && followed?.id === self.id ? this.network.prediction.position(renderAlpha, delta) ?? self
       : followed && this.network.interpolation.position(followed, now);
     const geometry = MAPS.find(m => m.id === message.mapId)!.geometry;
-    this.cameras.main.setZoom(mapView ? Math.min(1, this.scale.width / geometry.width, this.scale.height / (geometry.height ?? 700)) : 1);
+    this.cameras.main.setZoom(mapView ? Math.min(1, this.scale.width / geometry.width, this.scale.height / (geometry.height ?? 700)) : 0.8);
     if (mapView) this.cameras.main.centerOn(geometry.width / 2, (geometry.height ?? 700) / 2);
     else if (predicted) this.cameras.main.centerOn(predicted.x, predicted.y - 150);
     this.rig.begin(); this.graphics.clear();

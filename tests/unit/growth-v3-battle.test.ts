@@ -81,7 +81,7 @@ it('AI starts avoiding a real enemy charge exactly when it becomes armed',()=>{
   const attacker=defaultGrowthLoadoutV3();attacker.gadgetId='as_charge';
   const b=fixture([defaultGrowthLoadoutV3(),attacker]),enemy=b.actors[1];enemy.movement.reset(520,599.5);
   expect(b.useItem({x:540,y:599.5},enemy)).toBe(true);advance(b,13);
-  const charge=b.growthV3!.gadgets.entities()[0];enemy.movement.reset(1300,599.5);
+  const charge=b.growthV3!.gadgets.entities()[0];b.mission.width=2400;b.mission.terrain[0].width=2400;enemy.movement.reset(2200,599.5);
   while(b.frame<charge.armedTick-2)advance(b,1);
   b.player.movement.reset(480,599.5);b.player.human=false;advance(b,1);
   expect(b.frame).toBe(charge.armedTick-1);expect(b.player.brain.state).not.toBe('evade');
@@ -148,7 +148,7 @@ it('AI acquires and shoots a visible enemy facility when its owner has left sigh
   enemy.movement.reset(520,599.5);
   expect(b.useItem({x:540,y:599.5},enemy)).toBe(true);advance(b,28);
   const entity=b.growthV3!.gadgets.entities()[0];expect(entity.gadgetId).toBe('sn_beacon');
-  enemy.movement.reset(1300,599.5);b.player.human=false;advance(b,1);
+  b.mission.width=2400;b.mission.terrain[0].width=2400;enemy.movement.reset(2200,599.5);b.player.human=false;advance(b,1);
   expect(b.player.brain.target).toBe(entity.id);
   const restored=Battle.restore(b.checkpoint());advance(b,60);advance(restored,60);
   expect(restored.checkpoint()).toEqual(b.checkpoint());

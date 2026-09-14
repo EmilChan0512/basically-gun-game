@@ -25,6 +25,7 @@ Copy-Item -LiteralPath (Join-Path $taskRoot 'node_modules/eventemitter3/LICENSE'
 Copy-Item -LiteralPath (Join-Path $taskRoot 'public/assets/audio/SOURCES.txt') -Destination (Join-Path $taskFolder 'licenses/Audio-Sources.txt')
 Copy-Item -LiteralPath (Join-Path $taskRoot 'public/assets/audio/Kenney-CC0.txt') -Destination (Join-Path $taskFolder 'licenses/Kenney-CC0.txt')
 Copy-Item -LiteralPath (Join-Path $taskRoot 'public/assets/ui-v2/SOURCES.txt') -Destination (Join-Path $taskFolder 'licenses/UI-Art-Sources.txt')
+Copy-Item -LiteralPath (Join-Path $taskRoot 'public/assets/architecture/SOURCES.txt') -Destination (Join-Path $taskFolder 'licenses/Architecture-Art-Sources.txt')
 $taskCache = Join-Path $taskRoot "tools/vendor/node-$($taskRuntime.version)-LICENSE.txt"
 if (!(Test-Path -LiteralPath $taskCache)) {
   New-Item -ItemType Directory -Path (Split-Path -Parent $taskCache) -Force | Out-Null
@@ -45,6 +46,7 @@ Project Strike - 破晓行动（Windows 64位便携版）
 已内置 Node.js，无需安装 Node、npm 或开发工具。请完整保留所有文件夹。
 单机免登录；进度保存在同一浏览器及本地地址下，不包含发行者的账号或存档。
 单机菜单点击“四干员成长训练”，可配装突击兵、重装兵、狙击手或医疗兵，进行4v4机器人训练。专属E/G、18枪与36配件均可离线使用，训练不计入联网账号资产。保存配装后开始，可暂停或返回配装重开。
+新增“纵深大楼 · 天穹中庭”地图：双侧逐层登高中庭、地面绕行；大厅与单机菜单的“成长实验室”可测试联机同源成长规则。
 联机需要网络与可用的配套服务器；本包不附带服务器账号或管理信息。
 端口占用时自动尝试其他端口。换端口后浏览器会使用另一份单机存档。
 操作：A/D移动，W/空格跳跃，S蹲伏，鼠标射击，Q切枪，R换弹，E主动技能，G道具。

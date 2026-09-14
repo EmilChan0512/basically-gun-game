@@ -1,0 +1,5 @@
+Project Strike - Atrium architecture v1
+Original environment generated locally with ComfyUI / FLUX.2 Klein 4B (Apache 2.0 model), Qwen 3 4B encoder, Flux2 VAE.
+One fixed-seed output; no downloaded game artwork. Production PNG contains no workflow metadata.
+Dimensions and SHA256: v1/manifest.json. Generation specification and local job history remain in the development workspace.
+Model weights, runtime and source workflows are not included in the game distribution.

@@ -14,7 +14,31 @@ export interface MapDefinition {
   id: string; name: string; version: number; modes: Mission['mode'][];
   geometry: MapGeometry;
 }
+const atriumTerrain = [
+  { x: 0, y: 1280, width: 3200, height: 120 },
+  ...[0, 1, 2, 3].flatMap(i => [
+    { x: 400 + i*200, y: 1160-i*120, width: 240, height: 28 },
+    { x: 2560-i*200, y: 1160-i*120, width: 240, height: 28 },
+  ]),
+  { x: 1200, y: 680, width: 800, height: 32 },
+];
+const atriumPoints = [
+  ...[200,500,800,1100,1400,1600,1800,2100,2400,2700,3000].map(x => ({ x, y:1279.5 })),
+  ...[0,1,2,3].map(i=>({x:520+i*200,y:1159.5-i*120})),
+  {x:1300,y:679.5},{x:1600,y:679.5},{x:1900,y:679.5},
+  ...[3,2,1,0].map(i=>({x:2680-i*200,y:1159.5-i*120})),
+];
+const atriumLinks = atriumPoints.map(()=>[] as number[]);
+for (const route of [[0,1,2,3,4,5,6,7,8,9,10],[1,11,12,13,14,15,16,17,18,19,20,21,9]]) {
+  for(let i=1;i<route.length;i++){atriumLinks[route[i-1]].push(route[i]);atriumLinks[route[i]].push(route[i-1]);}
+}
 export const MAPS: MapDefinition[] = [
+  { id:'atrium', name:'纵深大楼 · 天穹中庭', version:1, modes:['tdm','dom'], geometry:{
+    width:3200,height:1400,killY:1500,terrain:atriumTerrain,
+    navigation:atriumPoints.map((p,i)=>({...p,links:atriumLinks[i]})),
+    spawns:[[100,180,260,340].map(x=>({x,y:1279.5})),[3100,3020,2940,2860].map(x=>({x,y:1279.5}))],
+    objective:{x:1600,y:679.5},palette:{sky:0x101e2c,wall:0x293e4b,trim:0x8bccce},
+  } },
   ...arenas.map(m => ({ id: m.id, name: m.name, version: 1, modes: ['tdm', 'dom'] as Mission['mode'][], geometry: m.geometry as MapGeometry })),
   { id: 'hijack', name: '失控飞机', version: 2, modes: ['tdm', 'dom', 'coop', 'ctf'], geometry: {
     width: plane.width, height: plane.height, killY: 1260, terrain: [], collisionMask: plane.collisionMask,

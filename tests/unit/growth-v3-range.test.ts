@@ -38,7 +38,9 @@ it('uses real smoke visibility for the target, poses and impact traces, then res
   expect(range.presentation().state.actors.some(a=>a.id==='enemy-0')).toBe(false);
   expect(range.presentation().poses.some(a=>a.id==='enemy-0')).toBe(false);
   range.step({fire:true});
-  expect(range.damage).toBeGreaterThan(0);expect(range.presentation().effects).toEqual([]);
+  expect(range.damage).toBeGreaterThan(0);const effects=range.presentation().effects;
+  expect(effects).toHaveLength(1);expect(effects[0].trace.hit).toBeNull();expect(effects[0].damage).toBe(0);
+  expect(effects[0].trace.end.x).toBeLessThan(range.aim.x);
   expect(range.impacts).toEqual([]);
   for(let i=0;i<151;i++)range.step();
   expect(range.presentation().state.growthWorld!.smoke).toEqual([]);
@@ -56,4 +58,15 @@ it('presents the actual cover health and active tank shield in the range',()=>{
   expect(range.battle.useSkill()).toBe(true);
   for(let i=0;i<5;i++)range.step();
   expect(range.presentation().state.actors.find(a=>a.id==='player')!.growthV3!.activeAbility).toBe('tk_barrier');
+});
+
+
+it('reveals growth targets at the enlarged radius but still hides more distant targets',()=>{
+  const near=new GrowthRangeSession(defaultGrowthLoadoutV3('sniper'),{distance:900,health:100,armor:0});
+  const far=new GrowthRangeSession(defaultGrowthLoadoutV3('sniper'),{distance:1100,health:100,armor:0});
+  expect(near.presentation().state.actors.some(a=>a.id==='enemy-0')).toBe(true);
+  expect(far.presentation().state.actors.some(a=>a.id==='enemy-0')).toBe(false);
+  far.step({fire:true});
+  expect(far.presentation().effects.length).toBeGreaterThan(0);
+  expect(far.presentation().effects[0].trace.hit).toBeNull();
 });

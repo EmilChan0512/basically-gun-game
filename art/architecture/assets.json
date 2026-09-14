@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "style": "Original 2D side-scrolling military action game illustration, bold clean ink outlines, angular cel shading, slightly chunky readable proportions, olive and graphite armor with restrained cyan luminous technology and amber accents, near-future tactical science fiction, hand-painted game menu artwork, clear silhouette, crisp graphic shapes, no photorealism, no 3D render, no lettering, no typography, no logos, no watermark.",
+  "models": {
+    "unet": "flux-2-klein-4b.safetensors",
+    "clip": "qwen_3_4b.safetensors",
+    "vae": "flux2-vae.safetensors"
+  },
+  "steps": 4,
+  "assets": [
+    {
+      "id": "atrium-depth",
+      "width": 1536,
+      "height": 864,
+      "prompt": "Environment background plate for a side view 2D platform shooter. Monumental abandoned corporate skyscraper atrium interior, straight frontal architectural elevation, deep recessed glass offices and elevator shafts, layered pillars receding into depth, huge windows revealing distant hazy blue city skyline, cool teal shadows and warm amber office lights. Empty space across foreground for separately drawn playable platforms. Symmetrical architectural rhythm, four stories, no people, no foreground obstructions, no text. Rich painterly depth, clean readable dark background."
+    }
+  ]
+}

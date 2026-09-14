@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "revision": "v1",
+  "generator": "Local ComfyUI / FLUX.2 Klein 4B",
+  "assets": [
+    {
+      "id": "atrium-depth",
+      "file": "atrium-depth.png",
+      "width": 1536,
+      "height": 864,
+      "sha256": "8102e7bd9d7755d9d10710a2b6b8870a0eaa7b66c856352a73b704b71d649003"
+    }
+  ]
+}

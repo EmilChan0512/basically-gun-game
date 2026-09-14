@@ -1,3 +1,4 @@
+import { VISION_RADIUS } from '../Vision';
 import type { Actor, Battle, BattleInput, ShotEffect } from '../../../game/campaign/Battle';
 import { Arsenal } from '../../../game/campaign/Arsenal';
 import { OriginalLife } from '../../../game/combat/OriginalLife';
@@ -581,7 +582,7 @@ export class GrowthBattleCoordinator {
   private botControl(a: Actor): BattleInput {
     const id = a.id, p = this.participant(id), gun = this.gun(id), m = a.movement, brain = a.brain;
     const allies = this.actors().filter(b => b.team === a.team && b.life.alive);
-    const visiblePoint = (point: Point) => allies.some(b => distance(chest(b), point) <= 620 && this.gadgets.clearRay({ x: b.movement.x, y: b.movement.y - 42 }, point, true));
+    const visiblePoint = (point: Point) => allies.some(b => distance(chest(b), point) <= VISION_RADIUS && this.gadgets.clearRay({ x: b.movement.x, y: b.movement.y - 42 }, point, true));
     const enemies = this.actors().filter(b => b.team !== a.team && b.life.alive && visiblePoint(chest(b)))
       .sort((b, c) => distance(chest(a), chest(b)) - distance(chest(a), chest(c)) || byId(b, c));
     const target = enemies[0], dist = target ? distance(chest(a), chest(target)) : Infinity;
@@ -822,7 +823,7 @@ export class GrowthBattleCoordinator {
   }
   visibleActors(team: 1 | 2) {
     const observers = this.actors().filter(a => a.team === team && a.life.alive);
-    return new Set(this.actors().filter(a => !this.participant(a.id).retired && (a.team === team || observers.some(b => distance(chest(a), chest(b)) <= 620
+    return new Set(this.actors().filter(a => !this.participant(a.id).retired && (a.team === team || observers.some(b => distance(chest(a), chest(b)) <= VISION_RADIUS
       && this.gadgets.clearRay({ x: b.movement.x, y: b.movement.y - 42 }, chest(a), true)))).map(a => a.id));
   }
   retire(id: string) {

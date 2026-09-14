@@ -42,3 +42,18 @@ it('publishes visible world effects and team-authorized frozen intel without rev
   expect(clear.events.map(e=>e.id)).toEqual([1,2,3]);expect(clear.events[1].actorId).toBeUndefined();
   expect(message.events[0].actorId).toBe(hidden);
 });
+
+
+it.each([null, { type:'unit' as const, target:'enemy-0', region:'head' as const }])('keeps a distant shot visible without exposing hidden hit data: %j', hit => {
+  const battle=new Battle(customMatch('signal'));
+  battle.actors.forEach((a,i)=>{a.life.alive=i===0;a.movement.reset(100,500);});
+  const trace={origin:{x:100,y:458},end:{x:1700,y:458},maxDistance:1800,steps:160,preSteps:0,initialHit:hit,hit,headMarked:!!hit};
+  const message:StateMessage={type:'state',roomId:'shot',round:1,actorId:'player',mapId:'signal',mode:'tdm',state:battle.snapshot(),result:null,ack:0,poses:[],bursts:[],grenades:[],events:[],
+    effects:[{actorId:'player',team:1,frame:0,trace,damage:80,killed:true}]};
+  const result=visibleState(message,new Set(['player']),1,()=>false);
+  expect(result.effects).toHaveLength(1);
+  expect(result.effects[0].trace.end.x).toBeGreaterThan(1000);
+  expect(result.effects[0].trace.end.x).toBeLessThan(1100);
+  expect(result.effects[0]).toMatchObject({damage:0,killed:false,trace:{hit:null,initialHit:null,headMarked:false}});
+  expect(message.effects[0].trace.end.x).toBe(1700);
+});
