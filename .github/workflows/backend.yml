@@ -125,8 +125,31 @@ jobs:
           opts=(-o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=3)
           echo "[deploy] Creating remote staging directory for $release"
           ssh "${opts[@]}" -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$remote'"
-          echo '[deploy] Uploading verified backend bundle'
-          scp "${opts[@]}" -P "$DEPLOY_PORT" backend.tar.gz backend.tar.gz.sha256 deploy/release.sh "$DEPLOY_USER@$DEPLOY_HOST:$remote/"
+          upload_bundle() {
+            local attempt
+            for attempt in 1 2; do
+              echo "[deploy] Uploading verified backend bundle (attempt $attempt/2; legacy SCP; 180-second limit)"
+              # OpenSSH scp defaults to SFTP. The production host's SFTP session can
+              # establish successfully yet stall mid-upload, so use the legacy SCP
+              # protocol for this known local-to-remote release payload.
+              if timeout --foreground --signal=TERM 180 \
+                scp -O "${opts[@]}" -P "$DEPLOY_PORT" \
+                  backend.tar.gz backend.tar.gz.sha256 deploy/release.sh \
+                  "$DEPLOY_USER@$DEPLOY_HOST:$remote/"; then
+                return 0
+              fi
+
+              echo "[deploy] Upload attempt $attempt/2 failed or exceeded 180 seconds" >&2
+              if (( attempt < 2 )); then
+                echo '[deploy] Removing partial upload before retrying once'
+                ssh "${opts[@]}" -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" \
+                  "rm -f '$remote/backend.tar.gz' '$remote/backend.tar.gz.sha256' '$remote/release.sh'"
+                sleep 5
+              fi
+            done
+            return 1
+          }
+          upload_bundle
           echo '[deploy] Activating release on remote host (the release script may wait up to 5 minutes for deploy.lock)'
           ssh "${opts[@]}" -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" "bash '$remote/release.sh' '$release'"
           echo '[deploy] Remote release completed successfully'
