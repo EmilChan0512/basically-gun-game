@@ -1,0 +1,25 @@
+tools/package-server.mjs
+  s_e6b56f655a2604::t_af45145b39589d 10,13-17,58
+docs/BACKEND_DEPLOYMENT.md
+  s_e6b56f655a2604::t_af45145b39589d 72
+.github/workflows/backend.yml
+  s_e6b56f655a2604::t_af45145b39589d 31-33
+deploy/release.sh
+  s_e6b56f655a2604::t_af45145b39589d 37-49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "286d40d666bc37458df1306cb3756f00ab7d9d3d",
+  "prompts": {},
+  "sessions": {
+    "s_e6b56f655a2604": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0a019-8f1a-7641-b5bb-43573cf797b2",
+        "model": "GPT-5.6-Terra-joybuilder"
+      },
+      "human_author": "chenyi.266 <chenyi.266@jd.com>"
+    }
+  }
+}
