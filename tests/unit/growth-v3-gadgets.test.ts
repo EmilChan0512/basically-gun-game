@@ -1,3 +1,6 @@
+import { Battle } from '../../src/game/campaign/Battle';
+import { customMatch } from '../../src/shared/content/Maps';
+import { defaultGrowthLoadoutV3 } from '../../src/shared/content/growth-v3/Loadout';
 import { expect, it } from 'vitest';
 import { GadgetSimulation, type GadgetActor, type GadgetEvent, type GadgetWorldPort } from '../../src/shared/simulation/growth-v3/GadgetSimulation';
 import { newArmor } from '../../src/shared/simulation/growth-v3/DamageRules';
@@ -198,4 +201,32 @@ it('self-use damage interruption and stronger armor at commit do not spend the p
   f.actors[0].armor={remaining:25000,until:100,source:'test'};
   for(let t=1;t<=31;t++)sim.step(t);
   expect(sim.inventory('blue').charges).toBe(2);expect(f.actors[0].armor.until).toBe(100);
+});
+
+
+it.each([100,1100])('sniper beacon snaps a distant crosshair at %s onto nearby ground',x=>{
+  const f=fixture(),sim=new GadgetSimulation(f.port);sim.register('blue','sniper','sn_beacon');
+  expect(sim.use('blue',{x,y:400},0)).toBe(true);
+  const target=sim.inventory('blue').cast!.target;
+  expect(Math.abs(target.x-f.actors[0].feet.x)).toBe(48);expect(target.y).toBe(600);
+  for(let t=0;t<=30;t++)sim.step(t);
+  expect(sim.entities()).toHaveLength(1);expect(sim.inventory('blue').charges).toBe(0);
+});
+it.each(['spawn','objective','air','wall'] as const)('sniper beacon snapping cannot bypass %s restrictions',kind=>{
+  const f=fixture(),sim=new GadgetSimulation(f.port);sim.register('blue','sniper','sn_beacon');
+  if(kind==='spawn')f.port.spawns=[{x:348,y:600}];
+  if(kind==='objective')f.port.objectives=[{x:348,y:600}];
+  if(kind==='air')f.port.wall=()=>false;
+  if(kind==='wall')f.port.wall=()=>true;
+  expect(sim.use('blue',{x:1100,y:400},0)).toBe(false);
+  expect(sim.inventory('blue').charges).toBe(1);expect(sim.inventory('blue').cast).toBeNull();
+});
+
+it.each([{x:800,y:1279.5},{x:720,y:1039.5},{x:1300,y:679.5}])('deploys a beacon through real atrium collision at $x,$y',position=>{
+  const battle=new Battle({...customMatch('atrium'),allies:0,enemies:0});
+  battle.enableGrowthV3({player:defaultGrowthLoadoutV3('sniper')},5);
+  battle.player.human=true;battle.player.life.spawnProtectionFrames=0;battle.player.movement.reset(position.x,position.y);
+  expect(battle.useItem({x:2500,y:400})).toBe(true);
+  for(let t=0;t<30;t++)battle.tickPlayers(new Map());
+  expect(battle.growthV3!.gadgets.entities().some(e=>e.gadgetId==='sn_beacon')).toBe(true);
 });

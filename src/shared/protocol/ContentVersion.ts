@@ -23,7 +23,7 @@ export function contentFingerprint(value: unknown) {
   for (let i = 0; i < text.length; i++) hash = BigInt.asUintN(64, (hash ^ BigInt(text.charCodeAt(i))) * 0x100000001b3n);
   return hash.toString(16).padStart(16, '0');
 }
-export const CONTENT_VERSION = contentFingerprint({ rules: 58, visionRadius: VISION_RADIUS, growthPresets: GROWTH_V3_PRESETS, growthStage: GROWTH_V3_STAGE, growthSound: GROWTH_SOUND_RADII,
+export const CONTENT_VERSION = contentFingerprint({ rules: 59, visionRadius: VISION_RADIUS, growthPresets: GROWTH_V3_PRESETS, growthStage: GROWTH_V3_STAGE, growthSound: GROWTH_SOUND_RADII,
   growthV3: [GROWTH_V3_VERSION, GROWTH_V3_RULES, GROWTH_V3_WEAPONS, GROWTH_V3_ATTACHMENTS, GROWTH_V3_OPERATORS, GROWTH_V3_ABILITIES,
     GROWTH_V3_PASSIVES, GROWTH_V3_ULTIMATES, GROWTH_V3_GADGETS, GROWTH_V3_CARDS, GROWTH_V3_EVOLUTIONS, GROWTH_V3_PERKS],
   growth: [GROWTH_RULES, GROWTH_UPGRADES, GROWTH_ULTIMATE, GROWTH_WEAPONS, GROWTH_CLASSES, GROWTH_POOLS, GROWTH_ULTIMATES, GROWTH_PERKS, GROWTH_ALTERNATIVES], records: [GROWTH_ATTACHMENTS, GROWTH_ACHIEVEMENTS, GROWTH_TRAITS], maps: MAPS, scenarios: PVE_SCENARIOS, weapons: WEAPONS,

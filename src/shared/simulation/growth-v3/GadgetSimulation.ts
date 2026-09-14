@@ -166,6 +166,17 @@ export class GadgetSimulation {
     return !this.state.entities.some(e=>Math.abs(e.position.x-target.x)<(e.definition.width+def.width)/2
       &&Math.abs(e.position.y-(target.y-def.height/2))<(e.definition.height+def.height)/2);
   }
+  /** A human crosshair selects the nearby side; placement still uses authority geometry. */
+  private beaconPlacement(actor:GadgetActor,aim:CombatPoint,def:GadgetDefinition):CombatPoint|null {
+    if(this.validPlacement(actor,aim,def))return aim;
+    const x=actor.feet.x+Math.max(-48,Math.min(48,aim.x-actor.feet.x));
+    // Search only around the current floor, never down through an entire storey.
+    for(let offset=0;offset<=32;offset++)for(const sign of (offset?[1,-1]:[1])) {
+      const target={x,y:actor.feet.y+offset*sign};
+      if(this.validPlacement(actor,target,def))return target;
+    }
+    return null;
+  }
   /** seq deduplication belongs to the owning PlayerCommand boundary. Never accepts a client gadgetId. */
   use(id:string,target:CombatPoint,tick:number) {
     const state=this.inventory(id), actor=this.actor(id);
@@ -182,6 +193,11 @@ export class GadgetSimulation {
     if(def.reservesDeploySlot&&this.hasDeploymentReservation(id))return this.fail(state,tick,'existing_deployable');
     if(def.reservesSmokeSlot&&this.smokeCount()>=8)return this.fail(state,tick,'capacity');
     if(def.kind==='throw'&&this.state.flying.length+this.state.actors.filter(a=>a.cast?.definition.kind==='throw').length>=32)return this.fail(state,tick,'capacity');
+    if(state.gadgetId==='sn_beacon') {
+      const placement=this.beaconPlacement(actor,target,def);
+      if(!placement)return this.fail(state,tick,'beacon_placement');
+      target=placement;
+    }
     if(def.kind==='deploy'&&!this.validPlacement(actor,target,def))return this.fail(state,tick,'invalid_target');
     if(def.kind==='self'&&actor.armor.until>tick&&actor.armor.remaining>=healthUnits(def.armor))return this.fail(state,tick,'no_effect');
     this.world.interruptWeapon(id);state.cast={target:{...target},commitTick:tick+def.cast,definition:def};
