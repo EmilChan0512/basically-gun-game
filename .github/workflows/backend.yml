@@ -28,6 +28,9 @@ jobs:
       - run: node tools/package-game.mjs
       - run: npm run package:server
       - run: node tools/verify-server-package.mjs
+      # Production currently reuses the active static client. Keep the transfer small
+      # while deploy/release.sh enforces an identical content version before activation.
+      - run: node tools/package-server.mjs --backend-only
       - run: npm run test:offline
       - name: Upload gameplay diagnostics on failure
         if: failure()

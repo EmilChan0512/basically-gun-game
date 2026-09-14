@@ -69,6 +69,6 @@ node /opt/project-strike/current/probe.mjs
 
 服务端包现在包含生产前端 `dist/`。网页、WebSocket 和 `/admin/` 共用 4180 端口，玩家打开 http://43.142.165.82:4180/ 即可进入大厅，点击“公共调试房间”试玩，或登录后创建/加入普通房间。`/?offline` 为免登录单机入口（首次加载仍需要网络）。公网网页自动使用同源 WS/WSS，无需填写服务器地址。
 
-前端 TypeScript 仍在发布阶段通过 Vite 构建，玩家无需下载 ZIP 或安装 Node.js。执行 `npm run release` 后，按现有 release.sh 上传、校验和切换服务端包即可同时更新网页和后端；后续 GitHub Actions 也自动携带前端。部署探测同时验证网页和 WebSocket，失败恢复旧版本。`WEB_ROOT` 可覆盖静态资源路径，默认工作目录下的 dist；仅此目录公开，账号数据仍在 /var/lib/project-strike。
+本地 `npm run release` 仍生成包含网页和后端的完整服务端包。GitHub Actions 的生产部署当前使用后端优先包：复用当前 release 的 `dist` 静态客户端，只传输服务端 bundle；部署脚本会在激活前强制确认新旧 `contentVersion` 相同，防止前后端协议不一致。内容版本变更时必须改回完整前端发布。`WEB_ROOT` 可覆盖静态资源路径，默认工作目录下的 dist；仅此目录公开，账号数据仍在 /var/lib/project-strike。
 
 当前入口沿用无域名 HTTP/WS 部署；配置 HTTPS 反向代理时需同时转发网页和 WebSocket。Windows 便携发行包仍按仓库要求保留，作为可选下载。

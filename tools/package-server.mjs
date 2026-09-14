@@ -7,11 +7,14 @@ import { packageContentVersion } from './package-content.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const folder = join(root, 'artifacts/project-strike-server');
+const backendOnly = process.argv.includes('--backend-only');
 mkdirSync(join(folder, 'licenses'), { recursive: true });
-// Only production web assets belong in the public directory.
-readFileSync(join(root, 'dist/index.html'));
 rmSync(join(folder, 'dist'), { recursive: true, force: true });
-cpSync(join(root, 'dist'), join(folder, 'dist'), { recursive: true });
+if (!backendOnly) {
+  // Only production web assets belong in the public directory.
+  readFileSync(join(root, 'dist/index.html'));
+  cpSync(join(root, 'dist'), join(folder, 'dist'), { recursive: true });
+}
 copyFileSync(join(root, 'node_modules/phaser/LICENSE.md'), join(folder, 'licenses/phaser-MIT.txt'));
 await build({ absWorkingDir: root, entryPoints: ['server/main.ts'], outfile: join(folder, 'server.cjs'),
   bundle: true, platform: 'node', format: 'cjs', target: 'node22',
@@ -52,6 +55,6 @@ admin.json 只保存管理员用户名、加盐哈希及允许的 origin，不�
 配套客户端见 project-strike-local；打开其页面后进入 ?online 联机入口。
 `);
 writeFileSync(join(folder, 'manifest.json'), JSON.stringify({ builtAt: new Date().toISOString(), contentVersion: packageContentVersion(), node: '>=22.12',
-  entry: 'server.cjs', webRoot: 'dist', sha256: createHash('sha256').update(readFileSync(join(folder, 'server.cjs'))).digest('hex'),
+  entry: 'server.cjs', webRoot: backendOnly ? false : 'dist', frontend: backendOnly ? 'reuse-previous' : 'included', sha256: createHash('sha256').update(readFileSync(join(folder, 'server.cjs'))).digest('hex'),
   dependencies: 'ws bundled; optional native accelerators omitted', persistentRooms: false, persistentAccounts: true, accountSchema: 2 }, null, 2));
 console.log(`Server package: ${folder}`);
