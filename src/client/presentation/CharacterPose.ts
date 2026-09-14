@@ -15,7 +15,7 @@ export function compose(a: Matrix, b: Matrix): Matrix {
   const origin = transformPoint(a, b[4], b[5]);
   return [a[0] * b[0] + a[2] * b[1], a[1] * b[0] + a[3] * b[1], a[0] * b[2] + a[2] * b[3], a[1] * b[2] + a[3] * b[3], origin.x, origin.y];
 }
-export interface PoseOptions { frame?: number; vx?: number; crouch?: boolean; jumping?: boolean; flip?: boolean; aim?: { x: number; y: number }; reload?: number; flash?: boolean; bodyOnly?: boolean; melee?: { id: SpecialOffhandId; age: number } }
+export interface PoseOptions { recoilDegrees?: number; frame?: number; vx?: number; crouch?: boolean; jumping?: boolean; flip?: boolean; aim?: { x: number; y: number }; reload?: number; flash?: boolean; bodyOnly?: boolean; melee?: { id: SpecialOffhandId; age: number } }
 export const IDLE_CYCLE_FRAMES = movements.idle.length * 3;
 function sample(poses: Joint[][], frame: number): Joint[] {
   const base = Math.floor(frame), fraction = frame - base;
@@ -55,7 +55,7 @@ export function characterPose(role: ClassId, weapon: WeaponId, options: PoseOpti
     return { parts: [...resting, ...body], muzzle: undefined };
   }
   const aim = options.aim ?? { x: 100 * facing, y: shoulder[5] };
-  const angle = Math.atan2(aim.y - shoulder[5], (aim.x - shoulder[4] * facing) * facing);
+  const angle = Math.atan2(aim.y - shoulder[5], (aim.x - shoulder[4] * facing) * facing) - (options.recoilDegrees ?? 0) * Math.PI / 180;
   const c = Math.cos(angle), s = Math.sin(angle), root = [facing * c, s, -facing * s, c, shoulder[4] * facing, shoulder[5]];
   const definition = WEAPONS[weapon];
   if (options.melee) {
@@ -80,7 +80,7 @@ export function characterPose(role: ClassId, weapon: WeaponId, options: PoseOpti
     }));
     return { parts: [...parts('rear'), ...body, ...parts('front').filter(p => p.name !== 'gun')], muzzle: undefined };
   }
-  const clip = arms[reload > 0 ? `${definition.reloadGrip}_reload` : options.flash ? `${definition.fireGrip}_fire` : definition.grip];
+  const clip = arms[reload > 0 ? `${definition.reloadGrip}_reload` : options.flash && options.recoilDegrees === undefined ? `${definition.fireGrip}_fire` : definition.grip];
   const progress = reload > 0 ? Math.max(0, Math.min(.9999, 1 - reload / WEAPONS[weapon].config.reloadFrames)) : 0;
   const handParts = (poses: Joint[][]) => poses[Math.floor(progress * poses.length)].map(j => ({
     id: j.part === 'weapon' ? weapon : `${role}-${j.part}`, name: j.name, matrix: compose(root, j.matrix),

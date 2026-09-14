@@ -1,5 +1,6 @@
 import data from './catalog.json';
 export interface AudioSettings { master: number; effects: number; voice: number; muted: boolean; subtitles: boolean }
+export interface AudioOptions { dx?: number; dy?: number; tag?: string; duration?: number; rate?: number; gain?: number; pan?: number }
 export const AUDIO_STORAGE = 'strike.audio.v1';
 export const audioDefaults: AudioSettings = { master: .8, effects: .7, voice: 1, muted: false, subtitles: true };
 export function normalizeSettings(value: Partial<AudioSettings>): AudioSettings {
@@ -89,8 +90,8 @@ export class AudioService {
   }
   pause(value: boolean) { if (value && !this.suspended) this.stop(); this.suspended = value; }
   setForeground(value: boolean) { if (value !== this.foreground) { this.stop(); this.resumeGeneration++; } this.foreground = value; }
-  cue(kind: string, options: { dx?: number; dy?: number; tag?: string; duration?: number; rate?: number } = {}) { void this.play(audioCatalog.cues[kind] ?? kind, options); }
-  weapon(id: string, action: 'shot' | 'reload', options: { dx?: number; dy?: number; tag?: string; duration?: number } = {}) {
+  cue(kind: string, options: AudioOptions = {}) { void this.play(audioCatalog.cues[kind] ?? kind, options); }
+  weapon(id: string, action: 'shot' | 'reload', options: AudioOptions = {}) {
     const clip = audioCatalog.weapons[id]?.[action]; if (clip) void this.play(clip, options);
   }
   voice(group: string) {
@@ -103,7 +104,7 @@ export class AudioService {
     return true;
   }
   private available() { return this.enabled && this.settings.master > 0 && this.foreground && !this.suspended && typeof document !== 'undefined' && !document.hidden && this.context?.state === 'running'; }
-  async play(id: string, options: { dx?: number; dy?: number; tag?: string; duration?: number; rate?: number } = {}) {
+  async play(id: string, options: AudioOptions = {}) {
     const asset = audioCatalog.assets[id]; if (!asset || !this.available()) return;
     const voice = asset.category === 'voice', epoch = this.epoch, tagEpoch = options.tag ? this.tags.get(options.tag) : undefined, started = performance.now();
     if (!(voice ? this.settings.voice : this.settings.effects)) return;
@@ -111,9 +112,9 @@ export class AudioService {
     if (!buffer || epoch !== this.epoch || options.tag && tagEpoch !== this.tags.get(options.tag) || !this.available() || performance.now() - started > (voice ? 1500 : 300)) { this.diagnostics.skipped++; return; }
     if (this.active.size >= 32 && !voice) { this.diagnostics.skipped++; return; }
     const ctx = this.context!, source = ctx.createBufferSource(), gain = ctx.createGain(), pan = ctx.createStereoPanner();
-    gain.gain.value = asset.volume * (voice ? 1 : Math.max(0, 1 - Math.hypot(options.dx ?? 0, options.dy ?? 0) / 1400));
+    gain.gain.value = asset.volume * Math.max(0, Math.min(1, options.gain ?? 1)) * (voice ? 1 : Math.max(0, 1 - Math.hypot(options.dx ?? 0, options.dy ?? 0) / 1400));
     if (!gain.gain.value) return;
-    pan.pan.value = Math.max(-.85, Math.min(.85, (options.dx ?? 0) / 700)); source.buffer = buffer;
+    pan.pan.value = Math.max(-.85, Math.min(.85, options.pan ?? (options.dx ?? 0) / 700)); source.buffer = buffer;
     if (options.rate) source.playbackRate.value = Math.max(.5, Math.min(2, options.rate));
     if (options.duration) source.playbackRate.value = Math.max(.5, Math.min(2, buffer.duration / options.duration));
     source.connect(gain); gain.connect(pan); pan.connect(voice ? this.voices! : this.effects!);

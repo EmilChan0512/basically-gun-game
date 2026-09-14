@@ -36,7 +36,7 @@ test('delivery lobby, original art, pickup restriction and reconnect use authori
     await pages[0].screenshot({ path: 'artifacts/qa/delivery-carrier.png' });
     [...server.wss.clients][0].terminate();
     await expect(pages[0].locator('#status')).toContainText('连接已断开');
-    await pages[0].locator('#reconnect').click();
+    await pages[0].getByRole('button',{name:'断线重连',exact:true}).click();
     await expect(pages[0].locator('#status')).toContainText('房间码');
     await expect(pages[0].locator('#online-hud')).toContainText('橙包携带中');
     expect(battle.snapshot().deliveryTargets!.filter(t => t.carrierId)).toHaveLength(1);

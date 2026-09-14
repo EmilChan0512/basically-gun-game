@@ -1,5 +1,7 @@
-import type { SimulationEvent } from '../../shared/simulation/Events';
+import { GROWTH_COMBAT_EVENT_KINDS, type SimulationEvent } from '../../shared/simulation/Events';
 import { gameAudio, type AudioService } from './AudioService';
+import { GROWTH_SOUND_CLIPS } from './GrowthAudio';
+const descriptiveGrowthEvents:ReadonlySet<string>=new Set(GROWTH_COMBAT_EVENT_KINDS);
 export interface AudioActor { id: string; x: number; y: number; weapon: string; classId?: string | null; reload: number; reserve?: number; life: { alive: boolean }; team: number }
 /** Advance even when muted/backgrounded; seed new sessions without historical playback. */
 export class AudioEventCursor {
@@ -30,6 +32,19 @@ export class AudioPresentation {
       if (!actor?.life.alive || !actor.reload) { this.audio.stop(`reload:${id}`); this.reloading.delete(id); }
     }
     for (const event of fresh) {
+      // These describe state changes. Their audible cues arrive separately with authority-filtered hearing.
+      if(descriptiveGrowthEvents.has(event.kind))continue;
+      if (event.kind === 'tactical-sound') {
+        const sample = event.sound;
+        if (!sample) continue;
+        const clip = GROWTH_SOUND_CLIPS[sample.cue], key = `tactical:${sample.cue}:${sample.pan}`;
+        if (tick - (this.cooldown.get(key) ?? -Infinity) < (sample.cue === 'shot' ? 1 : 3)) continue;
+        this.cooldown.set(key, tick);
+        const options = { rate: clip.rate, pan: sample.pan * .65, gain: [1, .65, .35][sample.distance] };
+        if (sample.cue === 'shot' && sample.weapon) this.audio.weapon(sample.weapon, 'shot', options);
+        else this.audio.cue(clip.clip, options);
+        continue;
+      }
       if ((event.kind === 'shot' && event.actorId === listenerId) || (event.kind === 'damage' && event.targetId === listenerId)) this.recentCombat = event.tick;
       const actor = actors.find(a => a.id === (['damage','death','melee-hit','block'].includes(event.kind) ? event.targetId ?? event.actorId : event.actorId));
       const point = event.position ?? actor, options = point ? { dx: point.x - listener.x, dy: point.y - listener.y } : {};
@@ -42,7 +57,7 @@ export class AudioPresentation {
           if (!source?.life.alive || !source.reload || source.weapon !== weapon) continue;
           this.reloading.add(event.actorId);
         }
-        if (weapon) this.audio.weapon(weapon, event.kind, { ...options, ...(event.kind === 'reload' ? { tag: `reload:${event.actorId}`, duration: event.duration ? event.duration / 30 : undefined } : {}) });
+        if (weapon && !event.authoritativeSound) this.audio.weapon(weapon, event.kind, { ...options, ...(event.kind === 'reload' ? { tag: `reload:${event.actorId}`, duration: event.duration ? event.duration / 30 : undefined } : {}) });
         if (event.kind === 'reload' && event.actorId === listenerId && event.emptyMagazine && tick - this.recentCombat <= 150 && tick - this.lastTacticalVoice >= 450) {
           if (this.audio.voice('reload')) this.lastTacticalVoice = tick;
         }
@@ -67,7 +82,7 @@ export class AudioPresentation {
       } else if (event.kind === 'skill' || event.kind === 'item') {
         this.audio.cue(['heal','regenerate','medkit'].includes(event.ability ?? '') ? 'heal' : ['supply','ammo'].includes(event.ability ?? '') ? 'supply' : event.kind, options);
         if (event.actorId === listenerId && event.ability === 'regenerate') this.audio.voice('regenerate');
-      } else if (event.kind !== 'error' || event.actorId === listenerId) this.audio.cue(event.kind, options);
+      } else if (event.kind !== 'error' || event.actorId === listenerId && event.cause !== 'no_charge') this.audio.cue(event.kind, options);
     }
     if (this.cooldown.size > 2048) this.cooldown.clear();
   }

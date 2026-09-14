@@ -11,9 +11,14 @@ export function radarSvg(map: MapGeometry, message: Pick<StateMessage, 'state' |
   const projection = radarProjection(map), art = map.artwork;
   const terrain = map.terrain.map(t => `<rect x="${t.x}" y="${t.y}" width="${t.width}" height="${t.height}" fill="#71818d"/>`).join('');
   const backdrop = art ? `<image href="/assets/reference/${escape(art.id)}.png" x="${art.x}" y="${art.y}" width="${art.width}" height="${art.height}" opacity="0.6"/>` : terrain;
-  const markers = message.state.actors.filter(a => a.life.alive && (a.team === team || !a.growth?.ghost)).map(actor => {
+  const markers = message.state.actors.filter(a => a.life.alive && (a.growthV3 || a.team === team || !a.growth?.ghost)).map(actor => {
     const p = projection.point(actor), self = actor.id === message.actorId;
     return `<circle data-actor="${escape(actor.id)}" cx="${p.x}" cy="${p.y}" r="${self ? 4.5 : 3}" fill="${self ? '#ffffff' : actor.team === team ? '#58ead4' : '#ff897c'}" stroke="#10202d" stroke-width="1"/>`;
+  }).join('');
+  const signals = (message.state.growthWorld?.radar ?? []).filter(mark => mark.team === team && mark.expiresTick > message.state.frame).map(mark => {
+    const p = projection.point(mark.position);
+    const opacity = Math.min(.85, Math.max(.2, (mark.expiresTick - message.state.frame) / 60));
+    return `<circle data-signal="${escape(mark.id)}" cx="${p.x}" cy="${p.y}" r="5" fill="none" stroke="#ffbc85" stroke-width="1.5" stroke-dasharray="2 2" opacity="${opacity}"/>`;
   }).join('');
   const targets = (message.state.deliveryTargets ?? []).map(target => {
     const carrier = message.state.actors.find(a => a.id === target.carrierId);
@@ -23,5 +28,5 @@ export function radarSvg(map: MapGeometry, message: Pick<StateMessage, 'state' |
   }).join('');
   const control = projection.point(map.objective);
   const zone = message.mode === 'dom' ? `<circle cx="${control.x}" cy="${control.y}" r="6" fill="none" stroke="#ffe595" stroke-width="2"/>` : '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="战斗雷达：白色为自己，绿色为队友，红色为已暴露敌人，菱形为公文包" viewBox="0 0 260 150"><rect width="260" height="150" rx="8" fill="#10202d" fill-opacity="0.9"/><g transform="translate(${projection.x} ${projection.y}) scale(${projection.scale})">${backdrop}</g>${zone}${markers}${targets}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="战斗雷达：白色为自己，绿色为队友，红色为已暴露敌人，虚线圈为最后收到的信号位置，菱形为公文包" viewBox="0 0 260 150"><rect width="260" height="150" rx="8" fill="#10202d" fill-opacity="0.9"/><g transform="translate(${projection.x} ${projection.y}) scale(${projection.scale})">${backdrop}</g>${zone}${signals}${markers}${targets}</svg>`;
 }

@@ -1,6 +1,9 @@
 import { GROWTH_ACHIEVEMENTS } from '../content/GrowthRecords';
 import { Battle, seededRandom } from '../../game/campaign/Battle';
-import { GROWTH_RULES, defaultGrowthLoadout, validateGrowthLoadout, type GrowthLoadout } from '../content/GrowthCatalog';
+import { defaultGrowthLoadoutV3 as defaultGrowthLoadout, validateGrowthLoadoutV3, type GrowthLoadoutV3 as GrowthLoadout } from '../content/growth-v3/Loadout';
+import { GROWTH_V3_STAGE } from '../content/growth-v3/Core';
+import { GROWTH_V3_PRESETS, validateGrowthPreset, type GrowthPresetId } from '../content/growth-v3/Presets';
+const validateGrowthLoadout = (value: unknown) => validateGrowthLoadoutV3(value, GROWTH_V3_STAGE);
 import { customMatch } from '../content/Maps';
 import { MatchSession } from './MatchSession';
 import type { PlayerCommand } from '../protocol/Commands';
@@ -14,6 +17,7 @@ export class Room {
   session: MatchSession | null = null;
   hostId: string | null = null;
   round = 0;
+  growthPreset: GrowthPresetId = 'standard';
   constructor(readonly id: string, public mapId = 'hijack', public mode: import('./ModeRules').ModeId = 'tdm', readonly debug = false, readonly rules: 'classic' | 'growth' = 'classic') {
     if (!['classic', 'growth'].includes(rules) || rules === 'growth' && (debug || !['tdm', 'dom'].includes(mode))) throw Error('Invalid room rules');
   }
@@ -39,10 +43,13 @@ export class Room {
       if (equipment) this.session.reconfigureDebugPlayer(id, equipment);
     }
   }
-  configure(id: string, mapId: string, mode: import('./ModeRules').ModeId) {
+  configure(id: string, mapId: string, mode: import('./ModeRules').ModeId, preset: unknown = this.growthPreset) {
     if (this.rules === 'growth' && !['tdm', 'dom'].includes(mode)) throw Error('成长模式支持团队交火和据点争夺');
     if (id !== this.hostId || this.session) throw Error('Only lobby host can configure');
+    const selected = validateGrowthPreset(preset);
+    if(this.rules!=='growth'&&selected!=='standard')throw Error('实验短局仅限成长模式');
     customMatch(mapId, mode); this.mapId = mapId; this.mode = mode;
+    this.growthPreset = selected;
     [...this.players.values()].forEach((player, i) => { player.ready = false; player.team = mode === 'coop' || i % 2 === 0 ? 1 : 2; });
   }
   ready(id: string, ready: boolean) {
@@ -51,7 +58,7 @@ export class Room {
     player.ready = ready;
   }
   equip(id: string, value: unknown) {
-    if (this.rules === 'growth') throw Error('P1成长模式使用统一Assault配装');
+    if (this.rules === 'growth') throw Error('成长模式请使用四干员专属配装入口');
     const player = this.players.get(id);
     if (!player || !player.connected || this.session && !this.debug) throw Error('Cannot change equipment');
     const equipment = validateEquipment(value);
@@ -73,16 +80,18 @@ export class Room {
     // A lone returning spectator may be assigned red. Normalize the solo seat.
     if (soloGrowth) roster[0].team = 1;
     if (!soloGrowth && (!blue || (this.mode !== 'coop' && !red))) throw Error('Both teams required');
-    const battle = new Battle({ ...map, ...(this.rules === 'growth' ? { seconds: GROWTH_RULES.seconds, goal: Number.MAX_SAFE_INTEGER } : {}), allies: soloGrowth ? 0 : blue - 1, enemies: soloGrowth ? 1 : red }, 'normal', 'm4', seededRandom(seed), null, `${this.id}:${++this.round}`);
+    const battle = new Battle({ ...map, ...(this.rules === 'growth' ? { growthPreset: this.growthPreset, seconds: GROWTH_V3_PRESETS[this.growthPreset].matchTicks / 30, goal: Number.MAX_SAFE_INTEGER } : {}), allies: soloGrowth ? 0 : blue - 1, enemies: soloGrowth ? 1 : red }, 'normal', 'm4', seededRandom(seed), null, `${this.id}:${++this.round}`);
     this.session = new MatchSession(battle);
+    const growthBuilds: Record<string, GrowthLoadout> = {};
     roster.forEach((player, i) => { player.spectator = false; battle.actors[i].name = player.name;
       if (player.growthLoadout?.title && player.growthLoadout.title !== 'none') battle.actors[i].name += ` · ${GROWTH_ACHIEVEMENTS[player.growthLoadout.title].name.split(' · ')[1]}`;
-      if (this.rules === 'growth') battle.equipGrowth(battle.actors[i], player.growthLoadout); else battle.equipActor(battle.actors[i], player.equipment);
+      if (this.rules === 'growth') growthBuilds[battle.actors[i].id] = player.growthLoadout!; else battle.equipActor(battle.actors[i], player.equipment);
       this.session!.bind(player.id, battle.actors[i].id); });
     if (soloGrowth) {
       const bot = battle.actors[1], classId = (['assault', 'tank', 'sniper', 'medic'] as const)[(this.round - 1) % 4];
-      bot.name = `${classId} 训练机器人`; battle.equipGrowth(bot, defaultGrowthLoadout(classId));
+      bot.name = `${classId} 训练机器人`; growthBuilds[bot.id] = defaultGrowthLoadout(classId);
     }
+    if (this.rules === 'growth') battle.enableGrowthV3(growthBuilds, GROWTH_V3_STAGE);
   }
   command(id: string, command: PlayerCommand, authorityShotFrame?: number) { return this.players.get(id)?.connected ? this.session?.submit(id, command, authorityShotFrame) ?? false : false; }
   disconnect(id: string) {
@@ -100,7 +109,8 @@ export class Room {
     const actorId = this.session?.actorId(id);
     if (actorId) { this.session?.battle.releaseObjective(actorId); this.session?.battle.forgetActorInput(actorId); }
     if (this.session) {
-      this.session.battle.actors = this.session.battle.actors.filter(a => a.id !== actorId);
+      if (actorId && this.session.battle.growthV3) this.session.battle.growthV3.retire(actorId);
+      else this.session.battle.actors = this.session.battle.actors.filter(a => a.id !== actorId);
       this.session.battle.grenades = this.session.battle.grenades.filter(g => g.source.id !== actorId);
       this.session.battle.projectiles = this.session.battle.projectiles.filter(p => p.sourceId !== actorId);
     }
@@ -120,5 +130,5 @@ export class Room {
     for (const [key, player] of this.players) { if (!player.connected) this.players.delete(key); else { player.ready = false; player.spectator = false; } }
     this.session = null;
   }
-  lobby() { return { id: this.id, rules: this.rules, debug: this.debug, instanceId: this.instanceId, round: this.round, hostId: this.hostId, mapId: this.mapId, mode: this.mode, phase: this.session ? 'playing' : 'lobby', players: [...this.players.values()].map(p => ({ ...p, growthLoadout: p.growthLoadout ? { classId: p.growthLoadout.classId, primary: p.growthLoadout.primary } : undefined, equipment: { ...p.equipment } })) }; }
+  lobby() { return { id: this.id, rules: this.rules, growthPreset: this.rules === 'growth' ? this.growthPreset : undefined, debug: this.debug, instanceId: this.instanceId, round: this.round, hostId: this.hostId, mapId: this.mapId, mode: this.mode, phase: this.session ? 'playing' : 'lobby', players: [...this.players.values()].map(p => ({ ...p, growthLoadout: p.growthLoadout ? { classId: p.growthLoadout.classId, primary: p.growthLoadout.primary } : undefined, equipment: { ...p.equipment } })) }; }
 }

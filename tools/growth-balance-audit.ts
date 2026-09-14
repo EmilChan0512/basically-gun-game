@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { Room } from '../src/shared/simulation/Room';
+import { Battle, seededRandom } from '../src/game/campaign/Battle';
+import { customMatch } from '../src/shared/content/Maps';
 import { idleInput } from '../src/game/campaign/Battle';
 import { defaultGrowthLoadout, GROWTH_CLASSES, GROWTH_WEAPONS, type GrowthClassId, type GrowthLoadout } from '../src/shared/content/GrowthCatalog';
 import { freshGrowthCareer, ownedGrowthLoadout } from '../src/shared/content/GrowthCareer';
@@ -13,10 +14,10 @@ veteran.xp = 100000;
 for (const id of Object.keys(GROWTH_CLASSES) as GrowthClassId[]) veteran.mastery[id] = 100000;
 for (const id of Object.keys(GROWTH_WEAPONS) as (keyof typeof GROWTH_WEAPONS)[]) veteran.weaponXp[id] = 100000;
 const start = (loadout: GrowthLoadout) => {
-  const room = new Room('balance-audit', 'signal', 'tdm', false, 'growth');
-  room.join('player', 'Player', { classId: 'tank', primary: 'minigun', secondary: 'deagle', skill: 'iron', item: 'frag' }, loadout);
-  room.join('enemy', 'Opponent'); room.ready('player', true); room.ready('enemy', true); room.start('player', 17);
-  return room.session!.battle;
+  // Retained v2 regression audit. Current v3 authority evidence uses tools/qa/growth-v3-battle.ts.
+  const battle = new Battle({ ...customMatch('signal', 'tdm'), allies: 0, enemies: 1, seconds: 900 }, 'normal', 'm4', seededRandom(17), null, 'legacy-growth-audit');
+  battle.actors.forEach(a => { a.human = true; battle.equipGrowth(a, a.id === 'player' ? loadout : defaultGrowthLoadout()); });
+  return battle;
 };
 const comparisons: { classId: string; primary: string; identicalTicks: number; health: number; damage: number }[] = [];
 const attachments: { classId: string; primary: string; attachment: string; benefits: string[]; costs: string[] }[] = [];

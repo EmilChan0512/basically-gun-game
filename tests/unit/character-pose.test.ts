@@ -6,6 +6,16 @@ import manifest from '../../public/assets/characters/manifest.json';
 import { SPECIAL_OFFHANDS, type SpecialOffhandId } from '../../src/shared/content/Offhands';
 
 describe('recovered character anatomy', () => {
+  it('rotates only firearm joints for growth recoil while keeping the source aim and body intact', () => {
+    const aim={x:200,y:-35};
+    const base=characterPose('commando','m4',{aim,recoilDegrees:0});
+    const kicked=characterPose('commando','m4',{aim,recoilDegrees:8});
+    expect(aim).toEqual({x:200,y:-35});
+    const body=(pose:typeof base)=>pose.parts.filter(p=>p.id.endsWith('-boot')||p.id.endsWith('-torso')||p.id.endsWith('-head'));
+    expect(body(kicked)).toEqual(body(base));
+    expect(kicked.parts.find(p=>p.id==='m4')!.matrix).not.toEqual(base.parts.find(p=>p.id==='m4')!.matrix);
+    expect(kicked.muzzle!.y).toBeLessThan(base.muzzle!.y);
+  });
   it('breathes with anchored feet and loops without a pose discontinuity', () => {
     const first = characterPose('assassin', 'm4', { frame: 0 });
     const middle = characterPose('assassin', 'm4', { frame: 30 });

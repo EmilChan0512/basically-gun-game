@@ -1,6 +1,6 @@
 import { freshGrowthMetrics, type GrowthMetrics, type GrowthWeaponMetrics } from '../src/shared/content/GrowthRecords';
-import type { GrowthWeaponId } from '../src/shared/content/GrowthCatalog';
-import { ownedGrowthLoadout, freshGrowthCareer } from '../src/shared/content/GrowthCareer';
+import type { GrowthWeaponId } from '../src/shared/content/growth-v3/Weapons';
+import { ownedGrowthLoadoutV3 as ownedGrowthLoadout, freshGrowthCareerV3 as freshGrowthCareer } from '../src/shared/content/growth-v3/Career';
 import type { GrowthClassId } from '../src/shared/content/GrowthCatalog';
 import { WebSocketServer, WebSocket } from 'ws';
 import { randomUUID, randomBytes } from 'node:crypto';
@@ -15,7 +15,8 @@ import { RevealPolicy } from '../src/shared/simulation/RevealPolicy';
 import { visibleState } from '../src/shared/protocol/VisibleState';
 import type { MatchSession } from '../src/shared/simulation/MatchSession';
 import { OnlineAccounts } from './OnlineAccounts';
-import { growthView, type GrowthState } from '../src/shared/simulation/Growth';
+import { growthView } from '../src/shared/simulation/Growth';
+import type { GrowthProgressionState } from '../src/shared/simulation/growth-v3/Progression';
 import { ownedEquipment } from '../src/shared/content/OnlineProgress';
 import { validateEquipment } from '../src/shared/content/Equipment';
 import type { ClassId } from '../src/game/campaign/Catalog';
@@ -44,7 +45,7 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
   const endedSessions = new WeakSet<MatchSession>();
   const counters = { connections: 0, disconnections: 0, requestErrors: 0, rejectedCommands: 0, skippedSends: 0 };
   let lastMetrics = performance.now();
-  const roomFields = (room: Room) => ({ roomId: room.id, round: room.round, mapId: room.mapId, mode: room.mode });
+  const roomFields = (room: Room) => ({ roomId: room.id, round: room.round, mapId: room.mapId, mode: room.mode, growthPreset: room.rules === 'growth' ? room.growthPreset : undefined, content: CONTENT_VERSION });
   const removeRoom = (id: string) => {
     const room = rooms.get(id);
     if (room && !room.debug) {
@@ -57,7 +58,7 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
   const credentials = new Map<string, { id: string; room: Room; expires: number; accountId?: string }>();
   type Client = { connectionId: string; connectedAt: number; warningAt: number; suppressedWarnings: number; id: string; accountId?: string; authToken?: string; authenticating?: boolean; room?: Room; count: number; window: number; eventMatch?: string; eventCursor?: number; latency: LatencyBudget; nextProbe: number };
   const clients = new Map<WebSocket, Client>();
-  type Participant = { actorId: string; deaths: number; level: number; choices: GrowthState['choices']; metrics: GrowthMetrics; weaponMetrics: Partial<Record<GrowthWeaponId, GrowthWeaponMetrics>>; growthClass?: GrowthClassId; matchXp: number; accountId: string; classId: ClassId; team: 1 | 2; kills: number; commands: number };
+  type Participant = { actorId: string; deaths: number; level: number; choices: GrowthProgressionState['choices']; metrics: GrowthMetrics; weaponMetrics: Partial<Record<GrowthWeaponId, GrowthWeaponMetrics>>; growthClass?: GrowthClassId; matchXp: number; accountId: string; classId: ClassId; team: 1 | 2; kills: number; commands: number };
   const participants = new WeakMap<MatchSession, Map<string, Participant>>();
   const captureParticipants = (room: Room) => {
     if (!room.session) return;
@@ -65,10 +66,11 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
       const actor = room.session.battle.actors.find(a => a.id === participant.actorId);
       if (!actor) continue;
       participant.kills = Math.max(participant.kills, actor.kills); participant.deaths = actor.life.deaths;
-      if (actor.growth) {
-        participant.matchXp = actor.growth.xp; participant.level = actor.growth.level;
-        participant.choices = structuredClone(actor.growth.choices);
-        participant.metrics = structuredClone(actor.growth.metrics); participant.weaponMetrics = structuredClone(actor.growth.weaponMetrics);
+      const growth = room.session.battle.growthV3?.participant(actor.id);
+      if (growth) {
+        participant.matchXp = growth.progression.xp; participant.level = growth.progression.level;
+        participant.choices = structuredClone(growth.progression.choices);
+        participant.metrics = structuredClone(growth.metrics); participant.weaponMetrics = structuredClone(growth.weaponMetrics);
       }
     }
   };
@@ -224,7 +226,7 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
             const career = accounts.profile(client.accountId).growth ?? freshGrowthCareer();
             room.equipGrowth(client.id, ownedGrowthLoadout(career, message.loadout)); lobby(room);
           } else if (message.type === 'equip') {
-            if (room.rules === 'growth') throw Error('P1成长模式使用统一Assault配装');
+            if (room.rules === 'growth') throw Error('成长模式请使用四干员专属配装入口');
             if (!room.debug) {
               if (!client.accountId) throw Error('请先登录联机账号');
               ownedEquipment(accounts.profile(client.accountId), message.equipment);
@@ -235,7 +237,7 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
             logger.log('debug', 'room.equipment_changed', { playerId: client.id, ...roomFields(room), equipment: room.players.get(client.id)!.equipment });
           } else if (message.type === 'configure') {
             if (typeof message.mapId !== 'string' || !['tdm', 'dom', 'coop', 'ctf'].includes(message.mode)) throw Error('Invalid configuration');
-            room.configure(client.id, message.mapId, message.mode); lobby(room);
+            room.configure(client.id, message.mapId, message.mode, message.growthPreset); lobby(room);
             logger.log('info', 'room.configured', { playerId: client.id, ...roomFields(room) });
           } else if (message.type === 'start') {
             room.start(client.id, randomBytes(4).readInt32LE());
@@ -257,13 +259,15 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
             if (message.roomId !== room.id || message.round !== room.round) throw Error('Match mismatch');
             const shotFrame = client.latency.shotFrame(room.session?.battle.frame ?? 0, now);
             const rejection = room.session?.rejectionReason(client.id, message.command) ?? 'invalid-command';
+            const retry = room.session?.isAcceptedRetry(client.id, message.command) ?? false;
             if (!room.command(client.id, message.command, shotFrame)) {
               counters.rejectedCommands++; warnClient(client, rejection);
               send(socket, { type: 'rejected', sequence: message.command?.sequence,
               reason: rejection });
             } else {
+              if (room.session?.battle.growthV3) send(socket, { type: 'inputAccepted', roomId: room.id, round: room.round, sequence: message.command.sequence });
               const participant = room.session && participants.get(room.session)?.get(client.id), command = message.command;
-              if (participant && (command.actions.length || ['left', 'right', 'crouch', 'jump', 'fire'].some(key => command.input[key]))) participant.commands++;
+              if (!retry && participant && (command.actions.length || ['left', 'right', 'crouch', 'jump', 'fire'].some(key => command.input[key]))) participant.commands++;
             }
           } else throw Error('Unknown message');
         }
@@ -333,6 +337,7 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
         message.movement = b.actors.find(a => a.id === message.actorId)?.movement.checkpoint();
         const ownGrowth = b.actors.find(a => a.id === message.actorId)?.growth;
         if (ownGrowth) message.growth = growthView(ownGrowth);
+        if (b.growthV3 && message.actorId) message.growthV3 = b.growthV3.privateView(message.actorId);
         message.jumpHeld = session.jumpHeld(client.id);
         // WebSocket delivers in order. Advance only when queued successfully;
         // a skipped snapshot must not consume the recipient's pending events.
@@ -340,8 +345,8 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
         if (!reveal) { reveal = new RevealPolicy(); revealPolicies.set(session, reveal); }
         const team = client.room!.players.get(client.id)!.team;
         const carriers = new Set((message.state.deliveryTargets ?? []).flatMap(t => t.carrierId ? [t.carrierId] : []));
-        const visible = reveal.visible(b.actors, b.frame, b.journal.since(0), b.wall, team, carriers);
-        if (send(socket, visibleState(message, visible, team, b.wall))) { client.eventMatch = eventMatch; client.eventCursor = b.journal.cursor; }
+        const visible = b.growthV3?.visibleActors(team) ?? reveal.visible(b.actors, b.frame, b.journal.since(0), b.wall, team, carriers);
+        if (send(socket, visibleState(message, visible, team, b.wall, b.growthV3 ? (a, point) => b.growthV3!.gadgets.smokeBlocks(a, point) : undefined))) { client.eventMatch = eventMatch; client.eventCursor = b.journal.cursor; }
       }
     }
   }, 1000 / 30);

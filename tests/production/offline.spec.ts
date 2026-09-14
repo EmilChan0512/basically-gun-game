@@ -1,3 +1,4 @@
+import { exerciseOfflineGrowth } from '../helpers/offline-growth';
 import { test, expect } from '@playwright/test';
 import { enterOffline } from '../helpers/offline-ui';
 
@@ -77,4 +78,9 @@ test('offline class, purchased item and saved loadout work without an account', 
   await expect(page.locator('#player-ammo')).toHaveText('SHOTGUN  4 / 12');
   await page.keyboard.press('e'); await expect(page.locator('#abilities')).toContainText('装甲屏障 · 生效中');
   expect(external).toEqual([]);
+});
+
+test('packaged four-operator training works without accounts or WebSockets', async ({ page }) => {
+  test.setTimeout(60000);
+  await exerciseOfflineGrowth(page, 'growth-v3-offline-production.png');
 });

@@ -21,8 +21,8 @@ test('unified armory preserves drafts across rule tabs, exposes skills and stays
     await expect(page.locator('#online-gear-grid')).toBeVisible();
     await page.screenshot({ path: 'artifacts/qa/ui-v2-classic-skills.png', fullPage: true });
     await page.locator('#armory-rule-growth').click();
-    await expect(page.locator('#career-growth-class')).toHaveValue('sniper');
-    await expect(page.locator('#career-growth-weapon')).toHaveValue('scout');
+    await expect(page.locator('[data-growth-class="sniper"]')).toHaveAttribute('aria-pressed','true');
+    await expect(page.locator('[data-growth-weapon="scout"]')).toHaveAttribute('aria-pressed','true');
     for (const tab of ['weapons', 'skills', 'perks', 'pool', 'records']) {
       await page.locator(`#growth-tab-${tab}`).click();
       const images = page.locator('#growth-career-content img');
@@ -30,9 +30,11 @@ test('unified armory preserves drafts across rule tabs, exposes skills and stays
       await page.screenshot({ path: `artifacts/qa/ui-v2-growth-${tab}.png`, fullPage: true });
     }
     await page.locator('#growth-tab-pool').click();
-    await page.locator('[data-growth-option="steadyAim"]').uncheck();
+    const poolCard=page.locator('[data-growth-option][aria-pressed="true"]').first();
+    const cardId=await poolCard.getAttribute('data-growth-option');
+    await poolCard.click();
     await expect(page.locator('#growth-career-save')).toBeDisabled();
-    await page.locator('[data-growth-option="steadyAim"]').check();
+    await page.locator(`[data-growth-option="${cardId}"]`).click();
     await page.locator('#growth-career-save').click();
     await expect(page.locator('[data-growth-save-status]')).toHaveText('配装已由服务器保存。');
     for (const width of [390, 768]) {

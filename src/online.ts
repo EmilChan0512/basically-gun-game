@@ -1,5 +1,8 @@
+import { defaultGrowthLoadoutV3 as defaultGrowthLoadout } from './shared/content/growth-v3/Loadout';
+import { GROWTH_V3_ABILITIES, type GrowthAbilityId } from './shared/content/growth-v3/Operators';
+import { GROWTH_V3_GADGETS, type GrowthGadgetId } from './shared/content/growth-v3/Gadgets';
 import { GrowthCareerPanel } from './client/presentation/GrowthCareerPanel';
-import { GROWTH_CLASSES, defaultGrowthLoadout, type GrowthClassId } from './shared/content/GrowthCatalog';
+import { GROWTH_CLASSES, type GrowthClassId } from './shared/content/GrowthCatalog';
 import { GrowthPanel } from './client/presentation/GrowthPanel';
 import './client/presentation/GrowthMatchView.css';
 import { renderOnlineArmory, renderOnlineLoadoutSummary } from './client/presentation/OnlineArmory';
@@ -9,6 +12,7 @@ import Phaser from 'phaser';
 import { gameAudio } from './client/audio/AudioService';
 import { AudioPresentation } from './client/audio/AudioPresentation';
 import { NetworkSession } from './client/session/NetworkSession';
+import type { BattlePresentationSession } from './client/session/BattlePresentationSession';
 import { preloadReferenceArt, ReferenceArt } from './game/campaign/ReferenceArt';
 import { MAPS } from './shared/content/Maps';
 import { mapPreviewSvg } from './client/presentation/MapPreview';
@@ -29,23 +33,29 @@ import { isConcealed } from './shared/simulation/Stealth';
 import { CombatFeedback } from './client/presentation/CombatFeedback';
 import { CombatFeedbackView } from './client/presentation/CombatFeedbackView';
 import { BattleHUD } from './client/presentation/BattleHUD';
+import { combatMotion, installCombatMotionControl } from './client/presentation/CombatMotion';
+import { GROWTH_V3_PRESETS } from './shared/content/growth-v3/Presets';
+import { drawGrowthWorld, drawGrowthAbilities } from './client/presentation/GrowthWorldView';
+import { GROWTH_V3_WEAPONS, type GrowthWeaponId } from './shared/content/growth-v3/Weapons';
 
-function abilityText(actor: { growth?: { classId: GrowthClassId }; classId?: string | null; stealthFrames?: number; skill?: SkillId | null; skillCooldown: number; skillFrames: number; item?: ItemId | null; itemCharges: number }) {
+function abilityText(actor: { growthV3?: { abilityId: GrowthAbilityId; gadgetId: GrowthGadgetId }; growth?: { classId: GrowthClassId }; classId?: string | null; stealthFrames?: number; skill?: SkillId | null; skillCooldown: number; skillFrames: number; item?: ItemId | null; itemCharges: number; life?: { alive: boolean } }, charge?: { armed: boolean }) {
+  if (actor.growthV3) return 'E ' + GROWTH_V3_ABILITIES[actor.growthV3.abilityId].name + ' · ' + (actor.skillFrames ? '生效中' : actor.skillCooldown ? Math.ceil(actor.skillCooldown / 30) + '秒' : '就绪') + ' | G ' + GROWTH_V3_GADGETS[actor.growthV3.gadgetId].name + ' ×' + actor.itemCharges + (charge ? actor.life?.alive === false ? ' · 已部署，复活后可引爆' : charge.armed ? ' · 按 G 引爆' : ' · 武装中' : actor.itemCharges === 0 ? ' · 本局已用尽' : '');
   if (actor.growth) return `E ${GROWTH_CLASSES[actor.growth.classId].ability} · ${actor.skillFrames ? `生效中（${Math.ceil(actor.skillFrames / 30)}秒）` : actor.skillCooldown ? Math.ceil(actor.skillCooldown / 30) + '秒' : '就绪'} | G 手雷 ×${actor.itemCharges}`;
   return skillStatus(actor) + (actor.item ? ` | G ${ITEMS[actor.item].name} ×${actor.itemCharges}` : '');
 }
 
-function equipmentText(actor: { weapon: string; ammo: number; reserve: number; offhand?: OffhandView }) {
+function equipmentText(actor: { weapon: string; ammo: number; reserve: number; offhand?: OffhandView; growthV3?: { weaponId: GrowthWeaponId } }) {
   const offhand = actor.offhand;
   if (offhand?.equipped && offhand.kind !== 'firearm') return offhand.kind === 'melee'
     ? `${SPECIAL_OFFHANDS[offhand.id ?? 'knife'].name} · ${offhand.age < 0 ? '点击攻击' : '挥击中'}`
     : `${SPECIAL_OFFHANDS[offhand.id ?? 'shield'].name} · ${offhand.deployed ? '防御中' : '按住攻击部署'}`;
-  return `${actor.weapon.toUpperCase()} ${actor.ammo} / ${actor.reserve}`;
+  return `${actor.growthV3 ? GROWTH_V3_WEAPONS[actor.growthV3.weaponId].name : actor.weapon.toUpperCase()} ${actor.ammo} / ${actor.reserve}`;
 }
 
 export function startOnline() {
   document.body.innerHTML = `<main class="online-app"><header class="online-header"><a class="online-brand" href="/"><span class="online-mark">S</span><span>PROJECT STRIKE<small>ONLINE OPERATIONS</small></span></a><nav aria-label="联机主导航"><a id="online-lobby-nav" href="#lobby">联机大厅</a><a href="/?offline">单机免登录</a><a id="online-armory-nav" href="#loadout">出战配装</a></nav><span id="online-profile-chip">游客档案</span></header><p id="status" role="status">连接服务器后可创建或加入房间。</p><div id="online-lobby-page"><div class="online-lobby-title"><p class="arsenal-eyebrow">MULTIPLAYER / BRIEFING</p><h1>联机大厅</h1><p>整备你的装备，和队友一起出发。</p></div><section id="online-account"><h2>联机账号</h2><p>账号等级、金币和装备权益由服务器保存。单机可免登录，离线进度不计入联网资产。</p><div class="loadout" id="account-login"><label>账号<input id="account-name" autocomplete="username" maxlength="24"></label><label>密码<input id="account-password" type="password" autocomplete="current-password" minlength="8" maxlength="128"></label><button id="account-register">注册联机账号</button><button id="account-signin">登录</button></div><p id="account-status" role="status">普通联机需登录；公共调试房间可直接试玩。</p><button id="account-logout" hidden>退出账号</button><button id="online-leave" hidden>离开房间 / 返回配装</button></section><div id="online-loadout-brief"></div><section id="online-connection"><h2>加入行动</h2><div class="loadout"><label>服务器<input id="server" value="ws://43.142.165.82:4180"></label><label>调试昵称<input id="name" value="玩家" maxlength="24"></label><label>房间码<input id="code"></label></div><div class="online-room-actions"><button id="create">创建房间</button><button id="create-growth">创建成长对战房间</button><button id="join">加入房间</button><button id="join-debug">加入公共调试房间</button><button id="reconnect">断线重连</button></div></section><div id="lobby"></div><div id="growth-session-controls" hidden><button id="growth-leave">离开成长房间</button><button id="growth-reconnect">断线重连</button></div><p id="online-hud" aria-live="off"></p><div id="online-game" hidden><section id="growth-panel" hidden aria-label="局内成长"></section></div><p class="online-keys">A/D移动 · 空格跳跃 · S蹲伏 · 鼠标射击 · Q切枪 · R换弹 · E技能 · G道具</p></div><section id="online-preflight" hidden><div class="armory-rule-tabs" aria-label="配装规则"><button id="armory-rule-growth" aria-pressed="true">成长对战</button><button id="armory-rule-classic" aria-pressed="false">经典配装 · 装备与技能</button></div><p id="growth-armory-login" hidden>登录后可配置成长职业、武器、技能与成长池。<a href="#lobby">前往大厅登录 →</a></p><div id="growth-career-section" hidden><div id="growth-career-content"></div></div><div id="preflight-armory"></div></section></main>`;
   const el = (id: string) => document.getElementById(id)!;
+  installCombatMotionControl(el('growth-session-controls'));
   if (import.meta.env.DEV && ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname)) {
     (el('server') as HTMLInputElement).value = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.hostname}:4180`;
   } else if (!['localhost', '127.0.0.1', '[::1]'].includes(location.hostname) || location.port === '4180') {
@@ -88,7 +98,7 @@ export function startOnline() {
     renderOnlineLoadoutSummary(el('online-loadout-brief'), currentEquipment());
     if (armoryRule === 'growth' && profile?.growth) {
       const build = growthRoom()?.loadout ?? profile.growth.loadouts[profile.growth.selectedSlot], definition = GROWTH_CLASSES[build.classId];
-      el('online-loadout-brief').innerHTML = `<div class="loadout-brief"><img src="${operatorConcept(build.classId)}" alt=""><div><small>成长对战 · 当前出战配装</small><strong>${definition.name}</strong><p>${build.primary.toUpperCase()} · ${definition.ability} · ${build.perks?.length ?? 3}个 Perk · ${build.pool?.length ?? 8}张成长池</p></div><a href="#loadout" class="loadout-edit">编辑配装 →</a></div>`;
+      el('online-loadout-brief').innerHTML = `<div class="loadout-brief"><img src="${operatorConcept(build.classId)}" alt=""><div><small>成长对战 · 当前出战配装</small><strong>${definition.name}</strong><p>${build.primary.toUpperCase()} · ${GROWTH_V3_ABILITIES[build.abilityId].name} · ${GROWTH_V3_GADGETS[build.gadgetId].name} · ${build.perks?.length ?? 3}个 Perk · ${build.pool?.length ?? 8}张成长池</p></div><a href="#loadout" class="loadout-edit">编辑配装 →</a></div>`;
     }
     if (location.hash !== '#loadout' || !canEdit()) return;
     el('preflight-armory').hidden = armoryRule !== 'classic';
@@ -156,7 +166,10 @@ export function startOnline() {
       document.body.classList.toggle('growth-playing', growthPlaying);
       const matchPlaying = !!room && !!current.state && room.phase === 'playing';
       document.body.classList.toggle('online-match-playing', matchPlaying);
+      document.body.classList.toggle('online-debug-playing', matchPlaying && !!room?.debug);
+      document.body.classList.toggle('online-match-result', matchPlaying && !!current.state?.result);
       el('growth-session-controls').hidden = !matchPlaying && !growthPlaying;
+      if (!current.state?.result || room?.hostId !== current.playerId) document.getElementById('online-return')?.remove();
       el('growth-leave').textContent = growthPlaying ? '离开成长房间' : '离开对局 / 返回大厅';
       transportNote.textContent = current.allowInsecureAccounts && serverUrl.startsWith('ws:')
         ? '当前为 WS 测试兼容模式，请使用独立测试密码。联机进度仍保存在服务器。' : '';
@@ -198,7 +211,7 @@ export function startOnline() {
           if (!room.debug) {
             if (room.rules === 'growth') {
               const edit = document.createElement('a'); edit.id = 'growth-room-armory'; edit.href = '#loadout'; edit.textContent = '出战配装 → 职业、武器、技能与成长池'; el('lobby').append(edit);
-              const note = document.createElement('p'); note.id = 'growth-solo-note'; note.textContent = '可单人直接点击开始试玩，自动准备并添加一名训练机器人；多人开局使用真人队伍。战斗中加入先观战，下局参战。'; el('lobby').append(note); }
+              const note = document.createElement('p'); note.id = 'growth-solo-note'; note.textContent = '可单人直接点击开始试玩，自动准备并添加一名训练机器人；多人开局使用真人队伍。战斗中加入先观战，下局参战。'; note.textContent += ' 当前预设：' + GROWTH_V3_PRESETS[room.growthPreset ?? 'standard'].name; el('lobby').append(note); }
             const preview = document.createElement('div'); preview.id = 'online-map-preview';
             preview.innerHTML = mapPreviewSvg(MAPS.find(m => m.id === room.mapId)!); el('lobby').append(preview);
             const ready = document.createElement('button'); ready.textContent = '准备'; ready.id = 'online-ready'; ready.onclick = () => current.send({ type: 'ready', ready: true }); el('lobby').append(ready);
@@ -206,6 +219,9 @@ export function startOnline() {
               const maps = document.createElement('select'); maps.id = 'online-map';
               for (const map of MAPS) { const option = document.createElement('option'); option.value = map.id; option.textContent = map.name; maps.append(option); }
               maps.value = room.mapId;
+              const preset = document.createElement('select');preset.id='growth-match-preset';preset.setAttribute('aria-label','成长对局时长');
+              for(const [id,def] of Object.entries(GROWTH_V3_PRESETS)){const option=document.createElement('option');option.value=id;option.textContent=def.name+' · 第'+def.ultimateTick/1800+'分钟觉醒';preset.append(option);}
+              preset.value=room.growthPreset??'standard';
               const mode = document.createElement('select'); mode.id = 'online-mode';
               for (const [id, name] of [['tdm', '团队交火'], ['dom', '据点争夺'], ['coop', '合作生存'], ['ctf', '公文包争夺']]) { const option = document.createElement('option'); option.value = id; option.textContent = name; mode.append(option); }
               mode.value = room.mode;
@@ -216,9 +232,10 @@ export function startOnline() {
               const configure = () => {
                 const selected = MAPS.find(m => m.id === maps.value)!;
                 if (!selected.modes.includes(mode.value as 'tdm' | 'dom' | 'coop')) mode.value = selected.modes[0];
-                current.send({ type: 'configure', mapId: maps.value, mode: mode.value });
+                current.send({ type: 'configure', mapId: maps.value, mode: mode.value, ...(room.rules==='growth'?{growthPreset:preset.value}:{}) });
               };
               maps.onchange = configure; mode.onchange = configure; el('lobby').append(maps, mode);
+              if(room.rules==='growth'){preset.onchange=configure;el('lobby').append(preset);}
             }
             if (room.hostId === current.playerId) {
               const soloGrowth = room.rules === 'growth' && room.players.length === 1;
@@ -239,7 +256,7 @@ export function startOnline() {
       }
       if (current.state) {
         const actor = current.state.state.actors.find(a => a.id === current.state!.actorId);
-        if (actor) el('online-hud').textContent = `HP ${Math.ceil(actor.life.health)} · ${equipmentText(actor)} · ${abilityText(actor)}${current.state.state.waves ? '' : ` · ${current.state.state.scores.join(' : ')}`}`;
+        if (actor) el('online-hud').textContent = `HP ${Math.ceil(actor.life.health)} · ${equipmentText(actor)} · ${abilityText(actor, current.state.state.growthWorld?.entities.find(e => e.gadgetId === 'as_charge' && e.sourceId === actor.id))}${current.state.state.waves ? '' : ` · ${current.state.state.scores.join(' : ')}`}`;
         else el('online-hud').textContent = `观战中 · Tab切换跟随角色 · ${current.state.state.scores.join(' : ')}`;
         if (current.state.growth && current.state.growth.momentumUntil > current.state.state.frame) el('online-hud').textContent += ' · 乘胜加速中';
         if (current.state.state.waves) { const w = current.state.state.waves;
@@ -250,7 +267,7 @@ export function startOnline() {
         if (records.record(room.instanceId, current.state)) renderHistory();
         if (current.socket.readyState === WebSocket.OPEN) el('status').textContent = current.state.result.draw ? '平局' : `${current.state.result.winner === 1 ? '蓝队' : '红队'}获胜`;
         if (room.hostId === current.playerId && !document.getElementById('online-return')) {
-          const back = document.createElement('button'); back.id = 'online-return'; back.textContent = '返回大厅'; back.onclick = () => current.send({ type: 'return' }); el('lobby').append(back);
+          const back = document.createElement('button'); back.id = 'online-return'; back.textContent = '返回大厅'; back.onclick = () => current.send({ type: 'return' }); el('growth-session-controls').append(back);
         }
       }
     };
@@ -299,7 +316,7 @@ export function startOnline() {
   restore();
 }
 
-class OnlineScene extends Phaser.Scene {
+export class OnlineScene extends Phaser.Scene {
   private audioPresentation = new AudioPresentation();
   private rig!: ReferenceArt;
   private graphics!: Phaser.GameObjects.Graphics;
@@ -312,7 +329,7 @@ class OnlineScene extends Phaser.Scene {
   private spectateIndex = 0;
   private feedback = new CombatFeedback();
   private feedbackView?: CombatFeedbackView;
-  constructor(private network: NetworkSession) { super('Online'); }
+  constructor(private network: BattlePresentationSession) { super('Online'); }
   preload() { preloadReferenceArt(this); }
   create() {
     this.feedbackView = new CombatFeedbackView(document.getElementById('online-game')!, this.feedback);
@@ -372,13 +389,14 @@ class OnlineScene extends Phaser.Scene {
     this.events.once('shutdown', cleanupInput); this.events.once('destroy', cleanupInput);
   }
   update(_time: number, delta: number) {
+    this.network.advance?.(Math.min(delta, 100));
     const message = this.network.state; if (!message) { this.audioPresentation.reset(); return; }
     const self = message.state.actors.find(a => a.id === message.actorId);
     this.feedback.accept(`${message.roomId}:${message.round}:${this.network.audioGeneration}`, message.state.frame, message.events, self,
       !!message.state.waves && !message.state.waves.reserved.includes(self?.id ?? ''));
     const followed = self ? this.feedback.follow(self, message.state.actors) : message.state.actors[this.spectateIndex % message.state.actors.length];
     const now = performance.now();
-    const editing = !document.getElementById('online-preflight')?.hidden;
+    const editing = !document.getElementById('online-preflight')?.hidden || !!this.network.paused;
     const mapView = this.feedback.canObserve && this.feedback.observing > 0 && followed?.id === self?.id;
     this.feedbackView?.render(!editing && !message.result, mapView ? '地图总览' : followed?.id === self?.id ? undefined : message.poses.find(p => p.id === followed?.id)?.name);
     this.audioPresentation.accept(`${message.roomId}:${message.round}:${this.network.audioGeneration}`, message.state.frame, message.events, message.state.actors,
@@ -387,7 +405,7 @@ class OnlineScene extends Phaser.Scene {
     // aim while browsing equipment and send neutral input to stop movement.
     const pointerAim = editing ? undefined
       : this.input.activePointer.positionToCamera(this.cameras.main) as Phaser.Math.Vector2;
-    const aim = pointerAim && Number.isFinite(pointerAim.x) && Number.isFinite(pointerAim.y) ? { x: pointerAim.x, y: pointerAim.y - this.feedback.punch }
+    const aim = pointerAim && Number.isFinite(pointerAim.x) && Number.isFinite(pointerAim.y) ? { x: pointerAim.x, y: pointerAim.y - (self?.growthV3 ? 0 : this.feedback.punch) }
       : message.poses.find(p => p.id === message.actorId)?.aim ?? { x: 0, y: 0 };
     this.elapsed += Math.min(delta, 100);
     this.animationFrame += Math.min(delta, 100) / NETWORK_TICK_MS;
@@ -400,6 +418,15 @@ class OnlineScene extends Phaser.Scene {
     // must all consume the same position within this render frame.
     const renderAlpha = message.result || this.network.socket.readyState !== WebSocket.OPEN
       || now - this.network.lastStateAt > 500 || this.network.socket.bufferedAmount > 8192 ? 1 : this.elapsed / NETWORK_TICK_MS;
+    // Freeze the scene only; authoritative vitals and countdowns must stay current.
+    const wave = message.state.waves;
+    const heading = wave ? `第${wave.wave}/${wave.scenario.waves.length}波 · 待增援${wave.remaining} · 团队复活${wave.revives} · ${wave.spawnBlocked ? '增援入口受阻，请离开入口' : wave.phase === 'intermission' ? '休整中' : '战斗中'}` : message.state.scores.join(' : ');
+    this.hud.render({ mode: this.network.room?.debug ? '公共调试 · 无时限' : `${message.growthV3?.preset === 'short' ? '成长·10分钟实验 / ' : message.growthV3 || message.growth ? '成长 / ' : ''}${message.mode === 'coop' ? '合作生存' : message.mode === 'dom' ? '据点争夺' : message.mode === 'ctf' ? '公文包争夺' : '团队交火'}`,
+      objective: wave ? heading : message.mode === 'ctf' ? '先交付3次获胜' : '共享视野 · 敌方阴影不可见', seconds: message.state.seconds, scores: message.state.scores,
+      health: self?.life.health ?? 0, maxHealth: self?.maxHealth ?? 100, alive: self?.life.alive ?? false, armor: message.growthV3?.armor ?? message.growth?.armor ?? 0,
+      operator: self?.growth ? GROWTH_CLASSES[self.growth.classId].name : self?.classId ? CLASSES[self.classId].name : 'OPERATOR',
+      weapon: self ? equipmentText(self) : '正在观察战场', gadgetId: self?.growthV3?.gadgetId, ability: self ? abilityText(self, message.state.growthWorld?.entities.find(e => e.gadgetId === 'as_charge' && e.sourceId === self.id)) : `跟随 ${message.poses.find(p => p.id === followed?.id)?.name ?? '等待角色'}`,
+      reload: self?.reload ?? 0, cooldown: self?.skillCooldown ?? 0, spectator: !self, networkStalled: now - this.network.lastStateAt > 500 });
     if (this.feedback.frozen && !message.result) return;
     const predicted = self && followed?.id === self.id ? this.network.prediction.position(renderAlpha, delta) ?? self
       : followed && this.network.interpolation.position(followed, now);
@@ -408,6 +435,7 @@ class OnlineScene extends Phaser.Scene {
     if (mapView) this.cameras.main.centerOn(geometry.width / 2, (geometry.height ?? 700) / 2);
     else if (predicted) this.cameras.main.centerOn(predicted.x, predicted.y - 150);
     this.rig.begin(); this.graphics.clear();
+    drawGrowthWorld(this.graphics, message.state);
     const positions = new Map<string, { x: number; y: number }>();
     for (const actor of message.state.actors) {
       const pose = message.poses.find(p => p.id === actor.id)!;
@@ -415,9 +443,12 @@ class OnlineScene extends Phaser.Scene {
       positions.set(actor.id, position);
       const motion = actor.id === message.actorId ? this.network.prediction.movement ?? actor : actor;
       this.rig.soldier(position.x, position.y, motion.crouching, motion.vx, motion.jumping, this.animationFrame, actor.id === message.actorId ? aim : pose.aim, actor.weapon, actor.team === 1 ? 0xb7e8de : 0xf1b0a0, actor.life.alive, actor.reload, this.network.shots.visible(now).some(e => !e.reflected && e.actorId === actor.id), actor.offhand, actor.classId ?? 'medic', actor.id,
-        isConcealed({ kit: actor.skill ? { skill: actor.skill } : null, skillFrames: actor.skillFrames, stealthFrames: actor.stealthFrames }), this.feedback.flinch(actor.id));
+        isConcealed({ kit: actor.skill ? { skill: actor.skill } : null, skillFrames: actor.skillFrames, stealthFrames: actor.stealthFrames }), actor.growthV3 ? 0 : this.feedback.flinch(actor.id), actor.growthV3?.flashScale ?? 1,
+        actor.growthV3 ? actor.growthV3.recoilDegrees * combatMotion.scale : undefined,
+        !!self?.growthV3?.contrast && actor.team !== self.team && actor.life.alive);
     }
     this.rig.delivery(message.state.deliveryTargets, positions, this.graphics);
+    drawGrowthAbilities(this.graphics, message, positions);
     if (self?.life.alive && !editing) this.graphics.lineStyle(1, 0xe4f49a).strokeCircle(aim.x, aim.y, 5);
     for (const p of message.projectiles ?? []) this.graphics.lineStyle(3, 0xffc56a, .9).lineBetween(p.x - p.vx * 2, p.y - p.vy * 2, p.x, p.y).fillStyle(0xffedbb).fillCircle(p.x, p.y, 3);
     for (const g of message.grenades) this.graphics.fillStyle(0xeec17a).fillCircle(g.x, g.y, 5);
@@ -429,13 +460,6 @@ class OnlineScene extends Phaser.Scene {
     const team = this.network.room?.players.find(p => p.id === this.network.playerId)?.team ?? self?.team ?? 1;
     this.vision.draw(message.state.actors.filter(a => a.team === team && a.life.alive)
       .map(a => ({ id: a.id, ...(positions.get(a.id) ?? a) })));
-    const wave = message.state.waves;
-    const heading = wave ? `第${wave.wave}/${wave.scenario.waves.length}波 · 待增援${wave.remaining} · 团队复活${wave.revives} · ${wave.spawnBlocked ? '增援入口受阻，请离开入口' : wave.phase === 'intermission' ? '休整中' : '战斗中'}` : message.state.scores.join(' : ');
-    this.hud.render({ mode: this.network.room?.debug ? '公共调试 · 无时限' : `${message.growth ? '成长 / ' : ''}${message.mode === 'coop' ? '合作生存' : message.mode === 'dom' ? '据点争夺' : message.mode === 'ctf' ? '公文包争夺' : '团队交火'}`,
-      objective: wave ? heading : message.mode === 'ctf' ? '先交付3次获胜' : '共享视野 · 敌方阴影不可见', seconds: message.state.seconds, scores: message.state.scores,
-      health: self?.life.health ?? 0, maxHealth: self?.maxHealth ?? 100, alive: self?.life.alive ?? false, armor: message.growth?.armor ?? 0,
-      operator: self?.growth ? GROWTH_CLASSES[self.growth.classId].name : self?.classId ? CLASSES[self.classId].name : 'OPERATOR',
-      weapon: self ? equipmentText(self) : '正在观察战场', ability: self ? abilityText(self) : `跟随 ${message.poses.find(p => p.id === followed?.id)?.name ?? '等待角色'}`,
-      reload: self?.reload ?? 0, cooldown: self?.skillCooldown ?? 0, spectator: !self, networkStalled: now - this.network.lastStateAt > 500 });
+
   }
 }

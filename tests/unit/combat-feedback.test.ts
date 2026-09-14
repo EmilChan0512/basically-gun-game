@@ -10,6 +10,17 @@ import type { AudioService } from '../../src/client/audio/AudioService';
 const actor = (): FeedbackActor => ({ id: 'player', team: 1, x: 0, y: 0, maxHealth: 100, weapon: 'm4', ammo: 30, reserve: 60, reload: 0,
   life: { alive: true, health: 100, respawnFrames: 0, regenDelay: 0 } });
 
+it('shows only fresh own action failures, expires without replay and clears on reconnect',()=>{
+  const f=new CombatFeedback(),a=actor();f.accept('r',0,[],a);
+  const error={id:1,tick:1,kind:'error' as const,actorId:'player',cause:'no_charge'};
+  f.accept('r',1,[error],a);expect(f.stage).toBe('次数已用尽');
+  f.accept('r',60,[error],a);expect(f.stage).toBe('次数已用尽');
+  f.accept('r',61,[error],a);expect(f.stage).toBe('状态正常');
+  f.accept('r',62,[{...error,id:2,tick:62,actorId:'enemy'}],a);expect(f.stage).toBe('状态正常');
+  f.accept('r',63,[{...error,id:3,tick:63,cause:'invalid_target'}],a);expect(f.stage).toBe('目标或部署位置无效');
+  f.accept('reconnect',63,[{...error,id:3,tick:63}],a);expect(f.stage).toBe('状态正常');
+});
+
 it('uses authoritative countdown, nine-tick freeze, sixty-tick observation and resets at respawn', () => {
   const f = new CombatFeedback(), a = actor(); f.accept('round', 0, [], a);
   a.life.alive = false; a.life.respawnFrames = 150; a.deathInfo = { sourceName: '<enemy>', cause: 'M4' };
@@ -76,4 +87,11 @@ it('voices only combat empty reloads and key kills with a shared fifteen-second 
   a.reserve = 0; a.reload = 0;
   p.accept('r', 651, [{ id: 6, tick: 651, kind: 'empty', actorId: a.id }], [a], a.id);
   expect(audio.cue).toHaveBeenLastCalledWith('empty', expect.objectContaining({ rate: .55 }));
+});
+it('uses the growth magazine and never promises legacy regeneration for an injured growth actor', () => {
+  const a=actor();a.growthV3={magazine:12,healing:false};a.weapon='m4';a.ammo=4;a.reserve=48;
+  expect(ammoWarning(a)).toBe('');a.ammo=2;expect(ammoWarning(a)).toContain('25%');
+  a.life.health=20;a.life.regenDelay=0;
+  const f=new CombatFeedback();f.accept('growth',0,[],a);expect(f.stage).toBe('危险 · 寻求医疗支援');
+  a.growthV3.healing=true;f.accept('growth',1,[],a);expect(f.stage).toBe('治疗生效 · 保持掩护');
 });

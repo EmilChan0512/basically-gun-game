@@ -1,4 +1,4 @@
-import { freshGrowthCareer, type GrowthCareer } from './GrowthCareer';
+import { freshGrowthCareerV3 as freshGrowthCareer, type GrowthCareerV3 as GrowthCareer } from './growth-v3/Career';
 import { STARTER_WEAPONS, CLASSES, ITEMS, SKILLS, WEAPONS, SPECIAL_OFFHANDS, isSpecialOffhand, defaultLoadout, levelForXp, type ClassId, type ItemId } from '../../game/campaign/Catalog';
 import type { WeaponId } from '../../game/combat/Combat';
 import { validateEquipment, type EquipmentLoadout } from './Equipment';

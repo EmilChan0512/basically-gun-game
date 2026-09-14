@@ -20,3 +20,25 @@ it('removes hidden actor coordinates from poses, hits, effects and projectiles w
   expect(filtered.events.map(e => e.id)).toEqual([2]); expect(filtered.ack).toBe(5);
   expect(message.state.actors).toHaveLength(8); expect(message.effects).toHaveLength(1);
 });
+
+it('publishes visible world effects and team-authorized frozen intel without revealing hidden source identities',()=>{
+  const battle=new Battle(customMatch('signal')),source=battle.player.id,hidden=battle.actors[4].id;
+  battle.player.movement.reset(480,599.5);
+  const message:StateMessage={type:'state',roomId:'events',round:1,actorId:source,mapId:'signal',mode:'tdm',state:battle.snapshot(),
+    result:null,ack:0,poses:[],effects:[],bursts:[],grenades:[],events:[
+      {id:1,tick:0,kind:'smokeStarted',actorId:hidden,entityId:'smoke',position:{x:520,y:566}},
+      {id:2,tick:0,kind:'deployableDamaged',actorId:hidden,entityId:'cover',position:{x:520,y:566},amount:10},
+      {id:3,tick:0,kind:'intelPing',actorId:source,targetId:hidden,team:1,expiresTick:30,position:{x:900,y:566}},
+      {id:4,tick:0,kind:'intelPing',actorId:hidden,targetId:source,team:2,position:{x:480,y:566}},
+      {id:5,tick:0,kind:'smokeEnded',actorId:hidden,position:{x:9999,y:9999}},
+    ]};
+  const visible=new Set([source]);
+  const fogged=visibleState(message,visible,1,()=>false,()=>true);
+  expect(fogged.events.map(e=>e.id)).toEqual([1,3]);
+  expect(fogged.events[0].actorId).toBeUndefined();expect(fogged.events[1].targetId).toBeUndefined();
+  expect(fogged.events[1].position).toEqual({x:900,y:566});
+  expect(Object.keys(fogged.events[1]).sort()).toEqual(['expiresTick','id','kind','position','team','tick']);
+  const clear=visibleState(message,visible,1,()=>false,()=>false);
+  expect(clear.events.map(e=>e.id)).toEqual([1,2,3]);expect(clear.events[1].actorId).toBeUndefined();
+  expect(message.events[0].actorId).toBe(hidden);
+});

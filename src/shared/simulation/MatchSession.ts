@@ -1,9 +1,12 @@
 import { Battle, idleInput, type BattleInput } from '../../game/campaign/Battle';
 import { COMBAT_FRAME_MS } from '../../game/combat/Combat';
-import { validCommand, type PlayerCommand } from '../protocol/Commands';
+import { validCommand, validGrowthCommand, type PlayerCommand } from '../protocol/Commands';
 const newStats = () => ({ received: 0, coalesced: 0, timeouts: 0, firePresses: 0, fireHeldTicks: 0, shots: 0,
   hitShots: 0, damagingShots: 0, wallShots: 0, missShots: 0, reloadTicks: 0, emptyTicks: 0, cooldownTicks: 0, deadFireTicks: 0, offhandTicks: 0, maxQueue: 0 });
 
+// Canonical public values: object property order must not distinguish retries.
+const commandIdentity = (c: PlayerCommand) => JSON.stringify([c.input.left,c.input.right,c.input.crouch,
+  c.input.jump,c.input.fire,c.input.aim.x,c.input.aim.y,c.actions]);
 interface Controller {
   actorId: string;
   received: number;
@@ -11,6 +14,7 @@ interface Controller {
   lastTick: number;
   input: BattleInput;
   pending: (PlayerCommand & { shotFrame?: number })[];
+  acceptedCommands?: Record<number, string>;
   stats: ReturnType<typeof newStats>;
 }
 
@@ -29,7 +33,9 @@ export class MatchSession {
   rejectionReason(playerId: string, command: PlayerCommand) {
     const controller = this.controllers.get(playerId);
     if (!controller) return 'not-controlled';
-    if (!validCommand(command)) return 'malformed-command';
+    if (!(this.battle.growthV3 ? validGrowthCommand(command) : validCommand(command))) return 'malformed-command';
+    if (this.isAcceptedRetry(playerId, command)) return null;
+    if (controller.acceptedCommands?.[command.sequence] !== undefined) return 'sequence-conflict';
     if (this.battle.phase !== 'running') return 'match-ended';
     if (command.sequence <= controller.received) return 'stale-sequence';
     if (controller.pending.length >= 32) return 'input-queue-full';
@@ -38,12 +44,14 @@ export class MatchSession {
   submit(playerId: string, command: PlayerCommand, authorityShotFrame?: number) {
     const controller = this.controllers.get(playerId);
     if (!controller || this.rejectionReason(playerId, command)) return false;
+    if (this.isAcceptedRetry(playerId, command)) return true;
     // Copy only public command fields. In particular, a client-supplied
     // shotFrame property must never become trusted queued metadata.
     controller.pending.push({ sequence: command.sequence, input: structuredClone(command.input), actions: [...command.actions],
       ...(Number.isSafeInteger(authorityShotFrame) && authorityShotFrame! >= 0 && authorityShotFrame! <= this.battle.frame
         ? { shotFrame: authorityShotFrame } : {}) });
     controller.received = command.sequence;
+    if (this.battle.growthV3) (controller.acceptedCommands ??= {})[command.sequence] = commandIdentity(command);
     controller.stats.received++;
     controller.stats.maxQueue = Math.max(controller.stats.maxQueue, controller.pending.length);
     // A TCP stall releases a burst. Do not replay every obsolete continuous
@@ -55,6 +63,11 @@ export class MatchSession {
       controller.pending.splice(index, 1); controller.stats.coalesced++;
     }
     return true;
+  }
+  /** Round-scoped receipts survive disconnect/checkpoint; acknowledge queuing, not combat success. */
+  isAcceptedRetry(playerId: string, command: PlayerCommand) {
+    if (!this.battle.growthV3 || !validGrowthCommand(command)) return false;
+    return this.controllers.get(playerId)?.acceptedCommands?.[command.sequence] === commandIdentity(command);
   }
   disconnect(playerId: string) {
     const controller = this.controllers.get(playerId);

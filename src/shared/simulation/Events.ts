@@ -1,7 +1,15 @@
 import type { WeaponId } from '../../game/combat/Combat';
+export const GROWTH_COMBAT_EVENT_KINDS = ['abilityStart','abilityEnd','gadgetReleased',
+  'deployableCreated','deployableDamaged','deployableDestroyed','intercept',
+  'smokeStarted','smokeEnded','intelPing','heal','armorChanged'] as const;
+export type GrowthCombatEventKind = typeof GROWTH_COMBAT_EVENT_KINDS[number];
 export type SimulationEvent = { id: number; tick: number;
   kind: 'shot' | 'damage' | 'death' | 'result' | 'objective-pickup' | 'objective-delivery' | 'objective-return'
-    | 'reload' | 'reload-end' | 'swap' | 'empty' | 'respawn' | 'footstep' | 'jump' | 'land' | 'melee' | 'melee-hit' | 'block' | 'explosion' | 'skill' | 'item' | 'supply' | 'error';
+    | 'reload' | 'reload-end' | 'swap' | 'empty' | 'respawn' | 'footstep' | 'jump' | 'land' | 'melee' | 'melee-hit' | 'block' | 'explosion' | 'skill' | 'item' | 'supply' | 'error' | 'tactical-sound' | GrowthCombatEventKind;
+  entityId?: string; team?: 1 | 2; expiresTick?: number;
+  soundRecipients?: import('./growth-v3/Sound').GrowthSoundRecipient[];
+  sound?: import('./growth-v3/Sound').GrowthSoundSample;
+  authoritativeSound?: boolean;
   actorId?: string; targetId?: string; amount?: number; weapon?: WeaponId; ability?: string; duration?: number; position?: { x: number; y: number };
   direction?: number; sourceName?: string; cause?: string; emptyMagazine?: boolean };
 /** Bounded presentation journal; simulation state never depends on whether events were read. */

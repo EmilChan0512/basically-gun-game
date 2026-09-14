@@ -52,6 +52,16 @@ it('plays an authoritative shotgun event once and retains its event-time weapon 
   p.accept('one',2,[{id:2,tick:2,kind:'shot',actorId:'player',weapon:'usp'}],actors,'player');
   expect(audio.weapon).toHaveBeenCalledTimes(1);
 });
+it('does not double-play a descriptive heal event alongside its authoritative sound sample or a repeated snapshot',()=>{
+  const audio={stop:vi.fn(),voice:vi.fn(),weapon:vi.fn(),cue:vi.fn()};
+  const p=new AudioPresentation(audio as unknown as AudioService);
+  const actors=[{id:'player',x:0,y:0,weapon:'usp',reload:0,life:{alive:true},team:1}];
+  p.accept('growth',0,[],actors,'player');
+  const events:SimulationEvent[]=[{id:1,tick:1,kind:'heal',actorId:'player',targetId:'player',amount:3},
+    {id:2,tick:1,kind:'tactical-sound',sound:{cue:'heal',pan:0,distance:0}}];
+  p.accept('growth',1,events,actors,'player');p.accept('growth',1,events,actors,'player');
+  expect(audio.cue).toHaveBeenCalledTimes(1);
+});
 it('emits one gunshot per discharge and covers automatic reload without altering restored simulation', () => {
   const b = new Battle(MISSIONS[0], 'normal', 'shotgun', seededRandom(7));
   b.player.arsenal.gun.ammo = 1;

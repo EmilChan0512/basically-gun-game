@@ -6,6 +6,7 @@ import { defaults, tuningControls } from './game/config/movement';
 import './styles.css';
 import { startCampaign } from './campaign';
 import { startOnline } from './online';
+import { startOfflineGrowth } from './offlineGrowth';
 import { installAudioUI } from './client/audio/AudioSettings';
 
 function startLabs() {
@@ -76,5 +77,6 @@ new Phaser.Game({
 
 }
 const rules = new URLSearchParams(location.search).get('rules');
-if (new URLSearchParams(location.search).has('online')) startOnline(); else if (rules === 'lab' || rules === 'original') startLabs(); else if (new URLSearchParams(location.search).has('offline')) startCampaign(); else startOnline();
+const query = new URLSearchParams(location.search);
+if (query.has('online')) startOnline(); else if (rules === 'lab' || rules === 'original') startLabs(); else if (query.has('offline') && query.has('growth')) startOfflineGrowth(); else if (query.has('offline')) startCampaign(); else startOnline();
 installAudioUI();

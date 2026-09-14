@@ -1,4 +1,12 @@
-import { GROWTH_CLASSES, GROWTH_PERKS, GROWTH_RULES, GROWTH_UPGRADES, GROWTH_ULTIMATES } from '../../shared/content/GrowthCatalog';
+import { growthIcon } from './GrowthIcons';
+import { GROWTH_V3_OPERATORS as GROWTH_CLASSES, GROWTH_V3_ABILITIES as GROWTH_ABILITIES, GROWTH_V3_ULTIMATES as GROWTH_ULTIMATES } from '../../shared/content/growth-v3/Operators';
+import { GROWTH_V3_GADGETS as GROWTH_GADGETS } from '../../shared/content/growth-v3/Gadgets';
+import { GROWTH_V3_PERKS as GROWTH_PERKS } from '../../shared/content/growth-v3/Perks';
+import { GROWTH_V3_RULES as GROWTH_RULES } from '../../shared/content/growth-v3/Core';
+import { GROWTH_V3_CARDS, GROWTH_V3_EVOLUTIONS, type GrowthUpgradeId } from '../../shared/content/growth-v3/Cards';
+const GROWTH_UPGRADES = Object.fromEntries(Object.entries({ ...GROWTH_V3_CARDS, ...GROWTH_V3_EVOLUTIONS }).map(([id, def]) => [id, {
+  ...def, tag: def.group === 'C' ? 'Weapon' : def.group === 'G' ? 'Utility' : 'Ability',
+}])) as unknown as Record<GrowthUpgradeId, { name: string; description: string; tag: string }>;
 import type { StateMessage } from '../../shared/protocol/State';
 import { operatorConcept, uiArt } from './UIArt';
 
@@ -17,7 +25,7 @@ export class GrowthMatchView {
   requestFailed() { this.pendingBatch = ''; this.choiceKey = ''; this.render(this.message); }
   render(message: StateMessage | null) {
     this.message = message;
-    const g = message?.growth;
+    const g = message?.growthV3;
     this.root.hidden = !message || !g;
     if (!message || !g) { this.root.replaceChildren(); this.batch = ''; this.pendingBatch = ''; this.choiceKey = ''; this.overviewKey = ''; delete this.root.dataset.growthBatch; return; }
     if (!this.root.firstElementChild) this.root.innerHTML = '<div class="growth-overview"></div><div class="growth-selection"></div>';
@@ -25,15 +33,15 @@ export class GrowthMatchView {
     if (batch !== this.batch) { this.batch = batch; this.pendingBatch = ''; this.pendingUpgrade = ''; this.deferred = false; }
     this.root.dataset.growthBatch = batch;
     const pending = this.pendingBatch === batch;
-    const overviewKey = JSON.stringify([g.classId, g.level, g.xp, g.selected, g.perks, g.ultimate, Math.ceil(g.armor), g.healingDone, g.healingXp]);
+    const overviewKey = JSON.stringify([g.classId, g.level, g.xp, g.selected, g.perks, g.ultimate, Math.ceil(g.armor), g.healingDone, g.healingXp, g.gadget.charges, g.preset]);
     if (overviewKey !== this.overviewKey) {
       this.overviewKey = overviewKey;
       const overview = this.root.querySelector<HTMLElement>('.growth-overview')!;
       const expanded = overview.querySelector('details')?.open;
       const lower = GROWTH_RULES.xpThresholds[g.level - 1], upper = GROWTH_RULES.xpThresholds[g.level] ?? lower;
       const progress = g.level === 5 ? 100 : Math.max(0, Math.min(100, (g.xp - lower) / (upper - lower) * 100));
-      const ult = GROWTH_ULTIMATES[g.classId];
-      overview.innerHTML = `<div class="growth-command-strip"><img class="growth-avatar" src="${operatorConcept(g.classId)}" alt=""><div class="growth-rank"><small>MATCH PROGRESSION</small><h2>${GROWTH_CLASSES[g.classId].name} · Lv.${g.level}</h2></div><div class="growth-xp"><span>${g.xp} XP${g.level < 5 ? ` / ${upper}` : ' · 普通等级已满'}</span><div class="growth-xp-track" role="progressbar" aria-label="当前等级进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(progress)}"><i style="width:${progress}%"></i></div></div><div class="growth-picks"><small>已选升级</small><strong>${g.selected.length}<span> / 4</span></strong></div><div class="growth-awakening${g.ultimate ? ' is-awakened' : ''}"><small>${g.ultimate ? 'ULTIMATE ONLINE · 已觉醒' : '12:00 · 第12分钟觉醒'}</small><strong>${ult.name.split(' · ').at(-1)}</strong></div></div><div class="growth-build-line"><span>当前 Build</span>${g.selected.length ? g.selected.map(id => `<span class="growth-build-chip">${GROWTH_UPGRADES[id].name.split(' · ').at(-1)}</span>`).join('') : '<span class="growth-build-empty">尚未选择局内升级</span>'}<details${expanded ? ' open' : ''}><summary>技能与构筑详情</summary><div class="growth-build-details"><p>${GROWTH_CLASSES[g.classId].description} G 手雷。比赛不因选卡暂停。</p><p>基础Perk：${g.perks.map(id => GROWTH_PERKS[id].name).join(' / ')} · 临时护甲 ${Math.ceil(g.armor)}</p><p>${ult.name}：${ult.description}</p></div></details></div>${g.classId === 'medic' ? `<p class="growth-healing">队友治疗 ${g.healingDone} · 治疗经验 ${g.healingXp}。自疗、环境伤害及重复刷取不计经验。</p>` : ''}`;
+      const ult = GROWTH_ULTIMATES[GROWTH_CLASSES[g.classId].ultimate];
+      overview.innerHTML = `<div class="growth-command-strip"><img class="growth-avatar" src="${operatorConcept(g.classId)}" alt=""><div class="growth-rank"><small>MATCH PROGRESSION</small><h2>${GROWTH_CLASSES[g.classId].name} · Lv.${g.level}</h2></div><div class="growth-xp"><span>${g.xp} XP${g.level < 5 ? ` / ${upper}` : ' · 普通等级已满'}</span><div class="growth-xp-track" role="progressbar" aria-label="当前等级进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(progress)}"><i style="width:${progress}%"></i></div></div><div class="growth-picks"><small>已选升级</small><strong>${g.selected.length}<span> / 4</span></strong></div><div class="growth-awakening${g.ultimate ? ' is-awakened' : ''}"><small>${g.ultimate ? 'ULTIMATE ONLINE · 已觉醒' : `第${g.ultimateTick / 1800}分钟觉醒${g.preset === 'short' ? ' · 短局实验' : ''}`}</small><strong>${growthIcon(GROWTH_CLASSES[g.classId].ultimate)}${ult.name.split(' · ').at(-1)}</strong></div></div><div class="growth-build-line"><span>当前 Build</span>${g.selected.length ? g.selected.map(id => `<span class="growth-build-chip">${GROWTH_UPGRADES[id].name.split(' · ').at(-1)}</span>`).join('') : '<span class="growth-build-empty">尚未选择局内升级</span>'}<details${expanded ? ' open' : ''}><summary>技能与构筑详情</summary><div class="growth-build-details"><p>E ${GROWTH_ABILITIES[g.abilityId].name} · ${growthIcon(g.gadgetId)} G ${GROWTH_GADGETS[g.gadgetId].name}（剩余${g.gadget.charges}份）。比赛不因选卡暂停。</p><p>基础Perk：${g.perks.map(id => GROWTH_PERKS[id].name).join(' / ')} · 临时护甲 ${Math.ceil(g.armor)}</p><p>${ult.name}：${ult.description}</p></div></details></div>${g.classId === 'medic' ? `<p class="growth-healing">队友治疗 ${g.healingDone} · 治疗经验 ${g.healingXp}。自疗、环境伤害及重复刷取不计经验。</p>` : ''}`;
     }
     const choiceKey = JSON.stringify([batch, g.offer?.cards, g.rerolls, this.deferred, pending, message.result]);
     if (choiceKey === this.choiceKey) return;

@@ -45,10 +45,13 @@ test('moving client renders smoothly through latency and keeps camera aligned wi
       const { ReferenceArt } = await import(modulePath);
       const original = ReferenceArt.prototype.soldier;
       (window as any).__presentationSamples = [];
+      let moving=false;
+      window.addEventListener('keydown',event=>{if(event.code==='KeyD')moving=true;});
+      window.addEventListener('keyup',event=>{if(event.code==='KeyD')moving=false;});
       ReferenceArt.prototype.soldier = function (...args: any[]) {
         if (this.cursor === 0) {
           const camera = this.scene.cameras.main;
-          (window as any).__presentationSamples.push({ time: performance.now(), x: args[0], y: args[1], scrollX: camera.scrollX,
+          (window as any).__presentationSamples.push({ time: performance.now(), moving, x: args[0], y: args[1], scrollX: camera.scrollX,
             cameraError: args[0] - camera.scrollX - camera.width / 2 });
         }
         return original.apply(this, args);
@@ -60,14 +63,25 @@ test('moving client renders smoothly through latency and keeps camera aligned wi
     await page.waitForTimeout(600);
     await page.locator('canvas').click(); await page.keyboard.down('d');
     await page.waitForTimeout(1000); await page.keyboard.up('d');
+    // Include acknowledgement and visual convergence after releasing movement.
+    await page.waitForTimeout(600);
     await page.screenshot({ path: 'artifacts/qa/online-vision-latency.png' });
-    const samples = await page.evaluate(() => (window as any).__presentationSamples as { time: number; x: number; y: number; scrollX: number; cameraError: number }[]);
+    const samples = await page.evaluate(() => (window as any).__presentationSamples as { time: number; moving:boolean; x: number; y: number; scrollX: number; cameraError: number }[]);
     // Exclude camera clamping, where the player correctly moves away from center.
     const tracking = samples.filter(s => s.x > 600 && s.x < 2200 && s.scrollX > 1);
+    mkdirSync('artifacts/qa', { recursive: true });
+    writeFileSync(`artifacts/qa/online-presentation-samples-${Date.now()}.json`, JSON.stringify({samples,tracking,
+      backwards:tracking.slice(1).flatMap((s,i)=>s.x<tracking[i].x-.1?[{before:tracking[i],after:s}]:[])},null,2));
     expect(tracking.length).toBeGreaterThan(15);
     expect(Math.max(...tracking.map(s => Math.abs(s.cameraError)))).toBeLessThan(0.01);
-    expect(Math.max(...tracking.map(s => s.x)) - Math.min(...tracking.map(s => s.x))).toBeGreaterThan(50);
-    expect(tracking.slice(1).every((s, i) => s.x >= tracking[i].x - 0.1)).toBe(true);
+    // Continuous forward input must remain monotonic. After keyup, prediction
+    // can legitimately converge backwards to the stopped authoritative position.
+    const moving=tracking.filter(s=>s.moving);
+    expect(moving.length).toBeGreaterThan(15);
+    expect(Math.max(...moving.map(s => s.x)) - Math.min(...moving.map(s => s.x))).toBeGreaterThan(50);
+    expect(moving.slice(1).every((s, i) => s.x >= moving[i].x - 0.1)).toBe(true);
+    expect(tracking.at(-1)!.moving).toBe(false);
+    expect(Math.abs(tracking.at(-1)!.x-battle.player.movement.x)).toBeLessThan(0.1);
     expect(errors).toEqual([]);
     mkdirSync('artifacts/qa', { recursive: true });
     writeFileSync('artifacts/qa/online-presentation.json', JSON.stringify({ oneWayDelayMs: [60, 120], samples: tracking,

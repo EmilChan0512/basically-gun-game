@@ -64,12 +64,12 @@ test('online debug battle plays authoritative events, reconnects without replay 
     await page.evaluate(()=>{ window.__strikeAudio!.diagnostics.recent.length=0; });
     // Close just this test client's transport; resume the same round.
     for (const client of server.wss.clients) client.close();
-    await expect(page.locator('#status')).toContainText('断开'); await page.locator('#reconnect').click();
+    await expect(page.locator('#status')).toContainText('断开'); await page.getByRole('button', {name:'断线重连',exact:true}).click();
     await expect(page.locator('#status')).toContainText('公共调试房间');
     await expect(page.locator('#online-game')).toHaveAttribute('aria-busy','false');
     await page.waitForTimeout(150);
     expect(await page.evaluate(()=>window.__strikeAudio!.diagnostics.recent.includes('S_assaultFire'))).toBe(false);
-    await page.locator('#online-leave').click(); await expect(page.locator('#join-debug')).toBeEnabled();
+    await page.getByRole('button', {name:'离开对局 / 返回大厅',exact:true}).click(); await expect(page.locator('#join-debug')).toBeEnabled();
     const count=await page.evaluate(()=>window.__strikeAudio!.diagnostics.played);
     await page.waitForTimeout(350); expect(await page.evaluate(()=>window.__strikeAudio!.diagnostics.played)).toBeLessThanOrEqual(count+1);
   } finally { await server.close(); }

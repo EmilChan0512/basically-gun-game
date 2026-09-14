@@ -39,7 +39,7 @@ test('online knife and shield selection, authority actions and reconnect', async
     await pages[1].mouse.up();
     [...server.wss.clients][1].terminate();
     await expect(pages[1].locator('#status')).toContainText('连接已断开');
-    await pages[1].locator('#reconnect').click();
+    await pages[1].getByRole('button',{name:'断线重连',exact:true}).click();
     await expect(pages[1].locator('#status')).toContainText('房间码');
     await expect(pages[1].locator('#online-hud')).toContainText('防弹盾');
     expect(errors).toEqual([]);

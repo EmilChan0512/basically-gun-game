@@ -13,3 +13,9 @@ export function validCommand(value: PlayerCommand): boolean {
     && new Set(value.actions).size === value.actions.length
     && value.actions.every(action => ['swap', 'reload', 'skill', 'item'].includes(action));
 }
+/** V3 actions carry no gadget/ability identity. The roster loadout is the sole authority. */
+export function validGrowthCommand(value: PlayerCommand): boolean {
+  return validCommand(value) && Object.keys(value).every(k => ['sequence', 'input', 'actions'].includes(k))
+    && Object.keys(value.input).every(k => ['left', 'right', 'crouch', 'jump', 'fire', 'aim'].includes(k))
+    && Object.keys(value.input.aim).every(k => ['x', 'y'].includes(k));
+}

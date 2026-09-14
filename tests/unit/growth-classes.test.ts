@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { Room } from '../../src/shared/simulation/Room';
+import { Room } from '../helpers/LegacyGrowthRoom';
 import { GROWTH_CLASSES, GROWTH_POOLS, GROWTH_UPGRADES, GROWTH_WEAPONS, defaultGrowthLoadout, type GrowthClassId } from '../../src/shared/content/GrowthCatalog';
 import { Battle, idleInput, seededRandom } from '../../src/game/campaign/Battle';
 import { awardGrowth } from '../../src/shared/simulation/Growth';

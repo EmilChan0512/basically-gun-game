@@ -30,8 +30,9 @@ export class ReferenceArt {
   private cursor = 0;
   private concealment = new ConcealmentFade();
   private muzzles = new Map<string, Point>();
+  private contrastEffects = new WeakMap<Phaser.GameObjects.Image, Phaser.FX.ColorMatrix>();
   constructor(private scene: Phaser.Scene) {}
-  begin() { this.cursor = 0; this.concealment.begin(); this.muzzles.clear(); for (const image of this.pool) image.setVisible(false); }
+  begin() { this.cursor = 0; this.concealment.begin(); this.muzzles.clear(); for (const image of this.pool) { image.setVisible(false); const effect=this.contrastEffects.get(image); if(effect){effect.active=false;image.preFX?.disable();} } }
   tracer(graphics: Phaser.GameObjects.Graphics, trace: BulletTrace, actorId: string | undefined, age = 0, weapon = 'm4') {
     if (age < 0 || age >= 3) return;
     const start = (actorId ? this.muzzles.get(actorId) : undefined) ?? trace.origin;
@@ -71,11 +72,18 @@ export class ReferenceArt {
       .setRotation(Math.atan2(m[1], m[0])).setFlip(false, scaleY < 0).setTint(0xffffff).setAlpha(1);
     return image;
   }
-  soldier(x: number, y: number, crouch: boolean, vx: number, jumping: boolean, frame: number, aim: { x: number; y: number }, weapon: string, tint: number, alive: boolean, reload = 0, flash = false, offhand?: OffhandView, role: ClassId = 'medic', actorId = 'player', concealed = false, flinch = 0) {
+  soldier(x: number, y: number, crouch: boolean, vx: number, jumping: boolean, frame: number, aim: { x: number; y: number }, weapon: string, tint: number, alive: boolean, reload = 0, flash = false, offhand?: OffhandView, role: ClassId = 'medic', actorId = 'player', concealed = false, flinch = 0, flashScale = 1, recoilDegrees?: number, contrast = false) {
     const start = this.cursor, alpha = this.concealment.alpha(actorId, concealed, alive, frame);
-    this.drawSoldier(x, y, crouch, vx, jumping, frame, aim, weapon, tint, alive, reload, flash, offhand, role, actorId);
+    this.drawSoldier(x, y, crouch, vx, jumping, frame, aim, weapon, tint, alive, reload, flash, offhand, role, actorId, flashScale, recoilDegrees);
     for (let i = start; i < this.cursor; i++) {
       const part = this.pool[i]; part.setAlpha(part.alpha * alpha);
+      // RGB-only contrast preserves texture alpha; no box, outline or extra silhouette.
+      let effect = this.contrastEffects.get(part);
+      if (contrast && !effect && part.preFX) {
+        effect = part.preFX.addColorMatrix(); effect.contrast(.2);
+        this.contrastEffects.set(part, effect);
+      }
+      if (effect) { effect.active = contrast && alive; if(effect.active)part.preFX?.enable(); }
       if (alive && flinch) {
         // Brief lean about the feet; hitboxes and authoritative movement stay unchanged.
         part.x += (y - part.y) * flinch * .10;
@@ -84,13 +92,13 @@ export class ReferenceArt {
       }
     }
   }
-  private drawSoldier(x: number, y: number, crouch: boolean, vx: number, jumping: boolean, frame: number, aim: { x: number; y: number }, weapon: string, tint: number, alive: boolean, reload = 0, flash = false, offhand?: OffhandView, role: ClassId = 'medic', actorId = 'player') {
+  private drawSoldier(x: number, y: number, crouch: boolean, vx: number, jumping: boolean, frame: number, aim: { x: number; y: number }, weapon: string, tint: number, alive: boolean, reload = 0, flash = false, offhand?: OffhandView, role: ClassId = 'medic', actorId = 'player', flashScale = 1, recoilDegrees?: number) {
     const skin = (part: string) => `${role}-${part}`;
     const flip = offhand?.equipped && offhand.kind === 'melee' && offhand.age >= 0 ? offhand.facing.x < 0 : aim.x < x;
     if (!alive) { this.actorPart({ id: skin('torso'), name: 'fallen', matrix: [0, 1, -1, 0, 0, -5] }, x, y).setAlpha(.45); return; }
     const special = !!offhand?.equipped && offhand.kind !== 'firearm';
     const selectedWeapon = Object.hasOwn(WEAPONS, weapon) ? weapon as WeaponId : 'm4';
-    const pose = characterPose(role, selectedWeapon, { frame, vx, jumping, crouch, flip, reload, flash,
+    const pose = characterPose(role, selectedWeapon, { frame, vx, jumping, crouch, flip, reload, flash, recoilDegrees,
       aim: offhand?.equipped && offhand.kind === 'melee' && offhand.age >= 0
         ? { x: offhand.facing.x * 10000, y: -(crouch ? 28 : 42) + offhand.facing.y * 10000 }
         : { x: aim.x - x, y: aim.y - y }, bodyOnly: special,
@@ -100,7 +108,7 @@ export class ReferenceArt {
     if (!special) {
       if (pose.muzzle) {
         const muzzle = { x: x + pose.muzzle.x, y: y + pose.muzzle.y }; this.muzzles.set(actorId, muzzle);
-        if (flash) { const angle = Math.atan2(aim.y - muzzle.y, aim.x - muzzle.x); this.part('flash', muzzle.x + Math.cos(angle) * 8, muzzle.y + Math.sin(angle) * 8, 20, 12, angle); }
+        if (flash) { const angle = Math.atan2(aim.y - muzzle.y, aim.x - muzzle.x); this.part('flash', muzzle.x + Math.cos(angle) * 8, muzzle.y + Math.sin(angle) * 8, 20, 12, angle).setAlpha(flashScale); }
       }
       return;
     }

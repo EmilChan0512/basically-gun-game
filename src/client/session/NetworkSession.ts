@@ -1,4 +1,4 @@
-import type { GrowthLoadout } from '../../shared/content/GrowthCatalog';
+import type { GrowthLoadoutV3 as GrowthLoadout } from '../../shared/content/growth-v3/Loadout';
 import type { StateMessage } from '../../shared/protocol/State';
 import type { PlayerAction } from '../../shared/protocol/Commands';
 import type { BattleInput } from '../../game/campaign/Battle';
@@ -65,6 +65,9 @@ export class NetworkSession {
           this.lastStateAt = performance.now(); this.state = message;
           this.shots.accept(message, this.lastStateAt); this.interpolation.push(message, this.lastStateAt); this.prediction.accept(message);
         }
+      } else if (message.type === 'inputAccepted') {
+        // Receipt only: state.ack remains the authority for processed input/prediction.
+        return;
       } else if (message.type === 'rejected' && message.reason !== 'match-ended') this.onError(`操作未执行：${message.reason}`);
       else if (message.type === 'error') { this.onError(message.message); return; }
       this.onChange();

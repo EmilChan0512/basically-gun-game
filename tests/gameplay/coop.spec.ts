@@ -32,7 +32,7 @@ test('a solo room starts cooperative waves and displays server spawned enemies',
     expect(JSON.parse(saved!).entries).toHaveLength(1);
     [...server.wss.clients][0].terminate();
     await expect(page.locator('#status')).toContainText('连接已断开');
-    await page.locator('#reconnect').click();
+    await page.getByRole('button',{name:'断线重连',exact:true}).click();
     await expect(page.locator('#status')).toContainText('蓝队获胜');
     await expect(rows).toHaveCount(1);
     expect(await page.evaluate(key => localStorage.getItem(key), COOP_RECORDS_KEY)).toBe(saved);

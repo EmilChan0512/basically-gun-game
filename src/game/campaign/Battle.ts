@@ -1,4 +1,7 @@
 import { freshWeaponMetrics } from '../../shared/content/GrowthRecords';
+import { GrowthBattleCoordinator, type GrowthBattleCheckpoint, type GrowthBattlePorts } from '../../shared/simulation/growth-v3/BattleCoordinator';
+import type { GrowthLoadoutV3 } from '../../shared/content/growth-v3/Loadout';
+import type { ContentStage } from '../../shared/content/growth-v3/Core';
 import { medicPulse } from '../../shared/simulation/GrowthMedic';
 import { growthSpeed, growthSpread, growthReloadScale, growthIncoming, growthReserve } from '../../shared/simulation/GrowthCombat';
 import { OriginalMovement } from '../movement/OriginalMovement';
@@ -55,6 +58,7 @@ export function seededRandom(seed: number): RandomSource {
 
 /** Offline 30Hz team battle. Difficulty changes bot perception, reaction and aim, never damage. */
 export class Battle {
+  growthV3?: GrowthBattleCoordinator;
   readonly id: string;
   actors: Actor[] = [];
   frame = 0;
@@ -85,6 +89,16 @@ export class Battle {
     if (mission.mode === 'coop') this.waves = new WaveDirector(mission.allies + 1, mission.scenario);
   }
   get player() { return this.actors[0]; }
+  /** The complete roster switches together. Lobby exposure follows protocol/UI migration. */
+  enableGrowthV3(loadouts: Readonly<Record<string, GrowthLoadoutV3>>, stage: ContentStage = 2) {
+    if (this.growthV3) throw Error('Growth battle is already configured');
+    const runtime = new GrowthBattleCoordinator(this, stage, this.growthV3Ports());
+    runtime.install(loadouts); this.growthV3 = runtime;
+  }
+  private growthV3Ports(): GrowthBattlePorts {
+    return { random: () => this.random(), spawn: actor => this.spawn(actor), death: (target, source) => this.mode.onDeath(this, target, source),
+      hitboxes: frame => this.hitboxHistory.resolve(this.frame, frame, this.hitboxes()) };
+  }
   /** Authority-only growth setup: independent class and weapon balance, with no legacy kit bonuses. */
   equipGrowth(actor: Actor, value: GrowthLoadout = defaultGrowthLoadout()) {
     const loadout = validateGrowthLoadout(value), definition = GROWTH_CLASSES[loadout.classId];
@@ -96,6 +110,7 @@ export class Battle {
     actor.growth = newGrowth(loadout); actor.movement.speedScale = definition.speed;
   }
   growthChoice(actorId: string, batch: number, upgrade: unknown, reroll = false) {
+    if (this.growthV3) return this.growthV3.choice(actorId, batch, upgrade, reroll);
     const actor = this.actors.find(a => a.id === actorId);
     if (this.phase !== 'running' || !actor?.growth) return false;
     const accepted = reroll ? rerollGrowth(actor.growth, batch, this.random, this.frame)
@@ -105,11 +120,13 @@ export class Battle {
   }
   /** Trusted lobby setup only; never permits in-match replacement or refilling. */
   equipActor(actor: Actor, value: EquipmentLoadout) {
+    if (this.growthV3) throw Error('Cannot install classic equipment in a growth battle');
     if (this.frame !== 0 || this.phase !== 'running' || !this.actors.includes(actor)) throw Error('Cannot change equipment during battle');
     this.installEquipment(actor, validateEquipment(value));
   }
   /** Explicit debug-only reset; validation precedes every mutation. Keeps position and score. */
   reconfigureDebugActor(actor: Actor, value: EquipmentLoadout) {
+    if (this.growthV3) throw Error('Use growth loadout validation for growth debug rooms');
     if (!this.mission.debug || this.phase !== 'running' || !this.actors.includes(actor)) throw Error('Only debug rooms allow live equipment changes');
     const equipment = validateEquipment(value), deaths = actor.life.deaths, wasAlive = actor.life.alive;
     this.releaseObjective(actor.id);
@@ -143,7 +160,7 @@ export class Battle {
       modeState: this.mode.checkpoint(), matchResult: this.matchResult, phaseMs: this.phaseMs, jumpHeld: [...this.jumpHeld], hitboxHistory: this.hitboxHistory.checkpoint(),
       effects: this.effects, events: this.events, journal: this.journal.checkpoint(), bursts: this.bursts, notice: this.notice, noticeFrame: this.noticeFrame,
       grenades: this.grenades.map(({ source, ...g }) => ({ ...g, sourceId: source.id })),
-      projectiles: this.projectiles,
+      projectiles: this.projectiles, growthV3: this.growthV3?.checkpoint() as GrowthBattleCheckpoint | undefined,
       actors: this.actors.map(({ movement, life, arsenal, offhand, ...a }) => ({ ...a, offhand: offhand?.checkpoint(), movement: movement.checkpoint(),
         life: { ...life.snapshot(), maxHealth: life.maxHealth }, arsenal: arsenal.checkpoint() })) });
   }
@@ -168,6 +185,7 @@ export class Battle {
       if (!source) throw Error('Missing grenade source');
       return { ...g, source };
     });
+    if (state.growthV3) battle.growthV3 = GrowthBattleCoordinator.restore(battle, state.growthV3, battle.growthV3Ports());
     return battle;
   }
   /** Neutral result for sessions; phase remains the legacy blue-side campaign adapter. */
@@ -206,6 +224,7 @@ export class Battle {
   }
   /** Server-owned public debug room admission; IDs come from authenticated connections. */
   addDebugPlayer(id: string, name: string, team: 1 | 2) {
+    if (this.growthV3) throw Error('Growth roster is locked for this match');
     if (!this.mission.debug || this.actors.some(a => a.id === id)) throw Error('Invalid debug admission');
     this.addActor(id, name, team, true, this.actors.filter(a => a.team === team).length);
     this.reconfigureDebugActor(this.actors.find(a => a.id === id)!, { classId: 'medic', primary: 'm4', secondary: 'usp' });
@@ -224,6 +243,7 @@ export class Battle {
       brain: { target: null, acquired: 0, offset: 0, lastX: spawn.x, stuck: 0, state: 'advance' } });
   }
   swap(actor = this.player) {
+    if (this.growthV3) { this.growthV3.enqueue(actor.id, 'swap'); return; }
     if (this.phase !== 'running' || !actor.life.alive || actor.deliveryPreviousWeapon !== undefined) return;
     if (actor.offhand && actor.offhand.kind !== 'firearm') {
       if (actor.offhand.select(!actor.offhand.equipped, actor.offhand.triggerHeld)) actor.arsenal.gun.cancelReload();
@@ -240,6 +260,7 @@ export class Battle {
     if (actor.growth) { if (actor.arsenal.gun.ammo > 0) actor.growth.metrics.tacticalReloads++; else actor.growth.metrics.emptyReloads++; }
     this.journal.emit({ tick: this.frame, kind: 'reload', actorId: actor.id, weapon: actor.arsenal.selected, duration: actor.arsenal.gun.reloadFrames, emptyMagazine: actor.arsenal.gun.ammo === 0 }); }
   reload(actor = this.player) {
+    if (this.growthV3) { this.growthV3.enqueue(actor.id, 'reload'); return; }
     if (this.phase === 'running' && actor.life.alive && (!actor.offhand || actor.offhand.permitsGunfire)
       && actor.arsenal.gun.reload()) {
       if (actor.growth) actor.arsenal.gun.reloadFrames = Math.ceil(actor.arsenal.gun.reloadFrames * growthReloadScale(actor));
@@ -248,6 +269,7 @@ export class Battle {
   }
   private say(message: string) { this.notice = message; this.noticeFrame = this.frame; }
   useSkill(actor = this.player) {
+    if (this.growthV3) return this.growthV3.enqueue(actor.id, 'skill');
     if (actor.growth) {
       if (this.phase !== 'running' || !actor.life.alive || actor.skillCooldown) return false;
       if (actor.growth.classId === 'medic') return medicPulse(this, actor, this.random);
@@ -284,6 +306,7 @@ export class Battle {
     if (actor.human) this.say(`${skill.name}已发动`); return true;
   }
   useItem(aim: Point = this.player.aim, actor = this.player) {
+    if (this.growthV3) return this.growthV3.enqueue(actor.id, 'item', aim);
     if (this.phase !== 'running' || !actor.life.alive || !actor.kit && !actor.growth || actor.itemCooldown) return false;
     if (actor.itemCharges <= 0) { this.say('本次出战道具已耗尽'); return false; }
     const item = actor.growth ? 'frag' : actor.kit!.item;
@@ -354,6 +377,7 @@ export class Battle {
   }
   applyDamage(target: Actor, context: DamageContext) {
     if (this.phase !== 'running') return false;
+    if (this.growthV3) return this.growthV3.directDamage(target, context);
     validateDamageContext(context);
     const source = context.sourceId ? this.actors.find(actor => actor.id === context.sourceId) : undefined;
     if (context.sourceId && !source) throw Error('Damage source is not in this match');
@@ -457,6 +481,13 @@ export class Battle {
     this.frame++;
     this.effects = this.effects.filter(effect => this.frame - effect.frame < 20);
     this.bursts = this.bursts.filter(b => this.frame - b.frame < 18);
+    if (this.growthV3) {
+      this.growthV3.step(inputs, shotFrames);
+      this.mode.tick(this); this.growthV3.afterMode();
+      const result = resolveResult(this);
+      if (result) this.endMatch(result.winner, result.reason);
+      return;
+    }
     for (const actor of this.actors) {
       const input = inputs.get(actor.id) ?? { ...idleInput(), aim: actor.aim };
       const growth = actor.growth;
@@ -670,13 +701,16 @@ export class Battle {
   }
   snapshot() {
     return { mission: this.mission.id, phase: this.phase, frame: this.frame, scores: [...this.scores], objective: this.objective, reason: this.reason, waves: this.waves?.snapshot(),
+      ...(this.growthV3 ? { growthWorld: this.growthV3.worldView() } : {}),
       deliveryTargets: this.mission.mode === 'ctf' ? this.mode.checkpoint().delivery : undefined,
       seconds: Math.max(0, Math.ceil(this.mission.seconds - this.frame / 30)),
-      actors: this.actors.map(a => ({ id: a.id, team: a.team, x: a.movement.x, y: a.movement.y, vx: a.movement.vx, vy: a.movement.vy,
+      actors: this.actors.filter(a => !this.growthV3?.participant(a.id).retired).map(a => ({ id: a.id, team: a.team, x: a.movement.x, y: a.movement.y, vx: a.movement.vx, vy: a.movement.vy,
         crouching: a.movement.crouching, jumping: a.movement.jumping, life: a.life.snapshot(), weapon: a.arsenal.selected,
         offhand: a.offhand?.view(), deathInfo: !a.life.alive ? a.deathInfo : undefined,
         ammo: a.arsenal.gun.ammo, reserve: a.arsenal.gun.reserveAmmo, reload: a.arsenal.gun.reloadFrames, kills: a.kills, shots: a.arsenal.shots, ai: a.brain.state,
-        growth: a.growth ? { classId: a.growth.classId, level: a.growth.level, ultimate: a.growth.ultimate, ghost: a.growth.ghostUntil > this.frame, armor: a.growth.armor } : undefined,
-        classId: a.growth ? GROWTH_CLASSES[a.growth.classId].art : a.kit?.classId ?? null, stealthFrames: a.stealthFrames, maxHealth: a.life.maxHealth, skill: a.kit?.skill ?? null, skillCooldown: a.skillCooldown, skillFrames: a.skillFrames, item: a.growth ? 'frag' as const : a.kit?.item ?? null, itemCharges: a.itemCharges })) };
+        ...(this.growthV3 ? { growthV3: this.growthV3.actorView(a.id) } : {}),
+        growth: this.growthV3 ? (({ classId, level, ultimate, ghost, armor }) => ({ classId, level, ultimate, ghost, armor }))(this.growthV3.actorView(a.id))
+          : a.growth ? { classId: a.growth.classId, level: a.growth.level, ultimate: a.growth.ultimate, ghost: a.growth.ghostUntil > this.frame, armor: a.growth.armor } : undefined,
+        classId: this.growthV3 ? this.growthV3.actorView(a.id).art : a.growth ? GROWTH_CLASSES[a.growth.classId].art : a.kit?.classId ?? null, stealthFrames: a.stealthFrames, maxHealth: a.life.maxHealth, skill: a.kit?.skill ?? null, skillCooldown: a.skillCooldown, skillFrames: a.skillFrames, item: a.growth ? 'frag' as const : a.kit?.item ?? null, itemCharges: a.itemCharges })) };
   }
 }

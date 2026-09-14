@@ -3,6 +3,7 @@ import type { MatchResult } from '../simulation/ModeRules';
 import type { SimulationEvent } from '../simulation/Events';
 import type { OriginalMovement } from '../../game/movement/OriginalMovement';
 export interface StateMessage {
+  growthV3?: ReturnType<import('../simulation/growth-v3/BattleCoordinator').GrowthBattleCoordinator['privateView']>;
   growth?: ReturnType<typeof import('../simulation/Growth').growthView>;
   type: 'state'; roomId: string; round: number; actorId: string | null; mapId: string; mode: import('../simulation/ModeRules').ModeId;
   state: ReturnType<Battle['snapshot']>; result: MatchResult | null; ack: number;

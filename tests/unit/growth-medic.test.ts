@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { Room } from '../../src/shared/simulation/Room';
+import { Room } from '../helpers/LegacyGrowthRoom';
 import { Battle, idleInput } from '../../src/game/campaign/Battle';
 import { defaultGrowthLoadout, GROWTH_WEAPONS } from '../../src/shared/content/GrowthCatalog';
 import { growthReloadScale, growthSpeed, growthSpread } from '../../src/shared/simulation/GrowthCombat';

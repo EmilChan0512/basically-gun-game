@@ -5,6 +5,7 @@ import type { MapGeometry } from '../../shared/content/MapTypes';
 import type { PvEScenario } from '../../shared/content/PvEScenarios';
 export type { Terrain, Waypoint } from '../../shared/content/MapTypes';
 export interface Mission extends MapGeometry {
+  growthPreset?: import('../../shared/content/growth-v3/Presets').GrowthPresetId;
   scenario?: PvEScenario;
   id: string; title: string; location: string; brief: string; debrief: string;
   mode: import('../../shared/simulation/ModeRules').ModeId; goal: number; seconds: number; debug?: boolean; allies: number; enemies: number;

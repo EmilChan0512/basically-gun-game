@@ -1,6 +1,10 @@
 import { earnedGrowthTraits, earnedGrowthAchievements, freshGrowthMetrics, type GrowthMetrics, type GrowthWeaponMetrics } from '../src/shared/content/GrowthRecords';
-import { freshGrowthCareer, validateGrowthCareer, migrateGrowthCareer, ownedGrowthLoadout, growthSlots } from '../src/shared/content/GrowthCareer';
-import { GROWTH_WEAPONS, defaultGrowthLoadout, type GrowthClassId, type GrowthWeaponId } from '../src/shared/content/GrowthCatalog';
+import { growthSlots } from '../src/shared/content/GrowthCareer';
+import { freshGrowthCareerV3 as freshGrowthCareer, validateGrowthCareerV3 as validateGrowthCareer,
+  migrateGrowthCareerV3 as migrateGrowthCareer, ownedGrowthLoadoutV3 as ownedGrowthLoadout } from '../src/shared/content/growth-v3/Career';
+import { defaultGrowthLoadoutV3 as defaultGrowthLoadout } from '../src/shared/content/growth-v3/Loadout';
+import { GROWTH_V3_WEAPONS as GROWTH_WEAPONS, type GrowthWeaponId } from '../src/shared/content/growth-v3/Weapons';
+import type { GrowthClassId } from '../src/shared/content/growth-v3/Core';
 import { randomBytes, randomUUID, scrypt, timingSafeEqual, createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, renameSync, writeFileSync, openSync, closeSync, fsyncSync, unlinkSync } from 'node:fs';
 import { dirname } from 'node:path';
@@ -32,7 +36,7 @@ export class OnlineAccounts {
       if (![1, 2].includes(value.version) || !Array.isArray(value.accounts) || !Array.isArray(value.sessions)) throw Error('Invalid account database');
       const migrating = value.version === 1;
       const growthMigrating = value.accounts.some((a: Account) => !a.profile?.growth);
-      const growthExpanding = value.accounts.some((a: Account) => a.profile?.growth && (a.profile.growth.version as number) === 1);
+      const growthExpanding = value.accounts.some((a: Account) => a.profile?.growth && (a.profile.growth.version as number) !== 3);
       if (migrating) { value.version = 2; value.ledger = []; }
       if (!Array.isArray(value.ledger)) throw Error('Invalid asset ledger');
       for (const account of value.accounts) {
@@ -59,14 +63,18 @@ export class OnlineAccounts {
         }
       }
       for (const account of value.accounts) {
-        if (!account.profile.growth) { account.profile.growth = freshGrowthCareer(); this.record(value, account.profile.id, 'migration', 0, 'Independent growth career v1; legacy assets unchanged'); }
-        else account.profile.growth = migrateGrowthCareer(account.profile.growth);
+        if (!account.profile.growth) { account.profile.growth = freshGrowthCareer(); this.record(value, account.profile.id, 'migration', 0, 'Independent growth career v3; legacy assets unchanged'); }
+        else {
+          const previousVersion = account.profile.growth.version;
+          account.profile.growth = migrateGrowthCareer(account.profile.growth);
+          if (previousVersion !== 3) this.record(value, account.profile.id, 'migration', 0, `Growth v${previousVersion} to v3; original loadouts archived, XP and classic assets retained`);
+        }
         validateGrowthCareer(account.profile.growth);
       }
       this.data = value;
       if (migrating || growthMigrating || growthExpanding) {
         // Keep the previous schema for an administrator-assisted binary rollback.
-        writeFileSync(`${file}.${migrating ? 'schema1' : growthExpanding ? 'growth-v2' : 'growth-v1'}-${randomUUID()}.backup`, readFileSync(file), { mode: 0o600, flag: 'wx' });
+        writeFileSync(`${file}.${migrating ? 'schema1' : 'growth-v3'}-${randomUUID()}.backup`, readFileSync(file), { mode: 0o600, flag: 'wx' });
         this.commit(value);
       }
     } catch (error) {

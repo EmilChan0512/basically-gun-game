@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Room } from '../../src/shared/simulation/Room';
+import { Room } from '../helpers/LegacyGrowthRoom';
 import { MatchSession } from '../../src/shared/simulation/MatchSession';
 import { awardGrowth, growthView } from '../../src/shared/simulation/Growth';
 import { Battle, idleInput, seededRandom } from '../../src/game/campaign/Battle';

@@ -1,5 +1,7 @@
+import { ownedGrowthLoadoutV3 } from '../../src/shared/content/growth-v3/Career';
+import { defaultGrowthLoadoutV3 } from '../../src/shared/content/growth-v3/Loadout';
 import { expect, it } from 'vitest';
-import { Room } from '../../src/shared/simulation/Room';
+import { Room } from '../helpers/LegacyGrowthRoom';
 import { GROWTH_WEAPONS, defaultGrowthLoadout, growthWeaponConfigs } from '../../src/shared/content/GrowthCatalog';
 import { freshGrowthCareer, ownedGrowthLoadout } from '../../src/shared/content/GrowthCareer';
 import { freshGrowthMetrics, earnedGrowthTraits, earnedGrowthAchievements } from '../../src/shared/content/GrowthRecords';
@@ -54,7 +56,8 @@ it('settles weapon-specific mastery and behavior unlocks exactly once without to
   store.settleGrowth('depth1', [reward]); const next = store.profile(profile.id);
   expect(next.growth!.weaponXp).toEqual({ m4: 200, usp: 4 }); expect(next.growth!.traits).toEqual(earnedGrowthTraits(metrics));
   const loadout = defaultGrowthLoadout(); loadout.pool![0] = 'rollingReserve';
-  expect(() => ownedGrowthLoadout(next.growth!, loadout)).not.toThrow();
+  expect(() => ownedGrowthLoadoutV3(next.growth!, defaultGrowthLoadoutV3())).not.toThrow();
+  expect(() => ownedGrowthLoadoutV3(next.growth!, loadout)).toThrow();
   expect(next.credits).toBe(profile.credits); expect(next.classes).toEqual(profile.classes);
   store.settleGrowth('depth1', [reward]); expect(store.profile(profile.id)).toEqual(next);
 });
