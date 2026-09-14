@@ -2,3 +2,4 @@
 *.service text eol=lf
 *.conf text eol=lf
 *.yml text eol=lf
+*.svg text eol=lf
