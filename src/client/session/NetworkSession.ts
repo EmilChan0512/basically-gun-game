@@ -17,6 +17,7 @@ export class NetworkSession {
   authToken = '';
   allowInsecureAccounts = false;
   private welcomed = false;
+  private wireContent = CONTENT_VERSION;
   state: StateMessage | null = null;
   interpolation = new Interpolation();
   prediction = new Prediction();
@@ -40,7 +41,14 @@ export class NetworkSession {
       if (message.type === 'probe') { this.send({ type: 'probeReply', nonce: message.nonce }); return; }
       if (message.type === 'welcome') {
         if (message.protocol !== 1) { this.onError('服务器版本不兼容'); this.close(); return; }
-        if (message.content !== CONTENT_VERSION) { this.onError('地图或装备版本不一致，请更新客户端与服务器'); this.close(); return; }
+        if (typeof message.content !== 'string' || !message.content) { this.onError('服务器未提供有效内容版本'); this.close(); return; }
+        if (message.content !== CONTENT_VERSION && !import.meta.env.DEV) {
+          this.onError('地图或装备版本不一致，请更新客户端与服务器'); this.close(); return;
+        }
+        // Dev clients speak the connected authority's content version, including queued
+        // commands and reconnects. Protocol and server-side payload validation still apply.
+        this.wireContent = import.meta.env.DEV ? message.content : CONTENT_VERSION;
+        if (message.content !== CONTENT_VERSION) console.warn('开发模式：允许内容版本不同，使用服务器规则。', { client: CONTENT_VERSION, server: message.content });
         this.playerId = message.playerId;
         this.allowInsecureAccounts = message.allowInsecureAccounts === true; this.welcomed = true;
         const pending = this.queued; this.queued = []; for (const message of pending) this.send(message);
@@ -85,7 +93,7 @@ export class NetworkSession {
         return;
       }
     }
-    if (this.socket.readyState === WebSocket.OPEN) this.socket.send(JSON.stringify({ protocol: 1, content: CONTENT_VERSION, ...message }));
+    if (this.socket.readyState === WebSocket.OPEN) this.socket.send(JSON.stringify({ ...message, protocol: 1, content: this.wireContent }));
   }
   clearActions() { this.actions.clear(); }
   action(action: PlayerAction) { if (this.state?.actorId) this.actions.add(action); }
@@ -94,7 +102,7 @@ export class NetworkSession {
     const previous = this.socket;
     this.audioGeneration++;
     this.suppressCloseError = false;
-    this.welcomed = false; this.allowInsecureAccounts = false;
+    this.welcomed = false; this.wireContent = CONTENT_VERSION; this.allowInsecureAccounts = false;
     this.actions.clear(); this.queued = []; this.state = null; this.prediction = new Prediction(); this.interpolation = new Interpolation();
     this.socket = new WebSocket(this.url);
     this.socket.onmessage = previous.onmessage; this.socket.onerror = previous.onerror; this.socket.onclose = previous.onclose;

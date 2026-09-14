@@ -1,4 +1,4 @@
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { NetworkSession } from '../../src/client/session/NetworkSession';
 import { Battle, idleInput } from '../../src/game/campaign/Battle';
 import { MISSIONS } from '../../src/game/campaign/Missions';
@@ -16,7 +16,8 @@ class Socket {
   close() { this.readyState = 3; this.onclose?.(); }
   receive(message: object) { this.onmessage?.({ data: JSON.stringify(message) }); }
 }
-afterEach(() => vi.unstubAllGlobals());
+beforeEach(() => vi.stubEnv('DEV', false));
+afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.restoreAllMocks(); });
 function setup(welcomed = true) {
   vi.stubGlobal('WebSocket', Socket);
   const session = new NetworkSession('ws://test');
@@ -75,4 +76,28 @@ it('does not send queued login credentials to an incompatible server', () => {
   expect(socket.sent).toHaveLength(0);
   socket.receive({ type: 'welcome', protocol: 1, content: 'old-version', allowInsecureAccounts: true });
   expect(socket.sent).toHaveLength(0); expect(socket.readyState).toBe(Socket.CLOSED);
+});
+
+
+it('allows content drift in development and stamps queued commands with the server version', () => {
+  vi.stubEnv('DEV', true); vi.spyOn(console, 'warn').mockImplementation(() => {});
+  const { session, socket } = setup(false);
+  session.send({ type: 'joinDebug' });
+  socket.receive({ type: 'welcome', protocol: 1, content: 'server-build-a', playerId: 'p' });
+  expect(socket.readyState).toBe(Socket.OPEN);
+  expect(socket.sent.at(-1)).toMatchObject({ type: 'joinDebug', content: 'server-build-a', protocol: 1 });
+  socket.receive(lobby(1)); socket.receive(state(1,10)); session.input(idleInput());
+  expect(socket.sent.at(-1)).toMatchObject({ type: 'input', content: 'server-build-a' });
+  socket.receive({ type:'credential', token:'resume-token' }); socket.close();session.reconnect();
+  const resumed=session.socket as unknown as Socket;resumed.onopen?.();
+  expect(resumed.sent).toHaveLength(0);
+  resumed.receive({ type:'welcome', protocol:1, content:'server-build-b', playerId:'p' });
+  expect(resumed.sent.at(-1)).toMatchObject({ type:'resume',content:'server-build-b' });
+});
+
+it.each([{ protocol:2, content:'other' }, { protocol:1, content:null }])('still rejects incompatible protocol or malformed welcome in development: %j', welcome => {
+  vi.stubEnv('DEV',true);
+  const { session,socket }=setup(false);session.send({type:'joinDebug'});
+  socket.receive({type:'welcome',...welcome});
+  expect(socket.readyState).toBe(Socket.CLOSED);expect(socket.sent).toHaveLength(0);
 });
