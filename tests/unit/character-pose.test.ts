@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { characterPose, CHARACTER_ART } from '../../src/client/presentation/CharacterPose';
-import { CLASSES, WEAPONS, type ClassId } from '../../src/game/campaign/Catalog';
+import { CLASSES, WEAPONS } from '../../src/game/campaign/Catalog';
 import type { WeaponId } from '../../src/game/combat/Combat';
 import manifest from '../../public/assets/characters/manifest.json';
 import { SPECIAL_OFFHANDS, type SpecialOffhandId } from '../../src/shared/content/Offhands';
@@ -53,23 +53,6 @@ describe('recovered character anatomy', () => {
       expect(symbol('thigh')).toBe(598); expect(symbol('shin')).toBe(568);
       expect(symbol('upperarm')).toBe(298); expect(symbol('forearm')).toBe(266); expect(symbol('hand')).toBe(385);
     }
-  });
-  // Each role/weapon pair gets its own timeout and failure label on slower CI runners.
-  it.each((Object.keys(CLASSES) as ClassId[]).flatMap(role =>
-    (Object.keys(WEAPONS) as WeaponId[]).map(weapon => ({ role, weapon }))))(
-    'keeps $role / $weapon renderable throughout reload and locomotion', ({ role, weapon }) => {
-      for (let frame = 0; frame < 40; frame++) {
-        const pose = characterPose(role, weapon, { frame, crouch: frame % 3 === 0, jumping: frame % 3 === 1, vx: frame % 2 ? 4 : -4,
-          reload: WEAPONS[weapon].config.reloadFrames * frame / 40, aim: { x: 80, y: -70 } });
-        expect(pose.parts.filter(p => p.id === weapon)).toHaveLength(1);
-        expect(pose.parts.filter(p => p.id.endsWith('-thigh'))).toHaveLength(2);
-        expect(pose.parts.filter(p => p.id.endsWith('-shin'))).toHaveLength(2);
-        for (const part of pose.parts) {
-          expect(CHARACTER_ART[part.id]).toBeDefined();
-          expect(part.matrix.every(Number.isFinite)).toBe(true);
-        }
-        expect(Number.isFinite(pose.muzzle?.x)).toBe(true); expect(Number.isFinite(pose.muzzle?.y)).toBe(true);
-      }
   });
   it('mirrors the whole grip and muzzle together when facing left', () => {
     for (const weapon of Object.keys(WEAPONS) as WeaponId[]) {

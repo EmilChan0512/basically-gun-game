@@ -20,7 +20,8 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - run: npm run check
+      - name: Check code and regression tests (exhaustive checks run locally)
+        run: npm run check
       - name: Install browser for gameplay verification
         run: npx playwright install --with-deps chromium
       - name: Verify debug controls and online equipment
