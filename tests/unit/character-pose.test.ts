@@ -6,6 +6,16 @@ import manifest from '../../public/assets/characters/manifest.json';
 import { SPECIAL_OFFHANDS, type SpecialOffhandId } from '../../src/shared/content/Offhands';
 
 describe('recovered character anatomy', () => {
+  it('raises and lowers the head around its neck across stances and facing directions', () => {
+    for (const role of Object.keys(CLASSES) as (keyof typeof CLASSES)[]) for (const stance of [{}, {crouch:true}, {vx:5,frame:8}, {jumping:true}]) {
+      const head=(x:number,y:number,flip=false)=>characterPose(role,'m4',{...stance,...('vx' in stance ? {vx:flip?-stance.vx!:stance.vx}:{}),aim:{x,y},flip}).parts.find(p=>p.id.endsWith('-head'))!.matrix;
+      const up=head(200,-400),down=head(200,300),level=head(200,-42),left=head(-200,-400,true);
+      expect(Math.atan2(up[1],up[0])).toBeLessThan(Math.atan2(down[1],down[0]));
+      for(const m of [up,down]) {expect(m[4]).toBe(level[4]);expect(m[5]).toBe(level[5]);}
+      expect(left[0]).toBeCloseTo(-up[0]);expect(left[1]).toBeCloseTo(up[1]);
+      expect(left[4]).toBeCloseTo(-up[4]);expect(left[5]).toBeCloseTo(up[5]);
+    }
+  });
   it('rotates only firearm joints for growth recoil while keeping the source aim and body intact', () => {
     const aim={x:200,y:-35};
     const base=characterPose('commando','m4',{aim,recoilDegrees:0});

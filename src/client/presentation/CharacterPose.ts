@@ -47,15 +47,21 @@ export function characterPose(role: ClassId, weapon: WeaponId, options: PoseOpti
     : running ? `run${backwards ? 'back' : ''}${gait}` : 'idle';
   const frames = movements[animation], joints = sample(frames, Math.max(0, frame) / (!running && !jumping ? 3 : 1));
   const mirror = [facing, 0, 0, 1, 0, 0];
-  const body = joints.filter(j => j.part !== 'shoulder').map(j => ({ id: `${role}-${j.part}`, name: j.name, matrix: compose(mirror, j.matrix) }));
   const shoulder = joints.find(j => j.part === 'shoulder')!.matrix;
+  const aim = options.aim ?? { x: 100 * facing, y: shoulder[5] };
+  const aimAngle = Math.atan2(aim.y - shoulder[5], (aim.x - shoulder[4] * facing) * facing);
+  // The authored head origin is the neck joint. Keep it attached to the gait,
+  // adding a bounded look pitch before mirroring, independent of gun recoil.
+  const headPitch = Math.max(-50 * Math.PI / 180, Math.min(35 * Math.PI / 180, aimAngle * .65));
+  const hc = Math.cos(headPitch), hs = Math.sin(headPitch);
+  const body = joints.filter(j => j.part !== 'shoulder').map(j => ({ id: `${role}-${j.part}`, name: j.name,
+    matrix: compose(mirror, j.part === 'head' ? compose(j.matrix, [hc, hs, -hs, hc, 0, 0]) : j.matrix) }));
   if (options.bodyOnly && !options.melee) {
     const root = [facing, 0, 0, 1, shoulder[4] * facing, shoulder[5]];
     const resting = recovered.restingArm.map(j => ({ id: `${role}-${j.part}`, name: j.name, matrix: compose(root, j.matrix) }));
     return { parts: [...resting, ...body], muzzle: undefined };
   }
-  const aim = options.aim ?? { x: 100 * facing, y: shoulder[5] };
-  const angle = Math.atan2(aim.y - shoulder[5], (aim.x - shoulder[4] * facing) * facing) - (options.recoilDegrees ?? 0) * Math.PI / 180;
+  const angle = aimAngle - (options.recoilDegrees ?? 0) * Math.PI / 180;
   const c = Math.cos(angle), s = Math.sin(angle), root = [facing * c, s, -facing * s, c, shoulder[4] * facing, shoulder[5]];
   const definition = WEAPONS[weapon];
   if (options.melee) {
