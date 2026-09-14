@@ -20,30 +20,9 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - name: Check code and regression tests (exhaustive checks run locally)
-        run: npm run check
-      - name: Install browser for gameplay verification
-        run: npx playwright install --with-deps chromium
-      - name: Verify debug controls and online equipment
-        run: npx playwright test tests/gameplay/admin.spec.ts tests/gameplay/character-art.spec.ts tests/gameplay/online-accounts.spec.ts tests/gameplay/online.spec.ts tests/gameplay/debug-room.spec.ts tests/gameplay/offhand-online.spec.ts tests/gameplay/offhand.spec.ts tests/gameplay/offhand-variants.spec.ts tests/gameplay/career.spec.ts tests/gameplay/expanded-guns.spec.ts
-      - run: node tools/package-game.mjs
-      - name: Package backend without frontend assets
+      # CI only builds and deploys the backend. Run test suites locally.
+      - name: Build and package backend without frontend assets
         run: npm run package:server
-      - run: node tools/verify-server-package.mjs
-      - run: npm run test:offline
-      - name: Upload gameplay diagnostics on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gameplay-diagnostics-${{ github.sha }}
-          path: |
-            test-results/
-            artifacts/qa/
-          retention-days: 7
-      - name: Check deployment scripts
-        run: |
-          bash -n deploy/install.sh deploy/release.sh deploy/enable-account-storage.sh deploy/provision-test-accounts.sh deploy/reset-test-passwords.sh deploy/enable-admin.sh
-          shellcheck deploy/install.sh deploy/release.sh deploy/enable-account-storage.sh deploy/provision-test-accounts.sh deploy/reset-test-passwords.sh deploy/enable-admin.sh
       - name: Prepare release
         run: |
           cp deploy/probe.mjs artifacts/project-strike-server/

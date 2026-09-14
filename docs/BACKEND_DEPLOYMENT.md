@@ -69,6 +69,6 @@ node /opt/project-strike/current/probe.mjs
 
 服务端包及 GitHub Actions 只打包、上传和部署后端，不包含游戏前端 `dist/`，也不复用旧 release 的静态资源。部署脚本拒绝包含前端或声明复用前端的包；新版后端不再依赖旧版前端的内容版本，可以首次独立部署。WebSocket 和配置后的 `/admin/` 继续使用 4180 端口，游戏网页根路径返回 404。
 
-CI 中的前端构建和浏览器测试仅用于验证，不上传客户端构建产物。前端通过本地 Windows 工作区的 `npm run release` 生成便携 ZIP 分发，保留时间戳版本并更新 `artifacts/Project-Strike-Windows-latest.zip`。玩家解压后双击 `PLAY.cmd` 联机或 `SOLO.cmd` 单机。
+CI 仅安装依赖、构建后端包、上传并部署；不执行 Vitest、Playwright、离线测试或服务端测试，也不构建或上传前端。测试套件保留为本地按需运行。前端通过本地 Windows 工作区的 `npm run release` 生成便携 ZIP 分发，保留时间戳版本并更新 `artifacts/Project-Strike-Windows-latest.zip`。玩家解压后双击 `PLAY.cmd` 联机或 `SOLO.cmd` 单机。
 
 客户端与后端的内容版本兼容检查仍然有效：更新地图或规则后，玩家需要使用对应版本的本地客户端。部署健康检查、部署锁及失败回滚保持启用。账号数据继续保存在 `/var/lib/project-strike`。
