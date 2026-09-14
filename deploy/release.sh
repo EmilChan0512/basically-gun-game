@@ -19,10 +19,13 @@ mkdir "$target"
 tar -xzf backend.tar.gz -C "$target" --no-same-owner
 [[ "$(cat "$target/REVISION")" == "${release:0:40}" ]]
 /usr/bin/node --input-type=module - "$target" <<'NODE'
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 const dir = process.argv[2];
 const manifest = JSON.parse(readFileSync(`${dir}/manifest.json`, 'utf8'));
+if (manifest.frontend !== 'none' || manifest.webRoot !== false || existsSync(`${dir}/dist`)) {
+  throw Error('Deployment accepts backend-only packages without frontend assets');
+}
 if (createHash('sha256').update(readFileSync(`${dir}/server.cjs`)).digest('hex') !== manifest.sha256) {
   throw Error('Server checksum mismatch');
 }
@@ -34,19 +37,6 @@ elif [[ -e "$root/current" ]]; then
   echo 'current must be a release symlink' >&2
   exit 1
 fi
-frontend=$(/usr/bin/node -e "const { readFileSync } = require('node:fs'); console.log(JSON.parse(readFileSync(process.argv[1], 'utf8')).frontend ?? 'included')" "$target/manifest.json")
-case "$frontend" in
-  included) ;;
-  reuse-previous)
-    [[ -n "$previous" && -d "$previous/dist" ]] || { echo 'Backend-only release requires a previous release with static client assets' >&2; exit 1; }
-    target_content=$(/usr/bin/node -e "const { readFileSync } = require('node:fs'); console.log(JSON.parse(readFileSync(process.argv[1], 'utf8')).contentVersion)" "$target/manifest.json")
-    previous_content=$(/usr/bin/node -e "const { readFileSync } = require('node:fs'); console.log(JSON.parse(readFileSync(process.argv[1], 'utf8')).contentVersion)" "$previous/manifest.json")
-    [[ "$target_content" == "$previous_content" ]] || { echo "Backend-only release content version mismatch ($target_content != $previous_content); deploy the matching frontend first" >&2; exit 1; }
-    echo "[deploy] Reusing static client assets from $previous"
-    ln -s "$previous/dist" "$target/dist"
-    ;;
-  *) echo "Unknown frontend packaging mode: $frontend" >&2; exit 1 ;;
-esac
 activate() {
   ln -s "$1" "$root/current.next"
   mv -Tf "$root/current.next" "$root/current"

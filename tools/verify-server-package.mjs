@@ -1,4 +1,4 @@
-import { mkdtempSync, copyFileSync, writeFileSync, mkdirSync, readFileSync, cpSync } from 'node:fs';
+import { mkdtempSync, copyFileSync, writeFileSync, mkdirSync, readFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -11,7 +11,7 @@ const clientManifest = JSON.parse(readFileSync('artifacts/project-strike-local/m
 if (!serverManifest.contentVersion || serverManifest.contentVersion !== clientManifest.contentVersion) throw Error('Package content versions differ');
 if (createHash('sha256').update(readFileSync('artifacts/project-strike-server/server.cjs')).digest('hex') !== serverManifest.sha256) throw Error('Server bundle checksum mismatch');
 copyFileSync('artifacts/project-strike-server/server.cjs', join(temporary, 'server.cjs'));
-cpSync('artifacts/project-strike-server/dist', join(temporary, 'dist'), { recursive: true });
+if (serverManifest.frontend !== 'none' || serverManifest.webRoot !== false || existsSync('artifacts/project-strike-server/dist')) throw Error('Server package must not contain frontend assets');
 const launch = () => spawn(process.execPath, ['server.cjs'], { cwd: temporary,
   env: { ...process.env, PORT: '0', HOST: '127.0.0.1', NODE_PATH: '', LOG_LEVEL: 'info' }, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
 let child = launch();
@@ -34,7 +34,7 @@ try {
   const welcome = messages.find(m => m.type === 'welcome');
   const webUrl = socket.url.replace('ws:', 'http:');
   const page = await fetch(webUrl);
-  if (!page.ok || !(await page.text()).includes('<html')) throw Error('Packaged web page unavailable');
+  if (page.status !== 404) throw Error('Backend-only package must not serve the game frontend');
   if (welcome.content !== serverManifest.contentVersion) throw Error('Runtime content differs from package manifests');
   copyFileSync('deploy/probe.mjs', join(temporary, 'probe.mjs'));
   copyFileSync('artifacts/project-strike-server/manifest.json', join(temporary, 'manifest.json'));

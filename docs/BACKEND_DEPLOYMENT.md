@@ -65,10 +65,10 @@ node /opt/project-strike/current/probe.mjs
 
 手动回退优先在 Git 中 revert 问题改动后推送 main，让 CI 发布修复后的最新提交。需要立即恢复时，先关闭 `DEPLOY_ENABLED`，待正在执行的部署结束，管理员把 `current` 切到已验证的旧 release，重启并探测；同时切换对应客户端。保留当前和准备回退的发布目录。
 
-## 浏览器直接访问（2026-09-12）
+## 仅部署后端与本地客户端分发（2026-09-15）
 
-服务端包现在包含生产前端 `dist/`。网页、WebSocket 和 `/admin/` 共用 4180 端口，玩家打开 http://43.142.165.82:4180/ 即可进入大厅，点击“公共调试房间”试玩，或登录后创建/加入普通房间。`/?offline` 为免登录单机入口（首次加载仍需要网络）。公网网页自动使用同源 WS/WSS，无需填写服务器地址。
+服务端包及 GitHub Actions 只打包、上传和部署后端，不包含游戏前端 `dist/`，也不复用旧 release 的静态资源。部署脚本拒绝包含前端或声明复用前端的包；新版后端不再依赖旧版前端的内容版本，可以首次独立部署。WebSocket 和配置后的 `/admin/` 继续使用 4180 端口，游戏网页根路径返回 404。
 
-本地 `npm run release` 仍生成包含网页和后端的完整服务端包。GitHub Actions 的生产部署当前使用后端优先包：复用当前 release 的 `dist` 静态客户端，只传输服务端 bundle；部署脚本会在激活前强制确认新旧 `contentVersion` 相同，防止前后端协议不一致。内容版本变更时必须改回完整前端发布。`WEB_ROOT` 可覆盖静态资源路径，默认工作目录下的 dist；仅此目录公开，账号数据仍在 /var/lib/project-strike。
+CI 中的前端构建和浏览器测试仅用于验证，不上传客户端构建产物。前端通过本地 Windows 工作区的 `npm run release` 生成便携 ZIP 分发，保留时间戳版本并更新 `artifacts/Project-Strike-Windows-latest.zip`。玩家解压后双击 `PLAY.cmd` 联机或 `SOLO.cmd` 单机。
 
-当前入口沿用无域名 HTTP/WS 部署；配置 HTTPS 反向代理时需同时转发网页和 WebSocket。Windows 便携发行包仍按仓库要求保留，作为可选下载。
+客户端与后端的内容版本兼容检查仍然有效：更新地图或规则后，玩家需要使用对应版本的本地客户端。部署健康检查、部署锁及失败回滚保持启用。账号数据继续保存在 `/var/lib/project-strike`。

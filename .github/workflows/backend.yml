@@ -26,11 +26,9 @@ jobs:
       - name: Verify debug controls and online equipment
         run: npx playwright test tests/gameplay/admin.spec.ts tests/gameplay/character-art.spec.ts tests/gameplay/online-accounts.spec.ts tests/gameplay/online.spec.ts tests/gameplay/debug-room.spec.ts tests/gameplay/offhand-online.spec.ts tests/gameplay/offhand.spec.ts tests/gameplay/offhand-variants.spec.ts tests/gameplay/career.spec.ts tests/gameplay/expanded-guns.spec.ts
       - run: node tools/package-game.mjs
-      - run: npm run package:server
+      - name: Package backend without frontend assets
+        run: npm run package:server
       - run: node tools/verify-server-package.mjs
-      # Production currently reuses the active static client. Keep the transfer small
-      # while deploy/release.sh enforces an identical content version before activation.
-      - run: node tools/package-server.mjs --backend-only
       - run: npm run test:offline
       - name: Upload gameplay diagnostics on failure
         if: failure()
@@ -60,19 +58,12 @@ jobs:
             deploy/release.sh
             deploy/enable-account-storage.sh
           retention-days: 14
-      - uses: actions/upload-artifact@v4
-        with:
-          name: client-${{ github.sha }}
-          path: artifacts/project-strike-local/
-          retention-days: 14
 
   deploy:
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
-    # The route from GitHub-hosted runners to the production host can transfer the
-    # client-inclusive bundle at roughly 10 KiB/s. Leave enough time for a resumable
-    # upload, the shared deployment lock, health checks, and a graceful rollback.
+    # Allow time for resumable backend uploads, the deployment lock and rollback.
     timeout-minutes: 45
     environment: production
     concurrency:
@@ -137,9 +128,8 @@ jobs:
             ssh_command="ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -p $DEPLOY_PORT"
             for attempt in 1 2; do
               echo "[deploy] Uploading verified backend bundle (attempt $attempt/2; resumable rsync)"
-              # backend.tar.gz includes the browser client and can take more than 20
-              # minutes over the runner-to-host route. --timeout is an idle-I/O limit,
-              # not a total duration; --partial plus --append-verify resumes safely.
+              # Only backend files are transferred. --timeout limits idle I/O;
+              # --partial plus --append-verify resumes interrupted uploads safely.
               if rsync -a --partial --append-verify --human-readable --info=progress2 \
                 --timeout=120 -e "$ssh_command" \
                 backend.tar.gz backend.tar.gz.sha256 deploy/release.sh \
