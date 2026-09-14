@@ -5,7 +5,12 @@ release=${1:?Release ID required}
 [[ "$release" =~ ^[0-9a-f]{40}-[0-9]+-[0-9]+$ ]] || { echo 'Invalid release ID' >&2; exit 1; }
 root=/opt/project-strike
 exec 9>"$root/deploy.lock"
-flock -w 300 9
+echo "[deploy] Waiting for deployment lock (up to 300 seconds)"
+if ! flock -w 300 9; then
+  echo "[deploy] Timed out waiting for deployment lock after 300 seconds" >&2
+  exit 1
+fi
+echo '[deploy] Deployment lock acquired'
 incoming="$root/incoming/$release"
 target="$root/releases/$release"
 cd "$incoming"
@@ -47,14 +52,22 @@ rollback() {
   exit 1
 }
 trap rollback ERR HUP INT TERM
+echo '[deploy] Activating new release'
 activate "$target"
+echo '[deploy] Restarting project-strike.service'
 sudo -n systemctl restart project-strike.service
 healthy=false
 for ((attempt=1; attempt<=15; attempt++)); do
-  if /usr/bin/node "$target/probe.mjs"; then healthy=true; break; fi
+  echo "[deploy] Health check attempt $attempt/15"
+  if /usr/bin/node "$target/probe.mjs"; then
+    healthy=true
+    echo "[deploy] Health check passed on attempt $attempt/15"
+    break
+  fi
   sleep 2
 done
 [[ "$healthy" == true ]]
+echo '[deploy] Verifying service remains active'
 sleep 3
 systemctl is-active --quiet project-strike.service
 /usr/bin/node "$target/probe.mjs"
