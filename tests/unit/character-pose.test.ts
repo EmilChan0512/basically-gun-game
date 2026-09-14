@@ -54,8 +54,10 @@ describe('recovered character anatomy', () => {
       expect(symbol('upperarm')).toBe(298); expect(symbol('forearm')).toBe(266); expect(symbol('hand')).toBe(385);
     }
   });
-  it('keeps every equipped gun and joint renderable throughout reload and locomotion', () => {
-    for (const role of Object.keys(CLASSES) as ClassId[]) for (const weapon of Object.keys(WEAPONS) as WeaponId[]) {
+  // Each role/weapon pair gets its own timeout and failure label on slower CI runners.
+  it.each((Object.keys(CLASSES) as ClassId[]).flatMap(role =>
+    (Object.keys(WEAPONS) as WeaponId[]).map(weapon => ({ role, weapon }))))(
+    'keeps $role / $weapon renderable throughout reload and locomotion', ({ role, weapon }) => {
       for (let frame = 0; frame < 40; frame++) {
         const pose = characterPose(role, weapon, { frame, crouch: frame % 3 === 0, jumping: frame % 3 === 1, vx: frame % 2 ? 4 : -4,
           reload: WEAPONS[weapon].config.reloadFrames * frame / 40, aim: { x: 80, y: -70 } });
@@ -68,7 +70,6 @@ describe('recovered character anatomy', () => {
         }
         expect(Number.isFinite(pose.muzzle?.x)).toBe(true); expect(Number.isFinite(pose.muzzle?.y)).toBe(true);
       }
-    }
   });
   it('mirrors the whole grip and muzzle together when facing left', () => {
     for (const weapon of Object.keys(WEAPONS) as WeaponId[]) {
