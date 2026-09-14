@@ -67,10 +67,10 @@ jobs:
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
-    # The server-side release may wait for the shared deployment lock for up to 5 minutes
-    # and then run a bounded health-check sequence. Leave enough time for a graceful
-    # rollback instead of allowing GitHub Actions to cancel the release mid-flight.
-    timeout-minutes: 20
+    # The route from GitHub-hosted runners to the production host can transfer the
+    # client-inclusive bundle at roughly 10 KiB/s. Leave enough time for a resumable
+    # upload, the shared deployment lock, health checks, and a graceful rollback.
+    timeout-minutes: 45
     environment: production
     concurrency:
       group: backend-production
@@ -126,24 +126,27 @@ jobs:
           echo "[deploy] Creating remote staging directory for $release"
           ssh "${opts[@]}" -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$remote'"
           upload_bundle() {
-            local attempt
+            local attempt ssh_command
+            ssh "${opts[@]}" -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" 'command -v rsync >/dev/null' || {
+              echo '[deploy] Remote host requires rsync for resumable release uploads' >&2
+              return 1
+            }
+            ssh_command="ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -p $DEPLOY_PORT"
             for attempt in 1 2; do
-              echo "[deploy] Uploading verified backend bundle (attempt $attempt/2; legacy SCP; 180-second limit)"
-              # OpenSSH scp defaults to SFTP. The production host's SFTP session can
-              # establish successfully yet stall mid-upload, so use the legacy SCP
-              # protocol for this known local-to-remote release payload.
-              if timeout --foreground --signal=TERM 180 \
-                scp -O "${opts[@]}" -P "$DEPLOY_PORT" \
-                  backend.tar.gz backend.tar.gz.sha256 deploy/release.sh \
-                  "$DEPLOY_USER@$DEPLOY_HOST:$remote/"; then
+              echo "[deploy] Uploading verified backend bundle (attempt $attempt/2; resumable rsync)"
+              # backend.tar.gz includes the browser client and can take more than 20
+              # minutes over the runner-to-host route. --timeout is an idle-I/O limit,
+              # not a total duration; --partial plus --append-verify resumes safely.
+              if rsync -a --partial --append-verify --human-readable --info=progress2 \
+                --timeout=120 -e "$ssh_command" \
+                backend.tar.gz backend.tar.gz.sha256 deploy/release.sh \
+                "$DEPLOY_USER@$DEPLOY_HOST:$remote/"; then
                 return 0
               fi
 
-              echo "[deploy] Upload attempt $attempt/2 failed or exceeded 180 seconds" >&2
+              echo "[deploy] Upload attempt $attempt/2 failed after 120 seconds without I/O" >&2
               if (( attempt < 2 )); then
-                echo '[deploy] Removing partial upload before retrying once'
-                ssh "${opts[@]}" -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" \
-                  "rm -f '$remote/backend.tar.gz' '$remote/backend.tar.gz.sha256' '$remote/release.sh'"
+                echo '[deploy] Retrying once; preserving the partial bundle for rsync resume'
                 sleep 5
               fi
             done
