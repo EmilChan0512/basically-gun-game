@@ -215,7 +215,7 @@ export const GROWTH_V3_CARDS = {
   "sn_G2": {
     "classId": "sniper",
     "name": "广域侦察",
-    "description": "信标半径180→220、标记30→24tick；EMP半径160→190、停机90→60tick；诱饵声半径480→600、寿命150→120tick",
+    "description": "信标圆形视野半径880→1100；EMP半径160→190、停机90→60tick；诱饵声半径480→600、寿命150→120tick",
     "group": "G"
   },
   "md_C1": {

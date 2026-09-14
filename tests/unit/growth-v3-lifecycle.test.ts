@@ -1,3 +1,4 @@
+import { GROWTH_V3_GADGETS } from '../../src/shared/content/growth-v3/Gadgets';
 import { expect, it } from 'vitest';
 import { Room } from '../../src/shared/simulation/Room';
 import { MatchSession } from '../../src/shared/simulation/MatchSession';
@@ -370,7 +371,7 @@ it.each(gadgets)('%s exhausts its real inventory and never regenerates charges w
   const build=defaultGrowthLoadoutV3(cls);build.gadgetId=id;const f=fixture(build);f.b.player.life.health=f.b.player.life.maxHealth;
   for(let used=0;used<charges;used++){
     f.send('item',deploy);f.step(cast);expect(f.b.player.itemCharges).toBe(charges-used-1);
-    f.step(500);expect(f.b.player.itemCharges).toBe(charges-used-1);
+    f.step(Math.max(500,GROWTH_V3_GADGETS[id].duration+60));expect(f.b.player.itemCharges).toBe(charges-used-1);
   }
   f.send('item',deploy);f.step(cast);
   expect(f.b.player.itemCharges).toBe(0);expect(f.b.growthV3!.gadgets.inventory('player').cast).toBeNull();

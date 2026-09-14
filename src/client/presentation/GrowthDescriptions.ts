@@ -24,7 +24,7 @@ export function growthGadgetDescription(id: GrowthGadgetId): string {
     case 'tk_cover': return '阻挡双方子弹，人物可以穿过；爆炸和治疗不被掩体阻挡，可被敌方射毁。';
     case 'tk_interceptor': return `启动后最多拦截${g.intercepts}枚敌投掷物，每次间隔${g.interval / 30}秒；不能拦子弹，受到EMP会停机。`;
     case 'tk_plate': return `为自己提供${g.armor}护甲，持续${g.armorTicks / 30}秒；护甲不叠加，没有提升时不消耗份数。`;
-    case 'sn_beacon': return `每${g.interval / 30}秒扫描，标记敌人最后位置${g.markTicks / 30}秒；墙和烟阻断扫描，不显示隐藏敌人模型。`;
+    case 'sn_beacon': return `激活后持续提供半径${g.radius}的圆形队伍共享视野，持续${g.duration / 30}秒；穿透墙和烟雾显示敌人，EMP停机或被摧毁时失效。`;
     case 'sn_emp': return `令敌方拦截器、信标、诱饵和急救站停机${g.empTicks / 30}秒；不伤害玩家，不影响玩家开枪。`;
     case 'sn_decoy': return `落地后每${g.interval / 30}秒发出假枪声及短暂雷达信号，声音传播${g.noiseRadius}px；无伤害，可被击毁。`;
     case 'md_smoke': return '烟区阻断双方观察和依赖视线的治疗链、侦察；子弹仍可穿过，友方位置始终保留。';

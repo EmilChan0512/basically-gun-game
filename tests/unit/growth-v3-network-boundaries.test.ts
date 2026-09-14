@@ -164,35 +164,32 @@ it('N20 preserves an earned evolution across network refresh, stale requests, de
   } finally {await f.close();}
 },15000);
 
-it('N18 real beacon ping stays at p after real smoke and movement to q, and no hidden q coordinates cross the socket',async()=>{
+it('active beacon sends live enemy positions and shots through smoke, and EMP immediately revokes sight',async()=>{
   const sniper=defaultGrowthLoadoutV3('sniper'),medic=defaultGrowthLoadoutV3('medic');
-  sniper.gadgetId='sn_beacon';medic.gadgetId='md_smoke';
   const f=await networkFixture([sniper,medic]);
   try {
     f.actors[1].movement.reset(560,599.5);
-    const start=f.b.frame;
     await f.command(0,{aim:{x:520,y:599.5}},['item']);f.step(13);
-    expect(f.b.growthV3!.gadgets.entities()).toHaveLength(1);
-    await f.command(1,{aim:{x:560,y:599.5}},['item']);f.step(15);
-    const ping=await f.state(0),p=ping.state.growthWorld.radar.find((r:any)=>r.kind==='intel');
-    expect(p.position).toEqual({x:560,y:566.5});expect(f.b.frame).toBe(start+28);
-    f.step(16);expect(f.b.growthV3!.gadgets.smoke()).toHaveLength(1);
+    const beacon=f.b.growthV3!.gadgets.entities()[0];expect(beacon).toBeDefined();
+    await f.command(1,{aim:{x:560,y:599.5}},['item']);f.step(31);
+    expect(f.b.growthV3!.gadgets.smoke()).toHaveLength(1);
     await f.command(1,{left:true,fire:true,aim:{x:1000,y:566.5}});f.step(3);
-    const q={x:f.actors[1].movement.x,y:f.actors[1].movement.y};expect(q.x).toBeLessThan(560);
-    const hidden=await f.state(0),own=await f.state(1);
-    expect(own.state.actors.find((a:any)=>a.id===f.actors[1].id)).toMatchObject(q);
+    const q={x:f.actors[1].movement.x,y:f.actors[1].movement.y},live=await f.state(0);
+    expect(live.state.actors.find((a:any)=>a.id===f.actors[1].id)).toMatchObject(q);
+    expect(live.poses.some((a:any)=>a.id===f.actors[1].id)).toBe(true);
+    expect(live.effects.some((e:any)=>e.actorId===f.actors[1].id)).toBe(true);
+    expect(live.state.growthWorld.entities.find((e:any)=>e.id===beacon.id)).toMatchObject({radius:880,armed:true,stopped:false});
+    beacon.stoppedUntil=f.b.frame+2;
+    const hidden=await f.state(0);
     expect(hidden.state.actors.some((a:any)=>a.id===f.actors[1].id)).toBe(false);
     expect(hidden.poses.some((a:any)=>a.id===f.actors[1].id)).toBe(false);
-    const retained=hidden.state.growthWorld.radar.find((r:any)=>r.kind==='intel');
-    expect(retained).toMatchObject({position:p.position,expiresTick:p.expiresTick});
-    expect(retained.sourceId).toBeUndefined();
+    expect(hidden.effects.some((e:any)=>e.actorId===f.actors[1].id)).toBe(false);
     const points:{x:number;y:number}[]=[];
     const visit=(value:any)=>{if(!value||typeof value!=='object')return;if(typeof value.x==='number'&&typeof value.y==='number')points.push(value);for(const child of Object.values(value))visit(child);};
-    visit(hidden);
-    expect(points.some(point=>point.x===q.x&&(point.y===q.y||point.y===q.y-33))).toBe(false);
-    expect(hidden.effects.some((e:any)=>e.actorId===f.actors[1].id)).toBe(false);
-    await f.command(1,{aim:{x:1000,y:566.5}});f.step(42);
-    expect(f.b.frame).toBe(start+89);expect(f.b.growthV3!.gadgets.smoke()).toHaveLength(1);
-    expect((await f.state(0)).state.growthWorld.radar.filter((r:any)=>r.kind==='intel')).toEqual([]);
+    visit(hidden);expect(points.some(p=>p.x===q.x&&(p.y===q.y||p.y===q.y-33))).toBe(false);
+    await f.command(1,{});f.step(2);
+    expect((await f.state(0)).state.actors.some((a:any)=>a.id===f.actors[1].id)).toBe(true);
+    f.b.growthV3!.gadgets.damageEntity(beacon.id,9999,2,f.b.frame);
+    expect((await f.state(0)).state.actors.some((a:any)=>a.id===f.actors[1].id)).toBe(false);
   } finally {await f.close();}
 },15000);

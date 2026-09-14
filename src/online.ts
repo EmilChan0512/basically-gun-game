@@ -1,3 +1,4 @@
+import { beaconCircles } from './shared/simulation/BeaconVision';
 import { preloadAtrium, drawAtrium } from './client/presentation/AtriumView';
 import { defaultGrowthLoadoutV3 as defaultGrowthLoadout } from './shared/content/growth-v3/Loadout';
 import { GROWTH_V3_ABILITIES, type GrowthAbilityId } from './shared/content/growth-v3/Operators';
@@ -465,7 +466,8 @@ export class OnlineScene extends Phaser.Scene {
     for (const effect of this.network.shots.visible(now)) this.rig.tracer(this.graphics, effect.trace, effect.reflected ? undefined : effect.actorId, Math.max(0, message.state.frame - effect.frame), message.state.actors.find(a => a.id === effect.actorId)?.weapon);
     const team = this.network.room?.players.find(p => p.id === this.network.playerId)?.team ?? self?.team ?? 1;
     this.vision.draw(message.state.actors.filter(a => a.team === team && a.life.alive)
-      .map(a => ({ id: a.id, ...(positions.get(a.id) ?? a) })));
+      .map(a => ({ id: a.id, ...(positions.get(a.id) ?? a) })), now,
+      beaconCircles(message.state.growthWorld?.entities ?? [], team, message.state.frame));
 
   }
 }

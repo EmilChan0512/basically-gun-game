@@ -1,3 +1,4 @@
+import { inBeaconVision } from '../BeaconVision';
 import { VISION_RADIUS } from '../Vision';
 import type { Actor, Battle, BattleInput, ShotEffect } from '../../../game/campaign/Battle';
 import { Arsenal } from '../../../game/campaign/Arsenal';
@@ -578,11 +579,12 @@ export class GrowthBattleCoordinator {
       this.battle.events.length = Math.min(4, this.battle.events.length);
     }
   }
-  /** Only living team observers can contribute enemy positions to bot decisions. */
+  /** Team sight includes living observers and active reconnaissance beacons. */
   private botControl(a: Actor): BattleInput {
     const id = a.id, p = this.participant(id), gun = this.gun(id), m = a.movement, brain = a.brain;
     const allies = this.actors().filter(b => b.team === a.team && b.life.alive);
-    const visiblePoint = (point: Point) => allies.some(b => distance(chest(b), point) <= VISION_RADIUS && this.gadgets.clearRay({ x: b.movement.x, y: b.movement.y - 42 }, point, true));
+    const circles = this.gadgets.visionCircles(a.team, this.tick);
+    const visiblePoint = (point: Point) => inBeaconVision(point, circles) || allies.some(b => distance(chest(b), point) <= VISION_RADIUS && this.gadgets.clearRay({ x: b.movement.x, y: b.movement.y - 42 }, point, true));
     const enemies = this.actors().filter(b => b.team !== a.team && b.life.alive && visiblePoint(chest(b)))
       .sort((b, c) => distance(chest(a), chest(b)) - distance(chest(a), chest(c)) || byId(b, c));
     const target = enemies[0], dist = target ? distance(chest(a), chest(target)) : Infinity;
@@ -822,8 +824,9 @@ export class GrowthBattleCoordinator {
     }
   }
   visibleActors(team: 1 | 2) {
+    const circles = this.gadgets.visionCircles(team, this.tick);
     const observers = this.actors().filter(a => a.team === team && a.life.alive);
-    return new Set(this.actors().filter(a => !this.participant(a.id).retired && (a.team === team || observers.some(b => distance(chest(a), chest(b)) <= VISION_RADIUS
+    return new Set(this.actors().filter(a => !this.participant(a.id).retired && (a.team === team || inBeaconVision(chest(a), circles) || observers.some(b => distance(chest(a), chest(b)) <= VISION_RADIUS
       && this.gadgets.clearRay({ x: b.movement.x, y: b.movement.y - 42 }, chest(a), true)))).map(a => a.id));
   }
   retire(id: string) {
@@ -860,7 +863,7 @@ export class GrowthBattleCoordinator {
   worldView() {
     const entities = this.gadgets.entities().map(e => ({ id: e.id, sourceId: e.sourceId as string | undefined, team: e.team, gadgetId: e.gadgetId,
       x: e.position.x, y: e.position.y, width: e.definition.width, height: e.definition.height, health: e.health / 1000,
-      maxHealth: e.definition.health, expiresTick: e.expiresTick, armed: this.tick >= e.armedTick, stopped: this.tick < e.stoppedUntil }));
+      maxHealth: e.definition.health, radius: e.definition.radius, expiresTick: e.expiresTick, armed: this.tick >= e.armedTick, stopped: this.tick < e.stoppedUntil }));
     const flying = this.gadgets.flying().map(f => ({ id: f.id, sourceId: f.sourceId as string | undefined, team: f.team, gadgetId: f.gadgetId,
       x: f.position.x, y: f.position.y, vx: f.vx, vy: f.vy }));
     const smoke = this.gadgets.smoke().map(s => ({ id: s.id, x: s.position.x, y: s.position.y, radius: s.radius, expiresTick: s.expiresTick }));

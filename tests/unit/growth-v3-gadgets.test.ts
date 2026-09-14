@@ -168,7 +168,7 @@ it('N13 intercepts an EMP before same-tick detonation, but a stopped interceptor
   expect(stopped.entities()[0].interceptions).toBe(2);expect(stopped.entities()[0].stoppedUntil).toBe(117);
 });
 
-it('N18 smoke blocks later beacon observations without changing previously emitted last-position events',()=>{
+it('beacon reconnaissance continues through smoke without mutating earlier observations',()=>{
   const f=fixture(),sim=new GadgetSimulation(f.port);
   sim.register('blue','sniper','sn_beacon');sim.register('red','medic','md_smoke');
   sim.use('blue',{x:340,y:600},0);
@@ -178,7 +178,7 @@ it('N18 smoke blocks later beacon observations without changing previously emitt
   const cp=sim.checkpoint();cp.smoke.push({id:'smoke-fixture',sourceId:'red',team:2,gadgetId:'md_smoke',position:{x:420,y:560},radius:150,expiresTick:200});
   const blocked=GadgetSimulation.restore(f.port,cp);f.actors[1].position.x=460;
   for(let t=28;t<=87;t++)blocked.step(t);
-  expect(f.events.filter(e=>e.kind==='intel')).toHaveLength(1);expect(ping.position).toEqual({x:420,y:567});
+  expect(f.events.filter(e=>e.kind==='intel')).toHaveLength(2);expect(ping.position).toEqual({x:420,y:567});
   expect(blocked.smokeBlocks({x:340,y:588},{x:460,y:567})).toBe(true);
 });
 
@@ -229,4 +229,23 @@ it.each([{x:600,y:1439.5},{x:1400,y:1103.5},{x:3000,y:431.5}])('deploys a beacon
   expect(battle.useItem({x:2500,y:400})).toBe(true);
   for(let t=0;t<30;t++)battle.tickPlayers(new Map());
   expect(battle.growthV3!.gadgets.entities().some(e=>e.gadgetId==='sn_beacon')).toBe(true);
+});
+
+it('reveals enemies upstairs through atrium floors only while the deployed beacon is active',()=>{
+  const battle=new Battle({...customMatch('atrium'),allies:0,enemies:1});
+  battle.enableGrowthV3(Object.fromEntries(battle.actors.map(a=>[a.id,defaultGrowthLoadoutV3(a.id==='player'?'sniper':'assault')])),5);
+  const enemy=battle.actors.find(a=>a.id!=='player')!;
+  for(const a of battle.actors){a.human=true;a.life.spawnProtectionFrames=0;}
+  battle.player.movement.reset(600,1439.5);enemy.movement.reset(600,1103.5);
+  const g=battle.growthV3!;
+  expect(g.visibleActors(1).has(enemy.id)).toBe(false);
+  expect(battle.useItem({x:640,y:1439.5})).toBe(true);
+  for(let i=0;i<28;i++)battle.tickPlayers(new Map());
+  expect(g.visibleActors(1).has(enemy.id)).toBe(true);
+  enemy.movement.reset(3000,431.5);
+  expect(g.visibleActors(1).has(enemy.id)).toBe(false);
+  enemy.movement.reset(600,1103.5);
+  const beacon=g.gadgets.entities()[0];
+  g.gadgets.damageEntity(beacon.id,9999,2,battle.frame);
+  expect(g.visibleActors(1).has(enemy.id)).toBe(false);
 });

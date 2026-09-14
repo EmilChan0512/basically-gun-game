@@ -1,3 +1,4 @@
+import type { VisionCircle } from '../../shared/simulation/BeaconVision';
 import Phaser from 'phaser';
 import { visionPolygon, type Point } from './VisionPolygon';
 import { VISION_RADIUS } from '../../shared/simulation/Vision';
@@ -25,7 +26,7 @@ export class VisionOverlay {
     this.image = scene.add.image(0, 0, this.key).setOrigin(0).setScrollFactor(0).setDepth(1).setDisplaySize(1120, 620);
     scene.events.once('shutdown', () => { this.image.destroy(); scene.textures.remove(this.key); this.scene.textures.remove(`${this.key}-mask`); this.cache.clear(); this.trails = []; this.sampledAt.clear(); });
   }
-  draw(observers: readonly (Point & { id: string })[], now = performance.now()) {
+  draw(observers: readonly (Point & { id: string })[], now = performance.now(), circles: readonly VisionCircle[] = []) {
     const camera = this.scene.cameras.main;
     const width = this.scene.scale.width, height = this.scene.scale.height;
     const zoom = camera.zoom;
@@ -55,7 +56,7 @@ export class VisionOverlay {
     // A stationary mask need not be rasterized and uploaded to WebGL every frame.
     // Include the camera so movement always reprojects the world-space polygons.
     const key = JSON.stringify([width, height, camera.scrollX, camera.scrollY, camera.zoom,
-      visible.map(p => [p.id, p.origin.x, p.origin.y]),
+      visible.map(p => [p.id, p.origin.x, p.origin.y]), circles,
       this.trails.map(t => [t.id, t.at, Math.floor((now-t.at)/16)])]);
     if (key === this.drawnKey) return;
     this.drawnKey = key;
@@ -79,6 +80,10 @@ export class VisionOverlay {
       paint(trail.sight, .8*(1-age)*(1-age));
     }
     for (const sight of visible) paint(sight, 1);
+    for (const circle of circles) {
+      mask.fillStyle = '#fff'; mask.beginPath();
+      mask.arc(circle.x, circle.y, circle.radius, 0, Math.PI*2); mask.fill();
+    }
     mask.filter = 'none'; mask.globalCompositeOperation = 'source-over';
     // Convert grayscale coverage into fog alpha. History affects terrain shading only;
     // enemy positions still come exclusively from the current authority snapshot.

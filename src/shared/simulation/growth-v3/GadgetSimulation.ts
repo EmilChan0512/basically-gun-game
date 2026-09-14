@@ -1,3 +1,4 @@
+import { beaconCircles } from '../BeaconVision';
 import { GROWTH_V3_RULES, healthUnits, type GrowthClassId } from '../../content/growth-v3/Core';
 import { GROWTH_V3_GADGETS, resolveGadget, type GadgetDefinition, type GrowthGadgetId } from '../../content/growth-v3/Gadgets';
 import type { ArmorState } from './DamageRules';
@@ -60,6 +61,10 @@ export class GadgetSimulation {
     if(!id||this.state.actors.length>=8||this.state.actors.some(a=>a.id===id)||!Object.hasOwn(GROWTH_V3_GADGETS,gadgetId)||GROWTH_V3_GADGETS[gadgetId].classId!==classId)throw Error('not_owner_class');
     this.state.actors.push({id,classId,gadgetId,charges:GROWTH_V3_GADGETS[gadgetId].charges,readyTick:0,upgraded:false,extraGranted:false,cast:null});
     this.state.actors.sort(byId);
+  }
+  visionCircles(team:1|2,tick:number) {
+    return beaconCircles(this.state.entities.map(e=>({id:e.id,team:e.team,gadgetId:e.gadgetId,x:e.position.x,y:e.position.y,
+      radius:e.definition.radius,health:e.health,expiresTick:e.expiresTick,armed:tick>=e.armedTick,stopped:tick<e.stoppedUntil})),team,tick);
   }
   inventory(id:string) { const state=this.state.actors.find(a=>a.id===id); if(!state)throw Error('Unknown gadget actor');return state; }
   checkpoint():GadgetCheckpoint { return structuredClone(this.state); }
@@ -317,7 +322,7 @@ export class GadgetSimulation {
     for(const e of [...this.state.entities].sort(byId)) {
       if(tick<e.armedTick||tick<e.stoppedUntil)continue;
       if(e.gadgetId==='sn_beacon'&&(tick-e.armedTick)%e.definition.interval===0) {
-        for(const target of this.world.actors())if(target.alive&&target.team!==e.team&&distance(target.position,e.position)<=e.definition.radius&&this.clearRay(e.position,target.position,true))
+        for(const target of this.world.actors())if(target.alive&&target.team!==e.team&&distance(target.position,e.position)<=e.definition.radius)
           this.world.event({kind:'intel',tick,sourceId:e.sourceId,gadgetId:e.gadgetId,targetId:target.id,position:{...target.position},expiresTick:tick+e.definition.markTicks,team:e.team});
       }
       if(e.gadgetId==='sn_decoy'&&(tick-e.armedTick)%e.definition.interval===0)

@@ -26,7 +26,7 @@ export const GROWTH_V3_GADGETS = {
   tk_cover: gadget('tank','折叠掩体','deploy',1,{ width: 16, height: 52, health: 120, duration: 360 }),
   tk_interceptor: gadget('tank','投掷拦截器','deploy',1,{ arm: 15, width: 20, height: 20, health: 40, duration: 300, radius: 140, intercepts: 2, interval: 15, electronic: true }),
   tk_plate: gadget('tank','应急装甲包','self',2,{ cast: 30, armor: 15, armorTicks: 120 }),
-  sn_beacon: gadget('sniper','侦察信标','deploy',1,{ arm: 15, width: 16, height: 24, health: 35, duration: 240, radius: 180, interval: 60, markTicks: 30, electronic: true }),
+  sn_beacon: gadget('sniper','侦察信标','deploy',1,{ arm: 15, width: 16, height: 24, health: 35, duration: 2400, radius: 880, interval: 60, markTicks: 30, electronic: true }),
   sn_emp: gadget('sniper','EMP弹','throw',2,{ fuse: 24, radius: 160, empTicks: 90 }),
   sn_decoy: gadget('sniper','声光诱饵','throw',2,{ fuse: 15, width: 12, height: 12, health: 15, duration: 150, interval: 30, noiseRadius: 480, radarTicks: 15, electronic: true, reservesDeploySlot: true }),
   md_smoke: gadget('medic','救援烟雾','throw',2,{ fuse: 24, radius: 150, duration: 150, reservesSmokeSlot: true }),
@@ -46,7 +46,7 @@ export function resolveGadget(id: GrowthGadgetId, upgraded: boolean): GadgetDefi
     case 'tk_cover': def.health = 150; def.duration = 300; break;
     case 'tk_interceptor': def.health = 55; def.duration = 240; break;
     case 'tk_plate': def.armor = 20; def.armorTicks = 90; break;
-    case 'sn_beacon': def.radius = 220; def.markTicks = 24; break;
+    case 'sn_beacon': def.radius *= 1.25; def.markTicks = 24; break;
     case 'sn_emp': def.radius = 190; def.empTicks = 60; break;
     case 'sn_decoy': def.noiseRadius = 600; def.duration = 120; break;
     case 'md_smoke': def.radius = 180; def.duration = 120; break;

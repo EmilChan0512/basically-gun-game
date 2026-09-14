@@ -1,3 +1,4 @@
+import { beaconCircles, inBeaconVision } from '../simulation/BeaconVision';
 import type { StateMessage } from './State';
 import { clearSight } from '../../game/campaign/Navigation';
 import { VISION_RADIUS, VISION_EYE_HEIGHT } from '../simulation/Vision';
@@ -5,7 +6,8 @@ import { VISION_RADIUS, VISION_EYE_HEIGHT } from '../simulation/Vision';
 export function visibleState(message: StateMessage, visible: ReadonlySet<string>, team: 1 | 2, wall: (x: number, y: number) => boolean,
   smokeBlocks?: (a: { x: number; y: number }, b: { x: number; y: number }) => boolean): StateMessage {
   const observers = message.state.actors.filter(a => a.team === team && a.life.alive);
-  const pointVisible = (p: { x: number; y: number }, ignoreSmoke = false) => observers.some(a => Math.hypot(p.x - a.x, p.y - a.y) <= VISION_RADIUS
+  const circles = beaconCircles(message.state.growthWorld?.entities ?? [], team, message.state.frame);
+  const pointVisible = (p: { x: number; y: number }, ignoreSmoke = false) => inBeaconVision(p, circles) || observers.some(a => Math.hypot(p.x - a.x, p.y - a.y) <= VISION_RADIUS
     && clearSight({ x: a.x, y: a.y - VISION_EYE_HEIGHT }, p, wall)
     && (ignoreSmoke || !smokeBlocks?.({ x: a.x, y: a.y - VISION_EYE_HEIGHT }, p)));
   const world = message.state.growthWorld;

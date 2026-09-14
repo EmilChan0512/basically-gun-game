@@ -489,7 +489,7 @@ it.each([
   const ping=b.journal.since(0).find(e=>e.kind==='intelPing'&&e.targetId===enemy.id);
   expect(ping).toBeDefined();
   // Leave beacon range to prevent subsequent scans from refreshing the evidence.
-  enemy.movement.reset(1100,599.5);
+  enemy.movement.reset(1600,599.5);
   if(damaged)b.damage(enemy,1,b.player);
   advance(b,ping!.tick+age-b.frame);
   b.damage(enemy,9999,ownKill?b.player:ally);

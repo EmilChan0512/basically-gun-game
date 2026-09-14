@@ -126,10 +126,12 @@ it('md_G2 real smoke expands to 180 pixels while lasting only 120 ticks',()=>{
   f.r.step();expect(f.b.growthV3!.gadgets.smoke()).toHaveLength(0);
 });
 
-it('sn_G2 actual beacon detects an enemy beyond old range and grants only a 24tick frozen mark',()=>{
-  const f=fixture('sniper','sn_G2',undefined,false,false,'sn_beacon');f.b.actors[1].movement.reset(360,499.5);
+it('sn_G2 expands continuous beacon sight beyond the base radius',()=>{
+  const f=fixture('sniper','sn_G2',undefined,false,false,'sn_beacon');f.b.actors[1].movement.reset(1160,499.5);
   f.b.useItem({x:160,y:499.5});for(let i=0;i<28;i++)f.r.step();
-  const ping=f.b.journal.since(0).find(e=>e.kind==='intelPing');expect(ping).toMatchObject({tick:28,expiresTick:52,position:{x:360,y:466.5}});
+  const ping=f.b.journal.since(0).find(e=>e.kind==='intelPing');expect(ping).toMatchObject({tick:28,expiresTick:52,position:{x:1160,y:466.5}});
+  expect(f.b.growthV3!.gadgets.visionCircles(1,f.b.frame)[0].radius).toBe(1100);
+  expect(f.b.growthV3!.visibleActors(1).has(f.b.actors[1].id)).toBe(true);
 });
 
 it('md_G2 actual station heals beyond the old radius and spends its reduced 72HP budget',()=>{
