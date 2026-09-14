@@ -605,8 +605,8 @@ export class GrowthBattleCoordinator {
     const stop = !empty && !m.jumping && (holding || !!attackPoint && distance(chest(a), attackPoint) < Math.min(def.falloffStart, 450));
     const dx = waypoint.x - m.x;
     brain.stuck = !stop && Math.abs(m.x - brain.lastX) < .5 ? brain.stuck + 1 : 0; brain.lastX = m.x;
-    const input: BattleInput = { left: !stop && dx < -8, right: !stop && dx > 8, crouch: stop && !!target && this.tick % 120 < 35,
-      jump: !stop && !m.jumping && (traversalJump(m, waypoint, this.battle.wall) || brain.stuck > 12),
+    const input: BattleInput = { left: !stop && dx < -8, right: !stop && dx > 8, crouch: m.shouldDescendStairs(waypoint) || m.shouldDescendStairs(destination) || stop && !!target && this.tick % 120 < 35,
+      jump: !stop && !m.shouldDescendStairs(destination) && !m.jumping && (traversalJump(m, waypoint, this.battle.wall) || brain.stuck > 12),
       fire: !!attackPoint && this.tick - brain.acquired >= reaction && this.tick % 54 < 32 && (def.mode === 'auto' || this.tick % Math.max(2, def.interval) === 0),
       aim: attackPoint ? { x: attackPoint.x, y: attackPoint.y + (target ? brain.offset : brain.offset * .1) } : { x: m.x + Math.sign(dx || (a.team === 1 ? 1 : -1)) * 300, y: chest(a).y } };
     brain.state = empty ? 'resupply' : holding ? 'hold' : attackPoint ? 'engage' : 'advance';

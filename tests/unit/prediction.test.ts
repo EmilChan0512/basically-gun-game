@@ -18,11 +18,12 @@ it('stops predicted falling at the authority boundary while awaiting the death s
   prediction.input(20, idleInput()); expect(prediction.movement!.checkpoint()).toEqual(stopped);
   expect(b.player.life.alive).toBe(true);
 });
-it('replays unacknowledged input and converges to authority after delayed acknowledgements', () => {
-  const b = new Battle(customMatch('signal'), 'normal', 'm4', seededRandom(1));
+it.each(['signal','atrium'])('%s replays unacknowledged input and converges to authority after delayed acknowledgements', mapId => {
+  const b = new Battle(customMatch(mapId), 'normal', 'm4', seededRandom(1));
   b.actors.forEach(a => { a.human = true; });
+  if(mapId==='atrium')b.player.movement.reset(930,1439.5);
   const host = new MatchSession(b); host.bind('p', b.player.id);
-  const state = (): StateMessage => ({ type: 'state', roomId: 'test', round: 1, actorId: b.player.id, mapId: 'signal', mode: 'tdm', state: b.snapshot(), result: null,
+  const state = (): StateMessage => ({ type: 'state', roomId: 'test', round: 1, actorId: b.player.id, mapId, mode: 'tdm', state: b.snapshot(), result: null,
     ack: host.acknowledgements().p, movement: b.player.movement.checkpoint(), jumpHeld: host.jumpHeld('p'), poses: [], effects: [], bursts: [], grenades: [], events: [] });
   const prediction = new Prediction(); prediction.accept(state());
   const commands = Array.from({ length: 20 }, (_, sequence) => ({ sequence, input: { ...idleInput(), right: true, jump: sequence >= 4 && sequence <= 6 }, actions: [] }));

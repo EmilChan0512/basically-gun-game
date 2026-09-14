@@ -25,7 +25,7 @@ export class Prediction {
       const map = customMatch(state.mapId, state.mode);
       this.mapId = state.mapId; this.width = map.width;
       this.killY = map.killY ?? (map.height ?? 700) + 140;
-      this.movement = new OriginalMovement(wallFor(map)); this.pending = [];
+      this.movement = new OriginalMovement(wallFor(map), map.stairTreads); this.pending = [];
     }
     Object.assign(this.movement, state.movement);
     this.jumpHeld = state.jumpHeld ?? false;

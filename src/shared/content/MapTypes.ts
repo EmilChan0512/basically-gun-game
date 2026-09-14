@@ -4,7 +4,11 @@ export interface Terrain { x: number; y: number; width: number; height: number }
 export interface Waypoint extends Point { links: number[] }
 export interface MapGeometry {
   width: number; height?: number; killY?: number;
-  terrain: Terrain[]; collisionMask?: RasterMask; navigation: Waypoint[];
+  terrain: Terrain[];
+  /** Open stair treads support movement from above without blocking the corridor below. */
+  stairTreads?: Terrain[];
+  /** Coarse structural rectangles for radar when collision uses row runs. */
+  minimapTerrain?: Terrain[]; collisionMask?: RasterMask; navigation: Waypoint[];
   spawns: [Point[], Point[]]; objective: Point;
   /** Team 1 and team 2 delivery bases, in world coordinates. */
   deliveryBases?: [Point, Point];

@@ -222,7 +222,7 @@ it.each(['spawn','objective','air','wall'] as const)('sniper beacon snapping can
   expect(sim.inventory('blue').charges).toBe(1);expect(sim.inventory('blue').cast).toBeNull();
 });
 
-it.each([{x:800,y:1279.5},{x:720,y:1039.5},{x:1300,y:679.5}])('deploys a beacon through real atrium collision at $x,$y',position=>{
+it.each([{x:600,y:1439.5},{x:1400,y:1103.5},{x:3000,y:431.5}])('deploys a beacon through real atrium collision at $x,$y',position=>{
   const battle=new Battle({...customMatch('atrium'),allies:0,enemies:0});
   battle.enableGrowthV3({player:defaultGrowthLoadoutV3('sniper')},5);
   battle.player.human=true;battle.player.life.spawnProtectionFrames=0;battle.player.movement.reset(position.x,position.y);

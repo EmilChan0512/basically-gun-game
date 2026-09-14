@@ -9,8 +9,9 @@ it.each(MAPS.map(m=>m.id))('%s objective can be entered from both horizontal sid
   const map=customMatch(id,'dom'),wall=wallFor(map),goal=map.objective;
   const arrivals=new Set<number>();
   for(const origin of map.navigation){
+    if(arrivals.size===2)break;
     if(Math.abs(origin.x-goal.x)<100)continue;
-    const movement=new OriginalMovement(wall);movement.reset(origin.x,origin.y);const route={};
+    const movement=new OriginalMovement(wall,map.stairTreads);movement.reset(origin.x,origin.y);const route={};
     let priorX=movement.x;
     for(let t=0;t<1800;t++){
       if(Math.abs(movement.x-goal.x)<=60&&Math.abs(movement.y-goal.y)<45){
@@ -18,8 +19,8 @@ it.each(MAPS.map(m=>m.id))('%s objective can be entered from both horizontal sid
       }
       if(Math.abs(movement.x-goal.x)>60)priorX=movement.x;
       const waypoint=trackedWaypoint(map.navigation,movement,goal,route),dx=waypoint.x-movement.x;
-      if(traversalJump(movement,waypoint,wall))movement.jump();
-      movement.tick({left:dx< -8,right:dx>8,crouch:false});
+      if(!movement.shouldDescendStairs(goal)&&traversalJump(movement,waypoint,wall))movement.jump();
+      movement.tick({left:dx< -8,right:dx>8,crouch:movement.shouldDescendStairs(waypoint)||movement.shouldDescendStairs(goal)});
       if(movement.y>(map.killY??(map.height??700)+140))break;
     }
   }

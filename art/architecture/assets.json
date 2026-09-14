@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "style": "Original 2D side-scrolling military action game illustration, bold clean ink outlines, angular cel shading, slightly chunky readable proportions, olive and graphite armor with restrained cyan luminous technology and amber accents, near-future tactical science fiction, hand-painted game menu artwork, clear silhouette, crisp graphic shapes, no photorealism, no 3D render, no lettering, no typography, no logos, no watermark.",
+  "style": "Architectural environment texture, empty interior wall panel only, straight-on orthographic view. Clean dark ink outlines, desaturated slate blue and teal, restrained ambient light. Absolutely no humans, no characters, no soldiers, no mannequins, no posters, no silhouettes. No text, no watermark. Flat 2D painted background asset.",
   "models": {
     "unet": "flux-2-klein-4b.safetensors",
     "clip": "qwen_3_4b.safetensors",
@@ -9,10 +9,16 @@
   "steps": 4,
   "assets": [
     {
-      "id": "atrium-depth",
-      "width": 1536,
-      "height": 864,
-      "prompt": "Environment background plate for a side view 2D platform shooter. Monumental abandoned corporate skyscraper atrium interior, straight frontal architectural elevation, deep recessed glass offices and elevator shafts, layered pillars receding into depth, huge windows revealing distant hazy blue city skyline, cool teal shadows and warm amber office lights. Empty space across foreground for separately drawn playable platforms. Symmetrical architectural rhythm, four stories, no people, no foreground obstructions, no text. Rich painterly depth, clean readable dark background."
+      "id": "office-wall",
+      "width": 1024,
+      "height": 512,
+      "prompt": "An empty office rear wall. Only three large rectangular windows, distant foggy city buildings seen through the glass, a low cable duct and plain grey concrete panels. Wall spans entire image edge to edge. No floor, no ceiling, no sidewalls, no objects in front of wall. Architectural material sample, unoccupied empty room."
+    },
+    {
+      "id": "service-wall",
+      "width": 1024,
+      "height": 512,
+      "prompt": "Modular rear wall of one utility room in a skyscraper for a side scrolling 2D shooter. Strict straight-on orthographic elevation, no perspective floor or side walls. Dark slate blue industrial panels, inset server cabinets with a few restrained green lights, ventilation grilles, recessed horizontal pipes. Empty foreground. No doors, stairs, characters or foreground furniture. No text. Clean readable single room backdrop."
     }
   ]
 }

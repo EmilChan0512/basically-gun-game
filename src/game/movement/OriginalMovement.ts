@@ -13,7 +13,8 @@ export class OriginalMovement {
   hardLandingFrames = 0;
   rotation = 0;
   speedScale = 1;
-  constructor(readonly wall: WallMask) {}
+  private droppingStairs = false;
+  constructor(readonly wall: WallMask, private readonly stairTreads: readonly {x:number;y:number;width:number;height:number}[] = []) {}
   checkpoint() {
     return { x: this.x, y: this.y, vx: this.vx, vy: this.vy, jumping: this.jumping, crouching: this.crouching,
       manualJump: this.manualJump, fallFrames: this.fallFrames, climb: this.climb, climbFrames: this.climbFrames,
@@ -24,7 +25,11 @@ export class OriginalMovement {
     this.jumping = this.crouching = this.manualJump = false;
     this.fallFrames = this.climb = this.climbFrames = this.hardLandingFrames = this.rotation = 0;
   }
-  private hit(x: number, y: number) { return this.wall(Math.trunc(this.x + x), Math.trunc(this.y + y)); }
+  private hit(x: number, y: number) { const px=Math.trunc(this.x+x),py=Math.trunc(this.y+y);
+    return this.wall(px,py)||!this.droppingStairs&&!this.crouching&&this.stairTreads.some(t=>this.y<=t.y+28&&px>=t.x&&px<t.x+t.width&&py>=t.y&&py<t.y+t.height); }
+  shouldDescendStairs(target:{x:number;y:number}) {
+    return target.y>this.y+12&&this.stairTreads.some(t=>Math.abs(this.y-t.y)<32&&this.x>=t.x-64&&this.x<=t.x+t.width+64);
+  }
   jump() {
     if (this.crouching || this.climb || this.hardLandingFrames || this.jumping) return false;
     this.y -= 6;
@@ -33,6 +38,7 @@ export class OriginalMovement {
     return true;
   }
   tick(input: OriginalMoveInput) {
+    this.droppingStairs = input.crouch;
     // UnitMC frame396/408/449 callbacks release these movement locks.
     if (this.climbFrames > 0 && --this.climbFrames === 0) this.climb = 0;
     if (this.hardLandingFrames > 0) this.hardLandingFrames--;

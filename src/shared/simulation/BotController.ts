@@ -46,7 +46,7 @@ export function botInput(context: BotContext, actor: Actor): BotDecision {
     const direction = Math.sign(dx);
     const stuck = Math.abs(m.x - brain.lastX) < 0.5 && !stop;
     brain.stuck = stuck ? brain.stuck + 1 : 0; brain.lastX = m.x;
-    const jump = !stop && !m.jumping && (traversalJump(m, waypoint, context.wall) || brain.stuck > 12);
+    const jump = !stop && !m.shouldDescendStairs(destination) && !m.jumping && (traversalJump(m, waypoint, context.wall) || brain.stuck > 12);
     const aim = target ? { x: target.movement.x, y: target.movement.y - (usingSpecial ? target.movement.crouching ? 28 : 42 : 33) + (usingSpecial ? 0 : brain.offset) } : { x: m.x + direction * 300, y: m.y - 42 };
     // Bursts give visible recovery windows; semi-auto alternates releases.
     const fire = usingKnife ? ready && distance < special!.reach - 8 && !special!.triggerHeld && special!.canSwitch
@@ -55,5 +55,5 @@ export function botInput(context: BotContext, actor: Actor): BotDecision {
     if (!special && !resupplying && !actor.arsenal.gun.ammo && !actor.arsenal.gun.reserveAmmo) actions.push('swap');
     if (!usingSpecial && !target && actor.arsenal.gun.ammo < 10) actions.push('reload');
     brain.state = resupplying ? 'resupply' : usingShield ? 'defend' : usingKnife ? 'melee' : controlling ? 'hold' : inRange ? 'engage' : jump ? 'jump' : 'advance';
-    return { actions, input: { left: !stop && dx < -8, right: !stop && dx > 8, crouch: !usingSpecial && !resupplying && inRange && !m.jumping && !controlling && context.frame % 120 < 35, jump, fire, aim } };
+    return { actions, input: { left: !stop && dx < -8, right: !stop && dx > 8, crouch: m.shouldDescendStairs(waypoint) || m.shouldDescendStairs(destination) || !usingSpecial && !resupplying && inRange && !m.jumping && !controlling && context.frame % 120 < 35, jump, fire, aim } };
   }

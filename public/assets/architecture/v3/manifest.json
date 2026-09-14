@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "revision": "v3",
+  "generator": "Local ComfyUI / FLUX.2 Klein 4B",
+  "assets": [
+    {
+      "id": "office-wall",
+      "file": "office-wall.png",
+      "width": 1024,
+      "height": 512,
+      "sha256": "0697ace16034bcf74ebcb77572cc31e62adc8512339b5bc84cc3cc772831e293"
+    },
+    {
+      "id": "service-wall",
+      "file": "service-wall.png",
+      "width": 1024,
+      "height": 512,
+      "sha256": "2acc43415c10a8efcc324e0bfeb105e073a84f0ec2027415b2aa062c84eb3b3c"
+    }
+  ]
+}

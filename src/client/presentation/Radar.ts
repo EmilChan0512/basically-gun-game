@@ -9,7 +9,7 @@ export function radarProjection(map: MapGeometry, width = 260, height = 150) {
 /** Uses only the received state; no retained enemy marker after visibility loss. */
 export function radarSvg(map: MapGeometry, message: Pick<StateMessage, 'state' | 'actorId' | 'mode'>, team: 1 | 2) {
   const projection = radarProjection(map), art = map.artwork;
-  const terrain = map.terrain.map(t => `<rect x="${t.x}" y="${t.y}" width="${t.width}" height="${t.height}" fill="#71818d"/>`).join('');
+  const terrain = (map.minimapTerrain ?? map.terrain).map(t => `<rect x="${t.x}" y="${t.y}" width="${t.width}" height="${t.height}" fill="#71818d"/>`).join('');
   const backdrop = art ? `<image href="/assets/reference/${escape(art.id)}.png" x="${art.x}" y="${art.y}" width="${art.width}" height="${art.height}" opacity="0.6"/>` : terrain;
   const markers = message.state.actors.filter(a => a.life.alive && (a.growthV3 || a.team === team || !a.growth?.ghost)).map(actor => {
     const p = projection.point(actor), self = actor.id === message.actorId;

@@ -3,3 +3,5 @@ Original environment generated locally with ComfyUI / FLUX.2 Klein 4B (Apache 2.
 One fixed-seed output; no downloaded game artwork. Production PNG contains no workflow metadata.
 Dimensions and SHA256: v1/manifest.json. Generation specification and local job history remain in the development workspace.
 Model weights, runtime and source workflows are not included in the game distribution.
+
+Four-floor redesign: office-wall and service-wall in v3 were generated locally with ComfyUI. Earlier v2 candidates were rejected during visual review and are not distributed. V3 hashes and dimensions are recorded in v3/manifest.json.

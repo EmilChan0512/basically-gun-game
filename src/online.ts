@@ -1,3 +1,4 @@
+import { preloadAtrium, drawAtrium } from './client/presentation/AtriumView';
 import { defaultGrowthLoadoutV3 as defaultGrowthLoadout } from './shared/content/growth-v3/Loadout';
 import { GROWTH_V3_ABILITIES, type GrowthAbilityId } from './shared/content/growth-v3/Operators';
 import { GROWTH_V3_GADGETS, type GrowthGadgetId } from './shared/content/growth-v3/Gadgets';
@@ -330,7 +331,7 @@ export class OnlineScene extends Phaser.Scene {
   private feedback = new CombatFeedback();
   private feedbackView?: CombatFeedbackView;
   constructor(private network: BattlePresentationSession) { super('Online'); }
-  preload() { preloadReferenceArt(this); this.load.image('atrium-depth', '/assets/architecture/v1/atrium-depth.png'); }
+  preload() { preloadReferenceArt(this); preloadAtrium(this); }
   create() {
     this.feedbackView = new CombatFeedbackView(document.getElementById('online-game')!, this.feedback);
     const destroyFeedback = () => this.feedbackView?.destroy();
@@ -344,24 +345,11 @@ export class OnlineScene extends Phaser.Scene {
     this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => { if (!pointer.leftButtonDown()) this.fire.edge(false, performance.now()); });
     const map = MAPS.find(m => m.id === this.network.state!.mapId)!.geometry;
     this.cameras.main.setBounds(0, 0, map.width, map.height ?? 700).setBackgroundColor(map.palette.sky);
-    if (this.network.state!.mapId === 'atrium') {
-      this.add.image(-180, -100, 'atrium-depth').setOrigin(0).setDisplaySize(3600, 1500).setScrollFactor(.88);
-      const walls = this.add.graphics();
-      for (let x=160; x<3200; x+=400) {
-        walls.fillStyle(0x09141d,.45).fillRect(x,100,26,1180);
-        walls.fillStyle(0x76b8c4,.18).fillRect(x+26,100,4,1180);
-      }
-    }
-    const background = this.add.graphics();
-    for (const t of map.terrain) background.fillStyle(map.palette.wall).fillRect(t.x, t.y, t.width, t.height);
-    if (map.artwork) { const a = map.artwork; this.add.image(a.x, a.y, `ref-${a.id}`).setOrigin(0).setDisplaySize(a.width, a.height); }
-    if (this.network.state!.mapId === 'atrium') {
-      for (const t of map.terrain) {
-        background.fillStyle(0x07111b,.65).fillRect(t.x+12,t.y+t.height,t.width,18);
-        background.fillStyle(0x9ac7ce).fillRect(t.x,t.y,t.width,4);
-        background.fillStyle(0x527383).fillRect(t.x,t.y+5,t.width,7);
-        for(let x=t.x+25;x<t.x+t.width-20;x+=80) background.fillStyle(0xd4ac67,.8).fillRect(x,t.y+16,28,3);
-      }
+    if (this.network.state!.mapId === 'atrium') drawAtrium(this,map);
+    else {
+      const background=this.add.graphics();
+      for(const t of map.terrain)background.fillStyle(map.palette.wall).fillRect(t.x,t.y,t.width,t.height);
+      if(map.artwork){const a=map.artwork;this.add.image(a.x,a.y,`ref-${a.id}`).setOrigin(0).setDisplaySize(a.width,a.height);}
     }
     this.vision = new VisionOverlay(this, new CollisionWorld(map.terrain, map.collisionMask).solid);
     this.rig = new ReferenceArt(this); this.graphics = this.add.graphics().setDepth(3);
@@ -393,7 +381,9 @@ export class OnlineScene extends Phaser.Scene {
     const resize = new ResizeObserver(() => {
       const next = `${surface.clientWidth}:${surface.clientHeight}`;
       if (next === surfaceSize || !surface.clientWidth || !surface.clientHeight) return;
-      surfaceSize = next; this.scale.setGameSize(Math.round(620 * surface.clientWidth / surface.clientHeight), 620); this.scale.getParentBounds(); this.scale.refresh();
+      surfaceSize = next;
+      const density = Math.min(2, window.devicePixelRatio || 1);
+      this.scale.setGameSize(Math.round(surface.clientWidth*density), Math.round(surface.clientHeight*density)); this.scale.getParentBounds(); this.scale.refresh();
     });
     resize.observe(surface);
     this.events.once('shutdown', () => resize.disconnect());
@@ -447,7 +437,7 @@ export class OnlineScene extends Phaser.Scene {
     const predicted = self && followed?.id === self.id ? this.network.prediction.position(renderAlpha, delta) ?? self
       : followed && this.network.interpolation.position(followed, now);
     const geometry = MAPS.find(m => m.id === message.mapId)!.geometry;
-    this.cameras.main.setZoom(mapView ? Math.min(1, this.scale.width / geometry.width, this.scale.height / (geometry.height ?? 700)) : 0.8);
+    this.cameras.main.setZoom(mapView ? Math.min(1, this.scale.width / geometry.width, this.scale.height / (geometry.height ?? 700)) : 0.8*this.scale.height/620);
     if (mapView) this.cameras.main.centerOn(geometry.width / 2, (geometry.height ?? 700) / 2);
     else if (predicted) this.cameras.main.centerOn(predicted.x, predicted.y - 150);
     this.rig.begin(); this.graphics.clear();
