@@ -1,0 +1,21 @@
+.github/workflows/backend.yml
+  s_e6b56f655a2604::t_4cc98eeefe6cde 70-73,126,128,130,132
+deploy/release.sh
+  s_e6b56f655a2604::t_4cc98eeefe6cde 8-13,55,57,61-66,70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "82d4e6a6864f3a5a62fa2f56ab06ff48b710e10b",
+  "prompts": {},
+  "sessions": {
+    "s_e6b56f655a2604": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0a019-8f1a-7641-b5bb-43573cf797b2",
+        "model": "GPT-5.6-Terra-joybuilder"
+      },
+      "human_author": "chenyi.266 <chenyi.266@jd.com>"
+    }
+  }
+}
