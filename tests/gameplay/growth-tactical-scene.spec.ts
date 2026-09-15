@@ -43,7 +43,7 @@ for(const observerClass of ['tank','assault'] as const)test(`five deployment mod
     step(1);await sync();
     const world=()=>latest!.state.growthWorld!;
     await expect(page.locator(`.hud-gadget-icon [data-growth-icon="${hostBuild.gadgetId}"]`)).toBeVisible();
-    await expect(page.locator('[data-hud="ability"]')).toContainText(observerClass==='tank'?'本局已用尽':'武装中');
+    await expect(page.locator('[data-hud="ability"]')).toContainText(observerClass==='tank'?'秒后恢复':'武装中');
     expect(world().entities.find(e=>e.gadgetId==='as_charge')?.armed).toBe(false);
     expect(world().entities.find(e=>e.gadgetId==='md_station')?.armed).toBe(false);
     await page.screenshot({path:`artifacts/qa/growth-deployments-${observerClass}-arming.png`});
@@ -62,7 +62,7 @@ for(const observerClass of ['tank','assault'] as const)test(`five deployment mod
     expect(world().entities.some(e=>e.id===charge.id)).toBe(true);
     const lastExpiry=Math.max(...world().entities.map(e=>e.expiresTick));
     step(lastExpiry-b.frame);await sync();expect(world().entities).toHaveLength(0);
-    await expect(page.locator('[data-hud="ability"]')).toContainText('本局已用尽');
+    await expect(page.locator('[data-hud="ability"]')).toContainText('秒后恢复');
     expect(b.journal.since(0).filter(e=>e.kind==='deployableDestroyed')).toHaveLength(5);
     expect(errors).toEqual([]);
   }finally{await server.close();}

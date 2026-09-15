@@ -1,7 +1,8 @@
+import { defaultGrowthLoadoutV3 } from '../helpers/legacyGrowthLoadout';
 import { expect, it, vi } from 'vitest';
 import { Battle, idleInput, seededRandom } from '../../src/game/campaign/Battle';
 import type { Mission } from '../../src/game/campaign/Missions';
-import { defaultGrowthLoadoutV3, changeGrowthAbility } from '../../src/shared/content/growth-v3/Loadout';
+import {  changeGrowthAbility } from '../../src/shared/content/growth-v3/Loadout';
 import { visibleState } from '../../src/shared/protocol/VisibleState';
 import type { StateMessage } from '../../src/shared/protocol/State';
 import { AudioPresentation } from '../../src/client/audio/AudioPresentation';

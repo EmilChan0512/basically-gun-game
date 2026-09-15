@@ -1,8 +1,9 @@
+import { defaultGrowthLoadoutV3 } from '../helpers/legacyGrowthLoadout';
 import { expect, it } from 'vitest';
 import { Battle, idleInput, seededRandom } from '../../src/game/campaign/Battle';
 import type { Mission } from '../../src/game/campaign/Missions';
 import { MatchSession } from '../../src/shared/simulation/MatchSession';
-import { defaultGrowthLoadoutV3, changeGrowthAbility, type GrowthLoadoutV3 } from '../../src/shared/content/growth-v3/Loadout';
+import {  changeGrowthAbility, type GrowthLoadoutV3 } from '../../src/shared/content/growth-v3/Loadout';
 import { GrowthArsenalV3 } from '../../src/shared/simulation/growth-v3/WeaponRules';
 import { GadgetSimulation } from '../../src/shared/simulation/growth-v3/GadgetSimulation';
 import { visibleState } from '../../src/shared/protocol/VisibleState';

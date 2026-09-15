@@ -1,6 +1,7 @@
+import { defaultGrowthLoadoutV3 } from '../helpers/legacyGrowthLoadout';
 import { expect, it } from 'vitest';
 import { GrowthRangeSession } from '../../src/client/session/GrowthRangeSession';
-import { defaultGrowthLoadoutV3, changeGrowthAbility } from '../../src/shared/content/growth-v3/Loadout';
+import {  changeGrowthAbility } from '../../src/shared/content/growth-v3/Loadout';
 import { GROWTH_V3_EVOLUTIONS, type GrowthEvolutionId } from '../../src/shared/content/growth-v3/Cards';
 import { GROWTH_V3_OPERATORS } from '../../src/shared/content/growth-v3/Operators';
 import { awardGrowthV3 } from '../../src/shared/simulation/growth-v3/Progression';

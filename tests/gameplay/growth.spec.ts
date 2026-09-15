@@ -190,9 +190,9 @@ test('Medic lobby loadout heals a teammate through the real skill input and disp
     medic.movement.reset(220, 599.5); ally.movement.reset(250, 599.5); ally.life.spawnProtectionFrames = 0; medic.life.spawnProtectionFrames = 0;
     battle.damage(ally, 50, enemy);
     await page.keyboard.press('e');
-    await expect.poll(() => battle.growthV3!.participant(medic.id).metrics.healingDone).toBe(25);
-    await expect(page.locator('#growth-panel')).toContainText('队友治疗 25 · 治疗经验 12');
-    expect(ally.life.health).toBeGreaterThanOrEqual(75); expect(medic.arsenal.primary).toBe('famas');
+    await expect.poll(() => battle.growthV3!.participant(medic.id).metrics.healingDone).toBe(50);
+    await expect(page.locator('#growth-panel')).toContainText('队友治疗 50 · 治疗经验 20');
+    expect(ally.life.health).toBe(100); expect(medic.arsenal.primary).toBe('famas');
     await page.screenshot({ path: 'artifacts/qa/growth-medic.png', fullPage: true });
   } finally { await Promise.all(contexts.map(context => context.close())); await server.close(); }
 });
@@ -236,8 +236,8 @@ test('career build is acknowledged, used by the room and retained after signing 
     await page.locator('#online-armory-nav').click();
     await expect(page.locator('#growth-career-content')).toContainText('1局 / 1胜');
     await page.locator('#growth-tab-perks').click();
-    await expect(page.locator('[data-growth-option="pk_quickswap"]')).toBeEnabled();
-    await page.locator('[data-growth-option="pk_quickswap"]').click();
+    await expect(page.locator('[data-growth-option="tk_steel"]')).toBeEnabled();
+    await page.locator('[data-growth-option="tk_steel"]').click();
     await page.locator('#growth-career-save').click();
     await expect(page.locator('[data-growth-save-status]')).toHaveText('配装已由服务器保存。');
     await page.locator('#online-lobby-nav').click();
@@ -251,13 +251,13 @@ test('career build is acknowledged, used by the room and retained after signing 
     await expect(page.locator('[data-growth-class=tank]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.locator('[data-growth-weapon=shotgun]')).toHaveAttribute('aria-pressed', 'true');
     await page.locator('#growth-tab-perks').click();
-    await expect(page.locator('[data-growth-option="pk_quickswap"]')).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.locator('[data-growth-option="pk_sidefeed"]')).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('[data-growth-option="tk_steel"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('[data-growth-option="tk_platform"]')).toHaveAttribute('aria-pressed', 'false');
     await page.locator('#online-lobby-nav').click();
     await page.locator('#create-growth').click();
     await expect(page.locator('#online-start')).toBeVisible();
     const nextRoom = [...server.rooms.values()].find(value => value.players.size > 0)!;
-    expect([...nextRoom.players.values()][0].growthLoadout!.perks).toContain('pk_quickswap');
+    expect([...nextRoom.players.values()][0].growthLoadout!.perks).toContain('tk_steel');
   } finally { await server.close(); }
 });
 

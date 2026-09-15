@@ -36,7 +36,8 @@ export class OnlineAccounts {
       if (![1, 2].includes(value.version) || !Array.isArray(value.accounts) || !Array.isArray(value.sessions)) throw Error('Invalid account database');
       const migrating = value.version === 1;
       const growthMigrating = value.accounts.some((a: Account) => !a.profile?.growth);
-      const growthExpanding = value.accounts.some((a: Account) => a.profile?.growth && (a.profile.growth.version as number) !== 3);
+      const growthExpanding = value.accounts.some((a: Account) => a.profile?.growth && ((a.profile.growth.version as number) !== 3
+        || a.profile.growth.loadouts?.some(loadout => loadout.perks?.some(id => id.startsWith('pk_')))));
       if (migrating) { value.version = 2; value.ledger = []; }
       if (!Array.isArray(value.ledger)) throw Error('Invalid asset ledger');
       for (const account of value.accounts) {

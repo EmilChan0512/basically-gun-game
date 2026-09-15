@@ -12,7 +12,7 @@ import { GROWTH_V3_OPERATORS, GROWTH_V3_ABILITIES, GROWTH_V3_PASSIVES, GROWTH_V3
 import { GROWTH_V3_GADGETS } from '../../shared/content/growth-v3/Gadgets';
 import { GROWTH_V3_WEAPONS, GROWTH_V3_SIDEARMS, growthPrimaryPool } from '../../shared/content/growth-v3/Weapons';
 import { GROWTH_V3_ATTACHMENTS, growthReloadTicks, resolveGrowthWeapon, validateAttachments, type GrowthAttachmentId, type ModifierStat } from '../../shared/content/growth-v3/Attachments';
-import { GROWTH_V3_PERKS, GROWTH_V3_PERK_GROUPS, type GrowthPerkId } from '../../shared/content/growth-v3/Perks';
+import { GROWTH_V3_PERKS, GROWTH_V3_PERK_GROUPS, legalGrowthPerks, type GrowthPerkId } from '../../shared/content/growth-v3/Perks';
 import { GROWTH_V3_CARDS, GROWTH_V3_EVOLUTIONS, legalGrowthCards } from '../../shared/content/growth-v3/Cards';
 
 const node = <K extends keyof HTMLElementTagNameMap>(tag: K, text = '', cls = '') => {
@@ -74,14 +74,14 @@ export class GrowthCareerPanel {
         pick.append(image, node('strong', GROWTH_V3_OPERATORS[id].name), node('small', '熟练度 Lv.' + masteryLevel(career.mastery[id]))); roster.append(pick);
       }
       const stats = node('div', '', 'operator-stats');
-      stats.append(node('span', definition.health + ' 生命'), node('span', '移速 ×' + definition.speed), node('span', GROWTH_V3_PASSIVES[definition.passive].description));
+      stats.append(node('span', (definition.health + (this.draft.perks.includes('tk_steel') ? 35 : 0)) + ' 生命'), node('span', '移速 ×' + definition.speed), node('span', GROWTH_V3_PASSIVES[definition.passive].description));
       const slots = node('div', '', 'growth-build-slots');
       for (let i = 0; i < growthSlots(career.xp); i++) {
         const pick = button('配装 ' + (i + 1), () => { this.slot = i; this.draft = structuredClone(career.loadouts[i] ?? defaultGrowthLoadoutV3()); dirty(); }, i === this.slot);
         pick.dataset.growthSlot = String(i); slots.append(pick);
       }
       const tabs = node('div', '', 'arsenal-tabs');
-      for (const [id, label] of [['weapons','主副武器'],['skills','技能与专属道具'],['perks','基础 Perk'],['pool','成长池与进化'],['records','记录与称号']]) {
+      for (const [id, label] of [['weapons','主副武器'],['skills','技能与专属道具'],['perks','职业特化 Perk'],['pool','成长池与进化'],['records','记录与称号']]) {
         const pick = button(label, () => { this.tab = id; this.draw(career); }, this.tab === id); pick.id = 'growth-tab-' + id; tabs.append(pick);
       }
       this.root.append(roster, stats, slots, tabs);
@@ -135,6 +135,8 @@ export class GrowthCareerPanel {
         pick.append(node('strong', e.name), node('span', '前摇 ' + (e.cast / 30).toFixed(2) + '秒 · 持续 ' + e.duration / 30 + '秒 · 冷却 ' + e.cooldown / 30 + '秒'),
           node('small', '移动 ×' + e.speed + (e.heal ? ' · 治疗 ' + e.heal : '') + (e.transfer ? ' · 转入 ' + e.transfer + ' 发备弹' : '') + (e.reduction ? ' · 减伤 ' + e.reduction * 100 + '%' : '') + (e.spread < 1 ? ' · 散布 ×' + e.spread : '')));
         pick.append(node('small', growthAbilityDescription(id)));
+        const specialization = GROWTH_V3_PERKS[legalGrowthPerks(this.draft.classId, id)[0]];
+        pick.append(node('strong', '职业特化 · ' + specialization.name), node('small', specialization.description));
         inventory.append(pick);
       }
       inventory.append(node('h2', definition.name + '专属 G · 三选一'));
@@ -150,8 +152,8 @@ export class GrowthCareerPanel {
       awakening.append(document.createTextNode('标准局第12分钟 / 短局第7分钟觉醒：' + GROWTH_V3_ULTIMATES[definition.ultimate].description));inventory.append(awakening);
     } else if (this.tab === 'perks') {
       for (const group of GROWTH_V3_PERK_GROUPS) {
-        inventory.append(node('h2', { mobility:'机动', handling:'操控', survival:'生存' }[group] + ' · 四选一'));
-        for (const [key, perk] of Object.entries(GROWTH_V3_PERKS)) if (perk.group === group) {
+        inventory.append(node('h2', { mobility:'技能强化 · 随主动技能匹配', handling:'战斗收益 · 二选一', survival:'连锁奖励 · 二选一' }[group]));
+        for (const [key, perk] of Object.entries(GROWTH_V3_PERKS)) if (perk.group === group && legalGrowthPerks(this.draft.classId, this.draft.abilityId).includes(key as GrowthPerkId)) {
           const id = key as GrowthPerkId, pick = button(perk.name + '：' + perk.description, () => { this.draft.perks = [...this.draft.perks.filter(p => GROWTH_V3_PERKS[p].group !== group), id]; dirty(); }, this.draft.perks.includes(id));
           pick.dataset.growthOption = id; pick.className = 'growth-option-card'; inventory.append(pick);
         }

@@ -1,6 +1,6 @@
+import { defaultGrowthLoadoutV3 } from '../helpers/legacyGrowthLoadout';
 import { expect, it } from 'vitest';
 import { GrowthRangeSession } from '../../src/client/session/GrowthRangeSession';
-import { defaultGrowthLoadoutV3 } from '../../src/shared/content/growth-v3/Loadout';
 import type { GrowthPerkId } from '../../src/shared/content/growth-v3/Perks';
 import { Battle, idleInput, seededRandom } from '../../src/game/campaign/Battle';
 import type { GrowthClassId } from '../../src/shared/content/growth-v3/Core';

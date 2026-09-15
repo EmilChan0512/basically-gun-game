@@ -116,8 +116,10 @@ export class GrowthArsenalV3 {
   resupply() { return this.supply(1000000, 'primary') + this.supply(1000000, 'secondary'); }
   /** Call once per authority tick, after movement/inputs and before damage resolution. */
   step(tick: number, held: boolean, conditions: Omit<WeaponConditions, 'first' | 'empty'>,
-    random: () => number, spreadBenefits: readonly number[] = [], blocked = false): GrowthShot | null {
+    random: () => number, spreadBenefits: readonly number[] = [], blocked = false, rateBonus = 0, recoilScale = 1): GrowthShot | null {
     validTick(tick);
+    if (!Number.isFinite(recoilScale) || recoilScale <= 0 || recoilScale > 1) throw Error('Invalid recoil scale');
+    if (!Number.isFinite(rateBonus) || rateBonus < 0 || rateBonus > 1) throw Error('Invalid fire rate');
     if (tick !== this.state.lastTick + 1) throw Error('Weapon simulation must advance exactly once per tick');
     this.state.lastTick = tick;
     for (const slot of ['primary','secondary'] as const) {
@@ -145,12 +147,12 @@ export class GrowthArsenalV3 {
     const offsetsDegrees = Array.from({ length: def.pellets }, (_, i) => center + (def.pellets === 1 ? 0 : (i / (def.pellets - 1) - .5) * def.fanDegrees));
     if (def.mode === 'burst' && !continuing) this.state.burstRemaining = Math.min(3, gun.ammo);
     gun.ammo--; gun.lastShotTick = tick;
-    gun.bloom = clamp(gun.bloom + def.bloomPerShot, 0, def.bloomCap);
+    gun.bloom = clamp(gun.bloom + def.bloomPerShot * recoilScale, 0, def.bloomCap);
     if (def.mode === 'burst') {
       this.state.burstRemaining--;
       const delay = this.state.burstRemaining > 0 ? def.interval : def.burstGap;
-      this.state.burstNextTick = tick + delay; this.state.shootReadyTick = tick + delay;
-    } else this.state.shootReadyTick = tick + def.interval;
+      this.state.burstNextTick = tick + Math.max(1, Math.ceil(delay / (1 + rateBonus))); this.state.shootReadyTick = this.state.burstNextTick;
+    } else this.state.shootReadyTick = tick + Math.max(1, Math.ceil(def.interval / (1 + rateBonus)));
     this.state.shotSerial++;
     return { serial: this.state.shotSerial, tick, slot, weaponId: this.selectedId, offsetsDegrees, definition: def };
   }

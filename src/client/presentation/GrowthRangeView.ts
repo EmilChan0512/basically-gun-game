@@ -43,6 +43,8 @@ export function growthRangeView(loadout: GrowthLoadoutV3, slot: 'primary'|'secon
     const b=session.battle,message=session.presentation(),target=message.state.actors.find(a=>a.id==='enemy-0'),gun=b.growthV3!.weapons.get('player')!;
     ctx.save();ctx.translate(50-80*scale(),300-500*scale());ctx.scale(scale(),scale());
     drawGrowthWorld(graphics,message.state);ctx.restore();
+    const perk = message.events.filter(e=>e.kind==='perkTriggered'&&e.actorId==='player'&&b.frame-e.tick<60).at(-1);
+    if(perk){ctx.fillStyle='#ffe08a';ctx.font='bold 18px sans-serif';ctx.fillText(perk.cause??'职业特化触发',24,32);}
     const shooter=project(b.player.movement.x,b.player.movement.y);
     const shooterHeight=b.player.movement.crouching?44:66;
     ctx.fillStyle='#6ee3d0';ctx.fillRect(shooter.x-10*scale(),shooter.y-shooterHeight*scale(),20*scale(),shooterHeight*scale());

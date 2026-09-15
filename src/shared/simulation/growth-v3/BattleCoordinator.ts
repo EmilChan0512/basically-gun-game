@@ -9,7 +9,7 @@ import type { DamageContext } from '../DamageContext';
 import { validateDamageContext } from '../DamageContext';
 import { GROWTH_V3_RULES, healthUnits, type ContentStage } from '../../content/growth-v3/Core';
 import { validateGrowthLoadoutV3, type GrowthLoadoutV3 } from '../../content/growth-v3/Loadout';
-import { GROWTH_V3_OPERATORS } from '../../content/growth-v3/Operators';
+import { GROWTH_V3_OPERATORS, GROWTH_V3_ABILITIES } from '../../content/growth-v3/Operators';
 import { GROWTH_V3_WEAPONS, type GrowthWeaponId } from '../../content/growth-v3/Weapons';
 import { resolveGrowthWeapon } from '../../content/growth-v3/Attachments';
 import type { GrowthUpgradeId } from '../../content/growth-v3/Cards';
@@ -33,6 +33,7 @@ import { GROWTH_V3_GADGETS, type GrowthGadgetId } from '../../content/growth-v3/
 import type { GrowthCombatEventKind } from '../Events';
 
 export interface GrowthParticipant {
+  perkState: Record<string, number>;
   recoil: GrowthRecoil;
   id: string; loadout: GrowthLoadoutV3; progression: GrowthProgressionState; armor: ArmorState;
   contributions: ContributionState; continuousHeal: ContinuousHealTarget;
@@ -105,6 +106,29 @@ export class GrowthBattleCoordinator {
   private perk(id: string, perk: GrowthPerkId) { return this.participant(id).loadout.perks.includes(perk); }
   private buff(id: string, key: string) { return (this.participant(id).buffs[key] ?? 0) > this.tick; }
   private ready(id: string, key: string) { return (this.participant(id).cooldowns[key] ?? 0) <= this.tick; }
+  private perkFeedback(id: string, label: string) {
+    const p = this.participant(id);
+    if (!this.ready(id, `feedback:${label}`)) return;
+    p.cooldowns[`feedback:${label}`] = this.tick + 15;
+    this.battle.journal.emit({ tick: this.tick, kind: 'perkTriggered', actorId: id, cause: label, position: chest(this.actor(id)) });
+  }
+  private perkRefund(id: string, fraction: number) {
+    const p = this.participant(id), state = this.abilities.actorState(id), base = GROWTH_V3_ABILITIES[p.loadout.abilityId].cooldown;
+    if (!state.queue.length || p.perkState.castStart === undefined) return;
+    const used = p.perkState.refunded ?? 0, cardUsed = state.active?.refundUsed ?? p.perkState.cardRefund ?? 0;
+    const amount = Math.max(0, Math.min(Math.round(base * fraction), Math.round(base * .8) - used - cardUsed,
+      state.queue[0] - Math.max(this.tick + 1, p.perkState.castStart + Math.ceil(base * .2))));
+    if (!amount) return;
+    state.queue = state.queue.map(t => t - amount); p.perkState.refunded = used + amount;
+    this.perkFeedback(id, `冷却返还 ${Math.round(amount / base * 100)}%`);
+  }
+  private linkReduction(id: string) {
+    return this.actors().some(a => {
+      if (!a.life.alive || !this.perk(a.id, 'md_transfusion')) return false;
+      const cast = this.abilities.actorState(a.id).active;
+      return cast?.definition.id === 'md_link' && (a.id === id || cast.targetId === id);
+    }) ? .2 : 0;
+  }
   private worldActors() {
     return this.actors().map(a => ({ id: a.id, team: a.team, position: chest(a), feet: { x: a.movement.x, y: a.movement.y },
       alive: a.life.alive, protected: a.life.spawnProtectionFrames > 0, hp: healthUnits(a.life.health), maxHp: healthUnits(a.life.maxHealth),
@@ -126,6 +150,11 @@ export class GrowthBattleCoordinator {
         this.healQueue.push({ sourceId, targetId, amount, castId, cast }); return 0;
       },
       started: (id, cast) => {
+        const p = this.participant(id);
+        delete p.buffs.resetKill;
+        Object.assign(p.perkState, { castStart: this.tick, refunded: 0, cardRefund: 0, tankTaken: 0, tankBlocked: 0, cycleHealing: 0, cycleRefund: 0, focusReset: 0 });
+        if (this.perk(id, 'sn_execute')) p.buffs.execute = cast.endTick;
+        if (p.loadout.perks.some(perk => !perk.startsWith('pk_'))) this.perkFeedback(id, '职业技能强化');
         this.battle.journal.emit({ tick: this.tick, kind: 'skill', actorId: id, ability: cast.definition.id });
         this.battle.journal.emit({ tick: this.tick, kind: 'abilityStart', actorId: id, ability: cast.definition.id, duration: cast.endTick-this.tick, position:chest(this.actor(id)) });
       },
@@ -184,16 +213,16 @@ export class GrowthBattleCoordinator {
   install(loadouts: Readonly<Record<string, GrowthLoadoutV3>>) {
     if (this.tick !== 0 || this.battle.phase !== 'running' || !['tdm', 'dom', 'ctf'].includes(this.battle.mission.mode)
       || this.battle.actors.length > 8 || Object.keys(loadouts).length !== this.battle.actors.length) throw Error('Invalid growth battle setup');
-    const validated = this.actors().map(a => ({ actor: a, loadout: validateGrowthLoadoutV3(loadouts[a.id], this.stage) }));
+    const validated = this.actors().map(a => ({ actor: a, loadout: validateGrowthLoadoutV3(loadouts[a.id], this.stage, true) }));
     for (const { actor: a, loadout } of validated) {
-      const p: GrowthParticipant = { recoil: newGrowthRecoil(), id: a.id, loadout, progression: newProgression(), armor: newArmor(), contributions: newContributions(),
+      const p: GrowthParticipant = { perkState: {}, recoil: newGrowthRecoil(), id: a.id, loadout, progression: newProgression(), armor: newArmor(), contributions: newContributions(),
         continuousHeal: newContinuousHealTarget(), cooldowns: {}, buffs: {}, attackers: {}, lastDamage: 0, stationary: 0, braceTicks: 0,
         stillShots: 0, focusedReady: false, focusWait: 0, deathTick: -1, jumpHeld: false, slowUntil: 0, slowScale: 0,
         slowResistUntil: 0, objectiveTicks: 0, scavenged: [], healedCasts: [], shots: 0,
         retired: false, metrics: freshGrowthMetrics(), weaponMetrics: {}, healingRemainder: 0, killStreak: 0, headStreak: 0, lastHitShot: -1, lastHeadShot: -1 };
       this.participants.set(a.id, p); this.weapons.set(a.id, new GrowthArsenalV3(loadout));
       a.growth = undefined; a.kit = null; a.equipment = undefined; a.offhand = undefined; a.shield = undefined;
-      a.life = new OriginalLife(GROWTH_V3_OPERATORS[loadout.classId].health); a.stealthFrames = 0;
+      a.life = new OriginalLife(GROWTH_V3_OPERATORS[loadout.classId].health + (loadout.perks.includes('tk_steel') ? 35 : 0)); a.stealthFrames = 0;
       this.mirrorArsenal(a);
       this.abilities.register(a.id, loadout); this.gadgets.register(a.id, loadout.classId, loadout.gadgetId);
     }
@@ -261,7 +290,9 @@ export class GrowthBattleCoordinator {
     const id = a.id, p = this.participant(id), gun = this.gun(id), toSide = gun.selectedSlot === 'primary';
     if (this.abilities.locks(id, this.tick).swap || this.gadgets.inventory(id).cast?.definition.kind === 'self') return this.error(id, 'busy');
     this.gadgets.cancelCast(id);
-    const benefits = [this.perk(id, 'pk_quickswap') ? .9 : 1, toSide && p.loadout.classId === 'assault' ? .85 : 1,
+    const dual = toSide && gun.current.ammo === 0 && this.perk(id, 'as_dual');
+    if (dual) { p.buffs.dual = this.tick + 90; this.perkFeedback(id, '双枪狂热 +35%'); }
+    const benefits = [dual ? .3 : 1, this.perk(id, 'pk_quickswap') ? .9 : 1, toSide && p.loadout.classId === 'assault' ? .85 : 1,
       !toSide && this.buff(id, 'shieldCounter') ? .5 : 1];
     const cardFeed = toSide && this.has(id, 'as_C4') && gun.current.ammo === 0 && this.ready(id, 'sidecard');
     const perkFeed = toSide && this.perk(id, 'pk_sidefeed') && this.ready(id, 'sidefeed');
@@ -279,7 +310,7 @@ export class GrowthBattleCoordinator {
     const id = a.id, gun = this.gun(id), p = this.participant(id), nonempty = gun.current.ammo > 0;
     if (this.abilities.locks(id, this.tick).reload || this.gadgets.inventory(id).cast) return this.error(id, 'busy');
     const def = resolveGrowthWeapon(gun.selectedId, p.loadout.attachments[gun.selectedSlot]);
-    const benefits = [!nonempty && this.perk(id, 'pk_emptyreload') ? .92 : 1,
+    const benefits = [this.buff(id, 'ambushReload') ? .6 : 1, this.perk(id, 'tk_steel') && a.life.health < a.life.maxHealth / 2 ? .7 : 1, !nonempty && this.perk(id, 'pk_emptyreload') ? .92 : 1,
       nonempty && this.has(id, 'as_C1') ? .8 : 1, nonempty && a.movement.crouching && this.has(id, 'tk_C2') ? .8 : 1,
       nonempty && gun.current.ammo < def.magazine / 2 && this.has(id, 'sn_C4') ? .75 : 1,
       this.has(id, 'sn_B2') && this.abilities.actorState(id).active?.definition.id === 'sn_relocate' ? .8 : 1,
@@ -310,7 +341,7 @@ export class GrowthBattleCoordinator {
   private movement(a: Actor, control: BattleInput) {
     const id = a.id, p = this.participant(id), m = a.movement, gun = this.gun(id), locks = this.abilities.locks(id, this.tick);
     const skillSpeed = locks.moveScale, gCast = !!this.gadgets.inventory(id).cast;
-    const ordinaryBoost = Math.max(this.buff(id, 'berserker') ? .2 : 0, this.buff(id, 'medRun') ? .15 : 0,
+    const ordinaryBoost = Math.max(this.buff(id, 'escape') ? .3 : 0, this.buff(id, 'adrenaline') ? .15 : 0, this.buff(id, 'berserker') ? .2 : 0, this.buff(id, 'medRun') ? .15 : 0,
       this.buff(id, 'supplyrun') ? .1 : 0, gun.selectedSlot === 'secondary' && this.perk(id, 'pk_sidewalk') ? .03 : 0);
     const definition = resolveGrowthWeapon(gun.selectedId, p.loadout.attachments[gun.selectedSlot]);
     const airborne = m.jumping, previousX = m.x;
@@ -350,16 +381,28 @@ export class GrowthBattleCoordinator {
       this.perk(id, 'pk_landing') && this.buff(id, 'landing') ? .85 : 1,
       this.perk(id, 'pk_firstshot') && this.tick - current.lastShotTick >= 30 ? .9 : 1,
       this.buff(id, 'rollSpread') ? .75 : 1];
+    if (this.tick - current.lastShotTick >= 15) p.perkState.platformStart = this.tick;
+    const platform = this.perk(id, 'tk_platform') && this.tick - (p.perkState.platformStart ?? this.tick) >= 24 && this.tick - current.lastShotTick < 15;
+    const rateBonus = (platform ? .25 : 0) + (this.buff(id, 'fullrush') ? .25 : 0) + (this.buff(id, 'adrenaline') ? .2 : 0);
     const wasReload = current.reloadUntil;
     const shot = gun.step(this.tick, control.fire, { ...pose(a), stationaryTicks: p.stationary, braceTicks: p.braceTicks }, this.ports.random, spread,
       !a.life.alive || a.life.spawnProtectionFrames > 0 || this.abilities.locks(id, this.tick).fire || !!this.gadgets.inventory(id).cast
-      || this.damageQueue.some(d => d.targetId === id && !d.sourceId));
+      || this.damageQueue.some(d => d.targetId === id && !d.sourceId), rateBonus, platform ? .6 : 1);
     if (wasReload && !current.reloadUntil) {
+      if (p.perkState.armedSlot === (gun.selectedSlot === 'primary' ? 0 : 1)) p.perkState.armedShots = 0;
       if (p.weaponMetrics[gun.selectedId]) p.weaponMetrics[gun.selectedId]!.magazineKills = 0;
       this.battle.journal.emit({ tick: this.tick, kind: 'reload-end', actorId: id });
     }
     if (!shot) return;
-    addShotRecoil(p.recoil, shot.definition.visualKick);
+    addShotRecoil(p.recoil, shot.definition.visualKick * (platform ? .6 : 1));
+    let bonus = (this.buff(id, 'ambush') ? .4 : 0) + (this.buff(id, 'hunt') ? .35 : 0)
+      + (this.buff(id, 'execute') && active?.definition.id === 'sn_focus' ? .45 : 0)
+      + (this.buff(id, 'dual') && gun.selectedSlot === 'secondary' ? .35 : 0);
+    if (this.buff(id, 'revenge') && (p.perkState.revengeShots ?? 0) > 0) { bonus += p.perkState.revengeBonus; p.perkState.revengeShots--; }
+    if ((p.perkState.armedShots ?? 0) > 0 && p.perkState.armedSlot === (gun.selectedSlot === 'primary' ? 0 : 1)) { bonus += .25; p.perkState.armedShots--; }
+    delete p.buffs.ambush; delete p.buffs.hunt; delete p.buffs.execute;
+    if (bonus > 0) this.perkFeedback(id, `强化射击 +${Math.round(bonus * 100)}%`);
+    if (platform) this.perkFeedback(id, '重火力平台');
     p.shots++; p.focusedReady = false; p.focusWait = 0; p.stillShots = Math.max(0, p.stillShots - 1);
     p.metrics.shots++; (p.weaponMetrics[shot.weaponId] ??= freshWeaponMetrics()).shots++;
     delete p.buffs.rollSpread; delete p.buffs.ghost;
@@ -381,7 +424,10 @@ export class GrowthBattleCoordinator {
       const head = hit.trace.hit?.type === 'unit' && hit.trace.hit.region === 'head', key = `${hit.structureId ? 'g' : 'a'}:${targetId}`;
       const group: PendingDamage = groups.get(key) ?? { targetId, sourceId: id, hp: 0, origin, weaponId: shot.weaponId, headshot: false,
         structure: !!hit.structureId, effects: [], shotSerial: p.shots, hitDistance: hit.distance };
-      const hp = pelletDamageHp(shot.definition, hit.distance, head);
+      const marked = this.buff(id, `mark:${targetId}`) ? .25 : 0;
+      const close = this.perk(id, 'as_close') && hit.distance <= 180 ? .2 : 0;
+      const structureBonus = hit.structureId && this.perk(id, 'sn_pierce') ? 1 : 0;
+      const hp = pelletDamageHp(shot.definition, hit.distance, head) * (1 + bonus + marked + close + structureBonus);
       if (hit.structureId) {
         const entity = entities.find(e => e.id === hit.structureId)!, ledger = this.coverSupport[entity.id];
         if (entity.gadgetId === 'tk_cover' && entity.team !== a.team && ledger) {
@@ -433,15 +479,30 @@ export class GrowthBattleCoordinator {
     const shield = cast?.definition.id === 'tk_shield' ? { budget: cast.shieldBudget, reduction: cast.definition.reduction, facing: Math.cos(angle) >= .5 } : undefined;
     const defense = resolveIncomingDamage({ hp: event.hp, tick: this.tick, armor: p.armor, environment: !source,
       spawnProtected: !!source && target.life.spawnProtectionFrames > 0, shield,
+      armorBypass: source && event.weaponId && this.perk(source.id, 'sn_pierce') ? .6 : 0,
+      additiveReduction: this.linkReduction(id),
       personalReductions: [cast?.definition.id === 'tk_barrier' ? cast.definition.reduction : 0,
         this.has(id, 'tk_C1') && target.movement.crouching && !target.movement.jumping && Math.abs(target.movement.vx) < .1 ? .15 : 0,
         event.explosion && this.has(id, 'tk_C3') ? .25 : 0, event.explosion && this.perk(id, 'pk_blast') ? .1 : 0,
         this.perk(id, 'pk_reloadguard') && this.gun(id).current.reloadUntil > this.tick ? .1 : 0] });
+    if (enemy && cast) {
+      p.perkState.tankTaken = (p.perkState.tankTaken ?? 0) + defense.shield + defense.personal + defense.armor + Math.min(healthUnits(target.life.health), defense.life);
+      p.perkState.tankBlocked = (p.perkState.tankBlocked ?? 0) + defense.shield + defense.personal;
+    }
     if (shield && cast) cast.shieldBudget = shield.budget;
     if(defense.armor>0)this.armorEvent(id,'damage');
     if (enemy) this.abilities.onAbsorbed(id, defense.shield + defense.personal, this.tick);
     const before = healthUnits(target.life.health), amount = Math.min(before, defense.life);
     target.life.health = (before - amount) / 1000;
+    if (enemy && event.weaponId && amount + defense.armor > 0) {
+      const attacker = this.participant(source!.id);
+      if (this.perk(source!.id, 'sn_mark')) attacker.buffs[`mark:${id}`] = this.tick + 120;
+      if (this.perk(source!.id, 'as_close') && (event.hitDistance ?? Infinity) <= 180) this.slow(id, .15, 24);
+      if (event.headshot && this.perk(source!.id, 'sn_execute') && !attacker.perkState.focusReset) {
+        const focus = this.abilities.actorState(source!.id).active;
+        if (focus?.definition.id === 'sn_focus') { attacker.buffs.execute = focus.endTick; attacker.perkState.focusReset = 1; }
+      }
+    }
     if (amount > 0) {
       if (enemy) {
         p.lastDamage = this.tick; p.attackers[source!.id] = this.tick; p.contributions.healable += amount;
@@ -469,7 +530,7 @@ export class GrowthBattleCoordinator {
       target.life.alive = false; target.life.deaths++; target.life.respawnFrames = 150; target.life.spawnProtectionFrames = 0; p.deathTick = this.tick;
       this.abilities.onDeath(id, this.tick); this.gadgets.cancelCast(id); this.gun(id).interrupt();
       const armorAtDeath=p.armor.remaining;p.armor = newArmor();if(armorAtDeath>0)this.armorEvent(id,'death');
-      p.buffs = {}; p.slowUntil = p.slowScale = p.slowResistUntil = 0;
+      p.buffs = {}; p.perkState = {}; p.slowUntil = p.slowScale = p.slowResistUntil = 0;
       p.stationary = p.braceTicks = p.focusWait = p.stillShots = 0; p.focusedReady = false; p.contributions.healable = 0;
       p.killStreak = p.headStreak = 0;
       p.recoil = newGrowthRecoil();
@@ -489,6 +550,7 @@ export class GrowthBattleCoordinator {
   private heal(sourceId: string, targetId: string, requested: number, castId?: string, committedCast?: ActiveAbility) {
     const target = this.actor(targetId), source = this.actor(sourceId), p = this.participant(sourceId), t = this.participant(targetId);
     if (!target.life.alive || target.team !== source.team) return 0;
+    const eligible = Math.min(requested, healthUnits(target.life.maxHealth) - healthUnits(target.life.health), t.contributions.healable);
     const amount = Math.min(requested, healthUnits(target.life.maxHealth) - healthUnits(target.life.health));
     if (amount <= 0) return 0;
     target.life.health = (healthUnits(target.life.health) + amount) / 1000;
@@ -518,12 +580,47 @@ export class GrowthBattleCoordinator {
       if (ultimate) { this.giveArmor(targetId,15,90,sourceId); t.cooldowns.lifeline = this.tick + 600; }
       if (evolution) { if (!ultimate) this.giveArmor(targetId,10,60,sourceId); t.cooldowns.pulseArmor = this.tick + 300; }
     }
+    if (source.life.alive && eligible > 0) {
+      if (cast?.definition.id === 'md_pulse' && this.perk(sourceId, 'md_emergency') && requested > amount)
+        this.giveArmor(targetId, Math.min(30, (requested - amount) / 1000), 150, sourceId);
+      if (sourceId !== targetId) {
+        if (this.perk(sourceId, 'md_adrenaline')) { p.buffs.adrenaline = t.buffs.adrenaline = this.tick + 120; this.perkFeedback(sourceId, '肾上腺素 · 双人强化'); }
+        if (this.perk(sourceId, 'md_together')) t.buffs[`healedBy:${sourceId}`] = this.tick + 150;
+        if (this.perk(sourceId, 'md_armed')) {
+          p.perkState.armedHealing = (p.perkState.armedHealing ?? 0) + eligible;
+          if (p.perkState.armedHealing >= 40000) {
+            p.perkState.armedHealing %= 40000; p.perkState.armedShots = 8;
+            p.perkState.armedSlot = this.gun(sourceId).selectedSlot === 'primary' ? 0 : 1;
+            this.giveArmor(sourceId, 25, 150, sourceId); this.perkFeedback(sourceId, '武装医护 · 强化8发');
+          }
+        }
+        if (castId && this.perk(sourceId, 'md_cycle')) {
+          p.perkState.cycleHealing = (p.perkState.cycleHealing ?? 0) + eligible;
+          while (p.perkState.cycleHealing >= 40000 && (p.perkState.cycleRefund ?? 0) < 3) {
+            p.perkState.cycleHealing -= 40000; p.perkState.cycleRefund = (p.perkState.cycleRefund ?? 0) + 1; this.perkRefund(sourceId, .2);
+          }
+        }
+      }
+    }
     return amount;
   }
   private finishAbilities() {
     for (const { id, cast, reason } of this.finished.splice(0)) {
       const a = this.actor(id), p = this.participant(id);
-      if (!a.life.alive || reason !== 'expired') continue;
+      if (!a.life.alive || reason === 'death') continue;
+      p.perkState.cardRefund = cast.refundUsed;
+      if (this.perk(id, 'as_reset')) p.buffs.resetKill = this.tick + 120;
+      if (this.perk(id, 'as_ambush')) { p.buffs.ambush = p.buffs.ambushReload = this.tick + 90; }
+      if (this.perk(id, 'as_fullrush')) p.buffs.fullrush = this.tick + 90;
+      if (this.perk(id, 'sn_hunt')) p.buffs.hunt = this.tick + 90;
+      if (this.perk(id, 'tk_siege')) this.giveArmor(id, 40, 120, id);
+      if (this.perk(id, 'tk_recycle') && (p.perkState.tankTaken ?? 0) >= 100000) this.perkRefund(id, .5);
+      if (this.perk(id, 'tk_revenge') && (p.perkState.tankBlocked ?? 0) > 0) {
+        p.buffs.revenge = this.tick + 120; p.perkState.revengeShots = 5;
+        p.perkState.revengeBonus = Math.min(.4, p.perkState.tankBlocked / 100000 * .4);
+        this.perkFeedback(id, '报复火力 · 反击就绪');
+      }
+      if (reason !== 'expired') continue;
       const has = (card: GrowthUpgradeId) => cast.selected.includes(card);
       if (cast.definition.id === 'as_roll' && has('as_A3')) p.buffs.rollSpread = this.tick + 30;
       if (cast.definition.id === 'as_reloadrush' && has('as_B3')) p.buffs.rushReload = this.tick + 90;
@@ -565,6 +662,19 @@ export class GrowthBattleCoordinator {
           if (context.weaponId) {
             const stat = p.weaponMetrics[context.weaponId]!; stat.magazineKills++; p.metrics.bestMagazineKills = Math.max(p.metrics.bestMagazineKills, stat.magazineKills);
             if (context.weaponId === p.loadout.secondary && this.gun(id).checkpoint().guns.primary.ammo === 0) p.metrics.sidearmKills++;
+          }
+          if (this.perk(id, 'as_blood')) { const healed = this.heal(id, id, 25000); this.giveArmor(id, 20, 120, id); this.perkFeedback(id, healed ? `嗜血前锋 +${healed / 1000}` : '嗜血前锋 · 护甲'); }
+          if (this.buff(id, 'resetKill')) { delete p.buffs.resetKill; this.perkRefund(id, .6); }
+          if (this.perk(id, 'sn_perfect') && context.headshot && this.ready(id, 'perfect')) {
+            this.perkRefund(id, .7); this.gun(id).transfer(1); p.cooldowns.perfect = this.tick + 120;
+          }
+          if (this.perk(id, 'sn_escape') && this.ready(id, 'escape')) {
+            this.giveArmor(id, 30, 90, id); p.buffs.escape = this.tick + 90; p.cooldowns.escape = this.tick + 180;
+          }
+          for (const medic of this.actors()) if (medic.life.alive && medic.team === source.team && this.perk(medic.id, 'md_together')
+            && this.buff(id, `healedBy:${medic.id}`) && this.ready(medic.id, 'together')) {
+            this.participant(medic.id).cooldowns.together = this.tick + 120;
+            this.heal(id, id, 20000); this.heal(medic.id, medic.id, 20000); this.perkFeedback(medic.id, '共同进攻 · 双人回血');
           }
           if (this.perk(id, 'pk_dressing') && source.life.health < source.life.maxHealth * .5 && this.ready(id, 'dressing')) {
             this.heal(id, id, 5000); p.cooldowns.dressing = this.tick + 300;
@@ -863,6 +973,10 @@ export class GrowthBattleCoordinator {
       abilityId: p.loadout.abilityId, gadgetId: p.loadout.gadgetId, weaponId: weapon.selectedId, slot: weapon.selectedSlot,
       charges: ability.charges, maxCharges: ability.maxCharges, casting: !!ability.pending || !!this.gadgets.inventory(id).cast,
       activeAbility: ability.active?.definition.id,
+      perkPower: ['ambush','hunt','execute','fullrush','adrenaline'].some(key => this.buff(id, key))
+        || this.buff(id, 'revenge') && (p.perkState.revengeShots ?? 0) > 0
+        || this.buff(id, 'dual') && weapon.selectedSlot === 'secondary'
+        || (p.perkState.armedShots ?? 0) > 0 && p.perkState.armedSlot === (weapon.selectedSlot === 'primary' ? 0 : 1),
       linkTargetId: ability.active?.definition.id === 'md_link' ? ability.active.targetId ?? undefined : undefined,
       flashScale: appearance.flashScale, magazine: appearance.magazine, healing: this.buff(id, 'healingFeedback'), contrast: appearance.contrast,
       recoilDegrees: (p.recoil.shot + p.recoil.hit) / 1000,
@@ -890,7 +1004,7 @@ export class GrowthBattleCoordinator {
     if (state.version !== 3 || ![2, 5].includes(state.stage) || state.participants.length !== battle.actors.length) throw Error('Invalid growth battle checkpoint');
     const runtime = new GrowthBattleCoordinator(battle, state.stage, ports);
     for (const participant of state.participants) {
-      runtime.actor(participant.id); validateGrowthLoadoutV3(participant.loadout, state.stage);
+      runtime.actor(participant.id); validateGrowthLoadoutV3(participant.loadout, state.stage, true);
       if (runtime.participants.has(participant.id)) throw Error('Duplicate growth participant');
       runtime.participants.set(participant.id, structuredClone(participant));
     }

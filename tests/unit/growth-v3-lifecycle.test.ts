@@ -1,16 +1,17 @@
+import { defaultGrowthLoadoutV3 } from '../../src/shared/content/growth-v3/Loadout';
 import { GROWTH_V3_GADGETS } from '../../src/shared/content/growth-v3/Gadgets';
 import { expect, it } from 'vitest';
 import { Room } from '../../src/shared/simulation/Room';
 import { MatchSession } from '../../src/shared/simulation/MatchSession';
 import { idleInput } from '../../src/game/campaign/Battle';
-import { defaultGrowthLoadoutV3, changeGrowthAbility, type GrowthLoadoutV3 } from '../../src/shared/content/growth-v3/Loadout';
+import {  changeGrowthAbility, type GrowthLoadoutV3 } from '../../src/shared/content/growth-v3/Loadout';
 import type { GrowthAbilityId } from '../../src/shared/content/growth-v3/Operators';
 import type { GrowthGadgetId } from '../../src/shared/content/growth-v3/Gadgets';
 import type { GrowthClassId } from '../../src/shared/content/growth-v3/Core';
 import type { PlayerAction } from '../../src/shared/protocol/Commands';
 import { awardGrowthV3 } from '../../src/shared/simulation/growth-v3/Progression';
 
-it.each([[450,12],[800,13]] as const)('actual healing catch-up at teammate XP %i awards %i but spends 12 base budget',(allyXp,expected)=>{
+it.each([[450,20],[800,22]] as const)('actual healing catch-up at teammate XP %i awards %i but spends 20 base budget',(allyXp,expected)=>{
   const f=fixture(defaultGrowthLoadoutV3('medic'),true),g=f.b.growthV3!;
   const ally=f.b.actors.find(a=>a.id!==f.b.player.id&&a.team===f.b.player.team)!;
   const enemy=f.b.actors.find(a=>a.team!==f.b.player.team)!;
@@ -22,8 +23,8 @@ it.each([[450,12],[800,13]] as const)('actual healing catch-up at teammate XP %i
   f.send('skill');f.step(3);
   const source=g.participant('player'),target=g.participant(ally.id);
   expect(source.progression.xp).toBe(expected);
-  expect(source.contributions).toMatchObject({healing:12,support:12});
-  expect(target.contributions.targetHealing).toBe(12);
+  expect(source.contributions).toMatchObject({healing:20,support:20});
+  expect(target.contributions.targetHealing).toBe(20);
 });
 
 // Independent specification baselines: id, class, cast, duration, cooldown, cancellable.
@@ -36,10 +37,10 @@ it('actual pulse credit survives recipient and healer death, reconnect and check
   f.b.damage(ally,40,enemy);
   f.send('skill');f.step(3);
   const source=g.participant('player'),target=g.participant(ally.id);
-  expect(source.contributions.healing).toBe(12);
-  expect(source.contributions.support).toBe(12);
-  expect(target.contributions.targetHealing).toBe(12);
-  expect(target.contributions.healingRemainders.player).toBe(1000);
+  expect(source.contributions.healing).toBe(20);
+  expect(source.contributions.support).toBe(20);
+  expect(target.contributions.targetHealing).toBe(20);
+  expect(target.contributions.healingRemainders.player).toBe(0);
   f.b.damage(ally,9999);f.b.damage(f.b.player,9999);
   expect(ally.life.alive).toBe(false);expect(f.b.player.life.alive).toBe(false);
   f.room.disconnect('owner');f.room.reconnect('owner');
@@ -47,10 +48,10 @@ it('actual pulse credit survives recipient and healer death, reconnect and check
   f.step(150);for(let i=0;i<150;i++)restored.tick();
   expect(restored.checkpoint()).toEqual(f.room.session!.checkpoint());
   expect(ally.life.alive).toBe(true);expect(f.b.player.life.alive).toBe(true);
-  expect(source.contributions).toMatchObject({healing:12,support:12,healable:0});
-  expect(target.contributions).toMatchObject({targetHealing:12,healable:0});
+  expect(source.contributions).toMatchObject({healing:20,support:20,healable:0});
+  expect(target.contributions).toMatchObject({targetHealing:20,healable:0});
   f.room.disconnect('teammate');f.room.reconnect('teammate');
-  expect(target.contributions.targetHealing).toBe(12);
+  expect(target.contributions.targetHealing).toBe(20);
 });
 
 const abilities: [GrowthAbilityId,GrowthClassId,number,number,number,boolean][] = [
@@ -156,7 +157,8 @@ it.each(abilities)('%s applies its active reload permission through the authorit
   gun.current.ammo=0;
   f.send('skill');f.step(cast);const before=gun.current.ammo;
   f.send('reload');
-  const locked=id==='tk_shield'||id==='md_link';
+  // Full-rush already filled the magazine; reload has no work to do.
+  const locked=id==='tk_shield'||id==='md_link'||id==='as_reloadrush';
   expect(gun.current.reloadUntil>f.b.frame).toBe(!locked);
   expect(gun.current.ammo).toBe(before);
   expect(f.b.growthV3!.abilities.actorState('player').active).not.toBeNull();

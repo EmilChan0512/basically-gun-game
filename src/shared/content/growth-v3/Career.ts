@@ -4,7 +4,7 @@ import { GROWTH_ACHIEVEMENTS, GROWTH_TRAITS, freshGrowthMetrics } from '../Growt
 import { assertRecord, GROWTH_CLASS_IDS, isClassId, type ContentStage, type GrowthClassId } from './Core';
 import { GROWTH_V3_STAGE } from './Core';
 import { GROWTH_V3_WEAPONS, growthPrimaryPool, isGrowthWeaponId, type GrowthWeaponId } from './Weapons';
-import { GROWTH_V3_PERKS, GROWTH_V3_PERK_GROUPS, DEFAULT_GROWTH_V3_PERKS, type GrowthPerkId } from './Perks';
+import { defaultClassPerks, validateGrowthPerks } from './Perks';
 import { defaultGrowthLoadoutV3, validateGrowthLoadoutV3, type GrowthLoadoutV3 } from './Loadout';
 import { validateAttachments, type GrowthAttachmentId } from './Attachments';
 import { defaultGrowthCards, legalGrowthCards, type GrowthCardId } from './Cards';
@@ -18,10 +18,6 @@ const CARD_MIGRATION: Record<GrowthClassId, Record<string, GrowthCardId>> = {
   tank: { brace:'tk_C1', blastPadding:'tk_C3', mobileCover:'tk_A1', emergencyPlate:'tk_A3', fieldRepair:'tk_G2', guardReload:'tk_C2', suppressiveGrip:'tk_C1', reserveDrill:'tk_C4' },
   sniper: { steadyAim:'sn_C1', relocate:'sn_A1', firstShot:'sn_C2', quickScope:'sn_A1', sidearmReady:'sn_C3', precisionCycle:'sn_A2', evasiveReload:'sn_C4', measuredReload:'sn_C4' },
   medic: { triage:'md_C1', widePulse:'md_A1', rapidAid:'md_A2', rescueSprint:'md_C2', sharedSupplies:'md_G1', clinicalGrip:'md_C3', aidReload:'md_C3', selfCare:'md_C4' },
-};
-const PERK_MIGRATION: Record<string, GrowthPerkId> = {
-  fieldDressing:'pk_dressing', preparedSidearm:'pk_sidefeed', steadyLanding:'pk_landing',
-  resourceful:'pk_supplyrun', cautiousReload:'pk_reloadguard', supplyRunner:'pk_supplyrun',
 };
 /** Only migration may default/repair loadout fields; live requests use strict validation. */
 export function migrateLegacyLoadout(value: unknown, stage: ContentStage): { loadout: GrowthLoadoutV3; notices: string[] } {
@@ -44,8 +40,7 @@ export function migrateLegacyLoadout(value: unknown, stage: ContentStage): { loa
   }
   for (const id of [...defaultGrowthCards(loadout.classId, loadout.abilityId), ...legal]) if (pool.length < 8 && !pool.includes(id)) pool.push(id);
   loadout.pool = pool;
-  const oldPerks = normalized.perks!.map(id => PERK_MIGRATION[id]).filter((id): id is GrowthPerkId => !!id);
-  loadout.perks = GROWTH_V3_PERK_GROUPS.map((group, index) => oldPerks.find(id => GROWTH_V3_PERKS[id].group === group) ?? DEFAULT_GROWTH_V3_PERKS[index]);
+  notices.push('旧通用Perk已归档，使用职业特化默认组合。');
   if (value.title === 'none' || typeof value.title === 'string' && Object.hasOwn(GROWTH_ACHIEVEMENTS, value.title)) loadout.title = value.title as GrowthLoadoutV3['title'];
   if (value.evolutions) notices.push('旧进化开关已归档，新竞技进化统一开放。');
   return { loadout: validateGrowthLoadoutV3(loadout, stage), notices };
@@ -83,7 +78,18 @@ export function validateGrowthCareerV3(value: unknown): asserts value is GrowthC
 }
 export function migrateGrowthCareerV3(value: unknown, stage: ContentStage = 5): GrowthCareerV3 {
   assertRecord(value, 'growth career');
-  if (value.version === 3) { validateGrowthCareerV3(value); return structuredClone(value); }
+  if (value.version === 3) {
+    const next = structuredClone(value);
+    if (Array.isArray(next.loadouts) && Array.isArray(next.legacyLoadoutArchive)) next.loadouts.forEach((item, slot) => {
+      if (!item || !isClassId(item.classId) || !Array.isArray(item.perks)) return;
+      if (item.perks.some((id: string) => id.startsWith('pk_'))) {
+        validateGrowthPerks(item.perks);
+        (next.legacyLoadoutArchive as GrowthCareerV3['legacyLoadoutArchive']).push({ slot, original: structuredClone(item), notices: ['通用Perk已迁移为职业特化组合。'] });
+        item.perks = defaultClassPerks(item.classId, item.abilityId);
+      }
+    });
+    validateGrowthCareerV3(next); return next;
+  }
   if (value.version !== 1 && value.version !== 2) throw Error('Unsupported growth schema');
   const legacy = migrateGrowthCareer(value); // Validates the actual released schema before converting it.
   const converted = legacy.loadouts.map(item => migrateLegacyLoadout(item, stage));

@@ -1,7 +1,7 @@
 import type { WeaponId } from '../../game/combat/Combat';
 export const GROWTH_COMBAT_EVENT_KINDS = ['abilityStart','abilityEnd','gadgetReleased',
   'deployableCreated','deployableDamaged','deployableDestroyed','intercept',
-  'smokeStarted','smokeEnded','intelPing','heal','armorChanged'] as const;
+  'smokeStarted','smokeEnded','intelPing','heal','armorChanged','perkTriggered'] as const;
 export type GrowthCombatEventKind = typeof GROWTH_COMBAT_EVENT_KINDS[number];
 export type SimulationEvent = { id: number; tick: number;
   kind: 'shot' | 'damage' | 'death' | 'result' | 'objective-pickup' | 'objective-delivery' | 'objective-return'

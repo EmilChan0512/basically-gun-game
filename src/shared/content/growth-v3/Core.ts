@@ -16,7 +16,7 @@ export const GROWTH_V3_RULES = {
   spawnExclusionRadius: 120, objectiveExclusionRadius: 60,
   throwSpeed: 13, throwLift: 5, throwGravity: .5, throwRadius: 2, maxThrowStep: 2,
   bulletStep: 2, healthUnits: 1000, primaryAttachments: 3, secondaryAttachments: 1,
-  armorCap: 25, personalReductionCap: .4, combinedReductionCap: .75,
+  armorCap: 40, personalReductionCap: .65, combinedReductionCap: .65,
   speedBuffCap: .2, slowCap: .25, slowResistanceTicks: 45,
   reloadFloor: .6, firstShotTicks: 30, defaultNoiseRadius: 600, defaultRadarTicks: 60,
 } as const;

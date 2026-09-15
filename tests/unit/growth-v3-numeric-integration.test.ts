@@ -1,6 +1,7 @@
+import { defaultGrowthLoadoutV3 } from '../helpers/legacyGrowthLoadout';
 import { expect, it } from 'vitest';
 import { GrowthRangeSession } from '../../src/client/session/GrowthRangeSession';
-import { defaultGrowthLoadoutV3, changeGrowthAbility } from '../../src/shared/content/growth-v3/Loadout';
+import {  changeGrowthAbility } from '../../src/shared/content/growth-v3/Loadout';
 import { awardGrowthV3 } from '../../src/shared/simulation/growth-v3/Progression';
 import { Battle, idleInput, seededRandom } from '../../src/game/campaign/Battle';
 import { grantArmor } from '../../src/shared/simulation/growth-v3/DamageRules';
@@ -298,11 +299,11 @@ it('legal shield, crouched support card and self-applied armor resolve front, re
   const shield=b.growthV3!.abilities.actorState('player').active!;
   expect(shield.definition.id).toBe('tk_shield');expect(shield.shieldBudget).toBe(120000);
   b.damage(b.player,100,b.actors[1]);
-  expect(shield.shieldBudget).toBe(55000);expect(p.armor.remaining).toBe(0);expect(b.player.life.health).toBe(100.25);
+  expect(shield.shieldBudget).toBe(55000);expect(p.armor.remaining).toBe(0);expect(b.player.life.health).toBe(95);
   b.actors[1].movement.reset(40,499.5);b.damage(b.player,20,b.actors[1]);
-  expect(shield.shieldBudget).toBe(55000);expect(b.player.life.health).toBe(83.25);
+  expect(shield.shieldBudget).toBe(55000);expect(b.player.life.health).toBe(78);
   b.actors[1].movement.reset(300,499.5);b.damage(b.player,100,b.actors[1]);
-  expect(shield.shieldBudget).toBe(0);expect(b.player.life.health).toBe(45);
+  expect(shield.shieldBudget).toBe(0);expect(b.player.life.health).toBe(39.75);
   expect(b.growthV3!.abilities.actorState('player').active).toBeNull();
 });
 

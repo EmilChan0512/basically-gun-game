@@ -3,7 +3,7 @@ import { OnlineScene } from './online';
 import { OfflineGrowthSession } from './client/session/OfflineGrowthSession';
 import { GrowthCareerPanel } from './client/presentation/GrowthCareerPanel';
 import { GrowthMatchView } from './client/presentation/GrowthMatchView';
-import { freshGrowthCareerV3, ownedGrowthLoadoutV3 } from './shared/content/growth-v3/Career';
+import { freshGrowthCareerV3, ownedGrowthLoadoutV3, migrateGrowthCareerV3 } from './shared/content/growth-v3/Career';
 import { MAPS } from './shared/content/Maps';
 import { validateGrowthPreset } from './shared/content/growth-v3/Presets';
 import { installCombatMotionControl } from './client/presentation/CombatMotion';
@@ -15,7 +15,15 @@ export function startOfflineGrowth(laboratory = false) {
   let storageNote = '';
   try {
     const saved = localStorage.getItem(storageKey);
-    if (saved) career.loadouts[0] = ownedGrowthLoadoutV3(career, JSON.parse(saved));
+    if (saved) {
+      const original = JSON.parse(saved), migrated = migrateGrowthCareerV3({ ...career, loadouts: [original] });
+      career.loadouts[0] = ownedGrowthLoadoutV3(career, migrated.loadouts[0]);
+      if (migrated.legacyLoadoutArchive.length) {
+        if (!localStorage.getItem(`${storageKey}.perk-archive`)) localStorage.setItem(`${storageKey}.perk-archive`, saved);
+        localStorage.setItem(storageKey, JSON.stringify(career.loadouts[0]));
+        storageNote = '本机配装已升级为职业专属Perk，武器与改装已保留。';
+      }
+    }
   } catch { storageNote = '本机旧配装无法读取，已使用默认配装；可重新选择后保存。'; }
   document.body.innerHTML = `<main class="online-app"><header class="online-header"><a class="online-brand" href="/?offline&growth">PROJECT STRIKE · 离线成长训练</a><nav><a href="/?offline">单人战役</a><a href="/?online">联机大厅</a></nav></header><section id="offline-setup"><h1>四干员 · 4v4机器人训练</h1><p>你与三名机器人队友对抗四名机器人。无需登录；局内成长使用正式规则，训练不计入联网账号资产。</p><div class="loadout"><label>地图<select id="offline-growth-map">${MAPS.filter(m => m.modes.includes('tdm')).map(m => `<option value="${m.id}">${m.name}</option>`).join('')}</select></label><label>模式<select id="offline-growth-mode"><option value="tdm">团队交火</option><option value="dom">据点争夺</option><option value="ctf">公文包争夺</option></select></label><label>对局时长<select id="offline-growth-preset"><option value="standard">15分钟标准 · 第12分钟觉醒</option><option value="short">10分钟实验 · 第7分钟觉醒</option></select></label><button id="offline-growth-start">使用已保存配装开始训练</button></div><p id="offline-growth-notice" role="status"></p></section><section id="online-preflight"><div id="growth-career-content"></div></section><div id="growth-session-controls" hidden><button id="offline-growth-leave">结束训练 / 返回配装</button><button id="offline-growth-pause">暂停训练</button><span id="offline-growth-status" role="status"></span></div><div id="online-game" hidden><section id="growth-panel" hidden aria-label="局内成长"></section></div></main>`;
   const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;

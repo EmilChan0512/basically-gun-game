@@ -18,6 +18,8 @@ export interface DamageResolutionInput {
   /** Already grouped, including head/distance/type modifiers. HP, rounded once into internal mHP. */
   hp: number; tick: number; armor: ArmorState;
   environment?: boolean; spawnProtected?: boolean;
+  armorBypass?: number;
+  additiveReduction?: number;
   personalReductions?: readonly number[];
   shield?: { budget: number; reduction: number; facing: boolean };
 }
@@ -25,6 +27,8 @@ export function resolveIncomingDamage(input: DamageResolutionInput) {
   const { armor, tick } = input;
   if (!Number.isFinite(input.hp) || input.hp < 0 || !Number.isSafeInteger(tick) || tick < 0) throw Error('Invalid damage');
   const reductions = input.personalReductions ?? [];
+  if (input.armorBypass !== undefined && (!Number.isFinite(input.armorBypass) || input.armorBypass < 0 || input.armorBypass > 1)
+    || input.additiveReduction !== undefined && (!Number.isFinite(input.additiveReduction) || input.additiveReduction < 0 || input.additiveReduction > 1)) throw Error('Invalid damage modifier');
   if (reductions.some(n => !Number.isFinite(n) || n < 0 || n > 1)) throw Error('Invalid reduction');
   expireArmor(armor, tick);
   const damage = healthUnits(input.hp);
@@ -32,14 +36,14 @@ export function resolveIncomingDamage(input: DamageResolutionInput) {
   if (input.environment) return { life: damage, shield: 0, personal: 0, armor: 0 };
   const shield = input.shield;
   if (shield && (!Number.isSafeInteger(shield.budget) || shield.budget < 0 || !Number.isFinite(shield.reduction) || shield.reduction < 0 || shield.reduction > .75)) throw Error('Invalid shield');
-  const shieldBlocked = shield?.facing ? Math.min(damage * shield.reduction, shield.budget) : 0;
-  const rate = clamp(Math.max(0, ...reductions), 0, GROWTH_V3_RULES.personalReductionCap);
+  const shieldBlocked = shield?.facing ? Math.min(damage * shield.reduction, damage * GROWTH_V3_RULES.combinedReductionCap, shield.budget) : 0;
+  const rate = clamp(reductions.reduce((sum, value) => sum + value, 0) + (input.additiveReduction ?? 0), 0, GROWTH_V3_RULES.personalReductionCap);
   const personalBlocked = Math.min((damage - shieldBlocked) * rate, damage * GROWTH_V3_RULES.combinedReductionCap - shieldBlocked);
   const afterReduction = Math.round(damage - shieldBlocked - personalBlocked);
   // Budget and armor remain integers. Rounding is centralized here, never at each multiplier.
   const shieldUnits = Math.round(shieldBlocked);
   if (shield) shield.budget -= shieldUnits;
-  const armorBlocked = Math.min(armor.remaining, afterReduction); armor.remaining -= armorBlocked;
+  const armorBlocked = Math.min(armor.remaining, Math.round(afterReduction * (1 - (input.armorBypass ?? 0)))); armor.remaining -= armorBlocked;
   return { life: afterReduction - armorBlocked, shield: shieldUnits, personal: damage - shieldUnits - afterReduction, armor: armorBlocked };
 }
 export function radialDamage(max: number, min: number, radius: number, distance: number) {

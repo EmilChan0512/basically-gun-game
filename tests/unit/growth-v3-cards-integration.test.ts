@@ -1,6 +1,7 @@
+import { defaultGrowthLoadoutV3 } from '../helpers/legacyGrowthLoadout';
 import { expect, it } from 'vitest';
 import { GrowthRangeSession } from '../../src/client/session/GrowthRangeSession';
-import { defaultGrowthLoadoutV3, changeGrowthAbility } from '../../src/shared/content/growth-v3/Loadout';
+import {  changeGrowthAbility } from '../../src/shared/content/growth-v3/Loadout';
 import { legalGrowthCards, type GrowthCardId } from '../../src/shared/content/growth-v3/Cards';
 import type { GrowthClassId } from '../../src/shared/content/growth-v3/Core';
 import type { GrowthAbilityId } from '../../src/shared/content/growth-v3/Operators';
@@ -356,10 +357,10 @@ it.each([false,true])('md_C2 speed requires healing another teammate (other=%s)'
 
 it.each([
   ['tk_C1',true,false,false,false,8.5],['tk_C1',false,false,false,false,10],
-  ['tk_C1',true,false,true,false,6.5],
+  ['tk_C1',true,false,true,false,5],
   ['tk_C3',false,true,false,false,7.5],['tk_C3',false,false,false,false,10],
-  ['tk_C3',false,true,false,true,7.5],['tk_C3',false,true,true,true,6.5],
-] as const)('%s crouch=%s explosion=%s barrier=%s blastPerk=%s uses strongest personal defense', (card,crouch,explosion,barrier,blast,damage)=>{
+  ['tk_C3',false,true,false,true,6.5],['tk_C3',false,true,true,true,3.5],
+] as const)('%s crouch=%s explosion=%s barrier=%s blastPerk=%s adds personal defense with a 65 percent cap', (card,crouch,explosion,barrier,blast,damage)=>{
   const f=fixture('tank',card,undefined,false,blast);
   if(barrier){f.b.useSkill();for(let i=0;i<4;i++)f.r.step({crouch});}
   else f.r.step({crouch});

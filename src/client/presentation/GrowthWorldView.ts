@@ -67,7 +67,13 @@ export function drawGrowthWorld(graphics: GrowthGraphics, state: StateMessage['s
 
 export function drawGrowthAbilities(graphics: GrowthGraphics, message: StateMessage, positions: ReadonlyMap<string, { x: number; y: number }>) {
   for (const actor of message.state.actors) {
-    if (!actor.life.alive || !actor.growthV3?.activeAbility) continue;
+    if (!actor.life.alive || !actor.growthV3) continue;
+    if (actor.growthV3.perkPower) {
+      const point = positions.get(actor.id) ?? actor;
+      const color = actor.growthV3.classId === 'medic' ? 0x80ffc0 : actor.growthV3.classId === 'tank' ? 0x8bdeff : 0xffd477;
+      graphics.lineStyle(3, color, .75).strokeCircle(point.x, point.y - 33, 30 + Math.sin(message.state.frame / 4) * 3);
+    }
+    if (!actor.growthV3.activeAbility) continue;
     const point = positions.get(actor.id) ?? actor, y = point.y - (actor.crouching ? 22 : 33);
     if (actor.growthV3.activeAbility === 'tk_shield') {
       const aim = message.poses.find(p => p.id === actor.id)?.aim;

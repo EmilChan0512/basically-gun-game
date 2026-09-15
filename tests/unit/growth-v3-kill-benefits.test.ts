@@ -1,7 +1,7 @@
+import { defaultGrowthLoadoutV3 } from '../helpers/legacyGrowthLoadout';
 import { expect, it } from 'vitest';
 import { Battle, idleInput, seededRandom } from '../../src/game/campaign/Battle';
 import { GrowthRangeSession } from '../../src/client/session/GrowthRangeSession';
-import { defaultGrowthLoadoutV3 } from '../../src/shared/content/growth-v3/Loadout';
 import { legalGrowthCards } from '../../src/shared/content/growth-v3/Cards';
 import { awardGrowthV3 } from '../../src/shared/simulation/growth-v3/Progression';
 

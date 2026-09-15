@@ -1,6 +1,7 @@
+import { defaultGrowthLoadoutV3 } from '../helpers/legacyGrowthLoadout';
 import { expect, it } from 'vitest';
 import { AbilitySimulation, type AbilityPort } from '../../src/shared/simulation/growth-v3/AbilitySimulation';
-import { defaultGrowthLoadoutV3, changeGrowthAbility } from '../../src/shared/content/growth-v3/Loadout';
+import {  changeGrowthAbility } from '../../src/shared/content/growth-v3/Loadout';
 import { newArmor } from '../../src/shared/simulation/growth-v3/DamageRules';
 import type { GadgetActor } from '../../src/shared/simulation/growth-v3/GadgetSimulation';
 import { chooseContinuousHeal, commitContinuousHeal, newContinuousHealTarget } from '../../src/shared/simulation/growth-v3/HealingRules';

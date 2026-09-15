@@ -18,6 +18,7 @@ export function ammoWarning(actor: FeedbackActor) {
 
 /** Presentation state only. Server ticks own life and respawn; hit effects never stack. */
 export class CombatFeedback {
+  private perkLabel = ''; private perkUntil = -1;
   private actionError = ''; private actionErrorUntil = -1;
   private scope = ''; private cursor = 0; private tick = 0;
   private hitUntil = -1; private suppressedUntil = -1; private deathTick = -1;
@@ -26,13 +27,14 @@ export class CombatFeedback {
   stage = ''; ammo = ''; killer = ''; cause = ''; observing = 0; noRevive = false;
   get hitStrength() { return Math.max(0, Math.min(1, (this.hitUntil - this.tick) / 8)); }
   get punch() { return this.hitStrength * 9; }
-  reset() { this.actionError = ''; this.actionErrorUntil = -1; this.scope = ''; this.cursor = 0; this.hitUntil = this.suppressedUntil = this.deathTick = -1; this.wasAlive = true; this.hits.clear(); this.observing = 0; this.canObserve = false; }
+  reset() { this.perkLabel = ''; this.perkUntil = -1; this.actionError = ''; this.actionErrorUntil = -1; this.scope = ''; this.cursor = 0; this.hitUntil = this.suppressedUntil = this.deathTick = -1; this.wasAlive = true; this.hits.clear(); this.observing = 0; this.canObserve = false; }
   accept(scope: string, tick: number, events: SimulationEvent[], self?: FeedbackActor, noRevive = false) {
     const newScope = this.scope !== scope;
     if (newScope) { this.reset(); this.scope = scope; this.cursor = Math.max(0, ...events.map(e => e.id)); }
     this.tick = tick;
     for (const [id, hit] of this.hits) if (hit.until <= tick) this.hits.delete(id);
     for (const event of events) if (event.id > this.cursor && tick - event.tick >= 0 && tick - event.tick <= 8) {
+      if (event.kind === 'perkTriggered' && event.actorId === self?.id) { this.perkLabel = event.cause ?? '职业特化触发'; this.perkUntil = event.tick + 60; }
       if (event.kind === 'error' && event.actorId === self?.id) {
         const messages: Record<string,string> = {
           no_charge:'次数已用尽',busy:'当前动作尚未结束',not_ready:'尚未冷却完成',
@@ -70,6 +72,7 @@ export class CombatFeedback {
       : self.life.health / self.maxHealth <= .3 && self.life.regenDelay > 0 ? '危险 · 生命低于 30%'
       : self.life.health < self.maxHealth && self.life.regenDelay === 0 ? '恢复中 · 保持掩护'
       : self.life.health / self.maxHealth <= .3 ? '危险 · 寻找补给' : '状态正常';
+    if (self && !this.dead && tick < this.perkUntil) this.stage = this.perkLabel;
     if (self && !this.dead && tick < this.actionErrorUntil) this.stage = this.actionError;
   }
   flinch(id: string) {

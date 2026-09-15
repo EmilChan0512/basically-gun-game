@@ -1,3 +1,4 @@
+import type { GrowthPerkId } from '../../content/growth-v3/Perks';
 import { GROWTH_V3_ABILITIES, type GrowthAbilityId } from '../../content/growth-v3/Operators';
 import type { GrowthClassId } from '../../content/growth-v3/Core';
 import { GROWTH_V3_CARDS, GROWTH_V3_EVOLUTIONS, legalGrowthCards, type GrowthUpgradeId } from '../../content/growth-v3/Cards';
@@ -12,7 +13,7 @@ export interface ResolvedAbility {
   pauseOnDamage: boolean; pauseTicks: number; refundPerHit: number; refundGap: number; refundCap: number;
 }
 /** All modifications are resolved once at cast commit; active casts retain their own snapshot. */
-export function resolveAbility(id: GrowthAbilityId, selected: readonly GrowthUpgradeId[]): ResolvedAbility {
+export function resolveAbility(id: GrowthAbilityId, selected: readonly GrowthUpgradeId[], perks: readonly GrowthPerkId[] = []): ResolvedAbility {
   const base = GROWTH_V3_ABILITIES[id], legal = legalGrowthCards(base.classId, id);
   const route = id.endsWith('roll') || id === 'tk_barrier' || id === 'sn_focus' || id === 'md_pulse' ? 'A' : 'B';
   for (const card of selected) {
@@ -74,6 +75,12 @@ export function resolveAbility(id: GrowthAbilityId, selected: readonly GrowthUpg
       d.fireLock = d.gadgetLock = d.duration;
       break;
   }
+  if (perks.includes('as_fullrush') && id === 'as_reloadrush') d.transfer = 1000000;
+  if (perks.includes('tk_fortress') && id === 'tk_barrier') { d.reduction += .2; d.speed = 1; }
+  if (perks.includes('tk_siege') && id === 'tk_shield') d.shieldBudget += 120;
+  if (perks.includes('sn_hunt') && id === 'sn_relocate') d.speed += .2;
+  if (perks.includes('md_emergency') && id === 'md_pulse') { d.heal += 25; d.selfHeal += 25; }
+  if (perks.includes('md_transfusion') && id === 'md_link') d.heal += 4;
   d.cooldown = Math.ceil(Math.max(cooldownBase * .75, cooldownBase + cooldownDelta));
   return d;
 }

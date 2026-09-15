@@ -1,13 +1,16 @@
+import { defaultGrowthLoadoutV3 } from '../../src/shared/content/growth-v3/Loadout';
 import { expect,it } from 'vitest';
 import { Battle, idleInput } from '../../src/game/campaign/Battle';
 import { Room } from '../../src/shared/simulation/Room';
-import { defaultGrowthLoadoutV3, changeGrowthAbility } from '../../src/shared/content/growth-v3/Loadout';
+import {  changeGrowthAbility } from '../../src/shared/content/growth-v3/Loadout';
 import type { GrowthClassId } from '../../src/shared/content/growth-v3/Core';
 import { grantArmor } from '../../src/shared/simulation/growth-v3/DamageRules';
 
 function fixture(classId:GrowthClassId,secondary:'usp'|'revolver'='usp',medicKit?:'link'|'station'){
   const room=new Room('operator-basics','signal','tdm',false,'growth');
   const build=medicKit==='link'?changeGrowthAbility(defaultGrowthLoadoutV3(classId),'md_link'):defaultGrowthLoadoutV3(classId);
+  // Isolate awakening kill healing from the optional blood-healing perk.
+  if(classId==='assault')build.perks[1]='as_close';
   build.secondary=secondary;if(medicKit==='station')build.gadgetId='md_station';
   room.join('client','Operator',undefined,build);
   for(let i=1;i<8;i++)room.join(`peer-${i}`,`Peer ${i}`,undefined,defaultGrowthLoadoutV3());
@@ -39,10 +42,10 @@ it.each(['link','station'] as const)('medical awakening applies from an actual %
   const aim={x:520,y:566.5};
   for(let i=0;i<first;i++)b.tickPlayers(new Map([[a.id,{...idleInput(),aim}]]));
   const p=r.participant(ally.id),until=p.armor.until,cooldown=p.cooldowns.lifeline;
-  expect(ally.life.health).toBe(kit==='link'?55:53);expect(p.armor.remaining).toBe(15000);
+  expect(ally.life.health).toBe(kit==='link'?59:53);expect(p.armor.remaining).toBe(15000);
   expect(until).toBe(b.frame+90);expect(cooldown).toBe(b.frame+600);
   for(let i=0;i<interval;i++)b.tickPlayers(new Map([[a.id,{...idleInput(),aim}]]));
-  expect(ally.life.health).toBe(kit==='link'?60:56);
+  expect(ally.life.health).toBe(kit==='link'?68:56);
   expect(p.armor.until).toBe(until);expect(p.cooldowns.lifeline).toBe(cooldown);
 });
 

@@ -1,6 +1,7 @@
+import { defaultGrowthLoadoutV3 } from '../helpers/legacyGrowthLoadout';
 import { expect,it } from 'vitest';
 import { Battle,idleInput,seededRandom } from '../../src/game/campaign/Battle';
-import { defaultGrowthLoadoutV3,changeGrowthAbility } from '../../src/shared/content/growth-v3/Loadout';
+import { changeGrowthAbility } from '../../src/shared/content/growth-v3/Loadout';
 import { grantArmor } from '../../src/shared/simulation/growth-v3/DamageRules';
 
 function fixture(ability:'md_pulse'|'md_link',wall=false,enemySmoke=false,allies=1){

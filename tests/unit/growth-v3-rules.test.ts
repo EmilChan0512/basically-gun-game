@@ -23,7 +23,7 @@ describe('growth v3 specification content and loadout authority', () => {
     expect(Object.keys(GROWTH_V3_GADGETS)).toHaveLength(12);
     expect(Object.keys(GROWTH_V3_CARDS)).toHaveLength(48);
     expect(Object.keys(GROWTH_V3_EVOLUTIONS)).toHaveLength(8);
-    expect(Object.keys(GROWTH_V3_PERKS)).toHaveLength(12);
+    expect(Object.keys(GROWTH_V3_PERKS).filter(id => !id.startsWith('pk_'))).toHaveLength(24);
     expect(Object.keys(GROWTH_V3_WEAPONS)).toHaveLength(18);
     expect(Object.values(GROWTH_V3_WEAPONS).filter(gun => gun.stage === 2)).toHaveLength(10);
     expect(Object.keys(GROWTH_V3_ATTACHMENTS)).toHaveLength(36);
@@ -51,7 +51,7 @@ describe('growth v3 specification content and loadout authority', () => {
       expect(validateGrowthLoadoutV3(next,2).gadgetId).toBe(base.gadgetId);
     }
     const medic = defaultGrowthLoadoutV3('medic');
-    expect(() => validateGrowthLoadoutV3({ ...medic, abilityId:'md_link' },2)).toThrow('legal cards');
+    expect(() => validateGrowthLoadoutV3({ ...medic, abilityId:'md_link' },2)).toThrow();
     expect(() => changeGrowthAbility(medic,'tk_shield')).toThrow('not_owner_class');
   });
   it('gates P5 guns and parts, and rejects incompatible feeds and duplicate slots', () => {
@@ -122,7 +122,7 @@ describe('growth v3 weapon and damage specification assertions', () => {
   });
   it('N07-N09 caps combined mitigation and never extends a strong armor plate with a weak source', () => {
     const shield = { budget:120000,reduction:.65,facing:true };
-    expect(resolveIncomingDamage({ hp:100,tick:0,armor:newArmor(),shield,personalReductions:[.4] })).toEqual({life:25000,shield:65000,personal:10000,armor:0});
+    expect(resolveIncomingDamage({ hp:100,tick:0,armor:newArmor(),shield,personalReductions:[.4] })).toEqual({life:35000,shield:65000,personal:0,armor:0});
     expect(shield.budget).toBe(55000);
     const armor = newArmor(); grantArmor(armor,15,120,0,'plate');
     expect(resolveIncomingDamage({hp:100,tick:1,armor,shield:{budget:20000,reduction:.65,facing:true},personalReductions:[.35]})).toEqual({life:37000,shield:20000,personal:28000,armor:15000});

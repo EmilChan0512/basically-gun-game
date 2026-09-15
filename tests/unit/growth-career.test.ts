@@ -79,7 +79,7 @@ it('settles growth atomically once, unlocks slots while combat choices stay equa
     expect(once.credits).toBe(account.profile.credits); expect(once.classes).toEqual(account.profile.classes);
     store.settleGrowth('round2', [reward]); store.settleGrowth('round3', [reward]);
     expect(growthSlots(store.profile(id).growth!.xp)).toBe(3);
-    locked.title = 'none'; locked.perks[0] = 'pk_supplyrun';
+    locked.title = 'none'; locked.perks[1] = 'as_close';
     store.saveGrowth(id, 2, locked);
     const reopened = new OnlineAccounts(file); reopened.settleGrowth('round1', [reward]);
     expect(reopened.profile(id)).toEqual(store.profile(id));

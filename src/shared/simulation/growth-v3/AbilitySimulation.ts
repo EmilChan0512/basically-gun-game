@@ -49,7 +49,7 @@ export class AbilitySimulation {
     if(!state||!Number.isSafeInteger(state.serial)||state.serial<0||!Number.isSafeInteger(state.lastTick)||state.lastTick< -1)throw Error('Invalid ability checkpoint');
     const sim=new AbilitySimulation(world);
     for(const a of state.actors) {
-      sim.register(a.id,a.loadout);resolveAbility(a.loadout.abilityId,a.selected);
+      sim.register(a.id,a.loadout);resolveAbility(a.loadout.abilityId,a.selected,a.loadout.perks);
       if(![1,2].includes(a.maxCharges)||!Number.isSafeInteger(a.charges)||a.charges<0||a.charges>a.maxCharges||a.charges+a.queue.length!==a.maxCharges
         ||a.queue.some((tick,index)=>!Number.isSafeInteger(tick)||tick<0||index>0&&tick<=a.queue[index-1]))throw Error('Invalid charge queue');
     }
@@ -57,7 +57,7 @@ export class AbilitySimulation {
   }
   private refresh(s:AbilityActorState,tick:number) { while(s.queue.length&&tick>=s.queue[0]){s.queue.shift();s.charges++;} }
   updateBuild(id:string,selected:readonly GrowthUpgradeId[],tick:number) {
-    const s=this.actorState(id);this.refresh(s,tick);const next=resolveAbility(s.loadout.abilityId,selected);
+    const s=this.actorState(id);this.refresh(s,tick);const next=resolveAbility(s.loadout.abilityId,selected,s.loadout.perks);
     if(next.maxCharges>s.maxCharges) {
       // Evolution never refreshes a cooling-down charge or changes an already active cast.
       if(s.charges>0)s.queue.push(tick+next.cooldown);
@@ -85,7 +85,7 @@ export class AbilitySimulation {
       this.finish(s,'cancelled',tick);return true;
     }
     if(s.charges===0||tick<s.useReadyTick)return this.reject(id,'not_ready');
-    const def=resolveAbility(s.loadout.abilityId,s.selected);
+    const def=resolveAbility(s.loadout.abilityId,s.selected,s.loadout.perks);
     if(def.id==='md_pulse'&&!this.pulseTargets(actor,def).length)return this.reject(id,'no_effect');
     const target=def.id==='md_link'?this.linkTarget(actor,def,aim):undefined;
     if(def.id==='md_link'&&!target)return this.reject(id,'no_effect');
@@ -125,7 +125,7 @@ export class AbilitySimulation {
   private refund(s:AbilityActorState,tick:number) {
     const cast=s.active;if(!cast||!cast.definition.refundPerHit||tick<cast.refundReady||cast.refundUsed>=cast.definition.refundCap||!s.queue.length)return;
     const amount=Math.min(cast.definition.refundPerHit,cast.definition.refundCap-cast.refundUsed), before=s.queue[0];
-    s.queue[0]=Math.max(cast.startTick+Math.ceil(cast.definition.cooldown*.5),s.queue[0]-amount);
+    s.queue[0]=Math.min(before,Math.max(cast.startTick+Math.ceil(cast.definition.cooldown*.5),s.queue[0]-amount));
     const difference=before-s.queue[0];
     for(let i=1;i<s.queue.length;i++)s.queue[i]-=difference;
     cast.refundUsed+=difference;cast.refundReady=tick+cast.definition.refundGap;
