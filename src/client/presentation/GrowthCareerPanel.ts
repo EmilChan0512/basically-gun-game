@@ -27,6 +27,7 @@ const whenNames = { always:'', moving:'移动时', stationary:'静止时', first
 
 export class GrowthCareerPanel {
   private signature = ''; private draft = defaultGrowthLoadoutV3(); private slot = 0; private pending = false; private status = '';
+  private rangeActive = false;
   private tab = 'weapons'; private smithSlot: 'primary' | 'secondary' | null = null;
   private room?: { id:string; loadout:GrowthLoadoutV3 }; private submitted = '';
   constructor(private root: HTMLElement, private send: (message: object) => void, private local = false) {}
@@ -45,7 +46,15 @@ export class GrowthCareerPanel {
     if (hidden) return;
     const signature = JSON.stringify([career, room]); if (signature === this.signature) return;
     this.signature = signature; this.room = room; this.slot = career.selectedSlot;
+    if (this.rangeActive) return;
     this.draft = structuredClone(room?.loadout ?? career.loadouts[this.slot]); this.draw(career);
+  }
+  private openRange(career: GrowthCareerV3, slot: 'primary'|'secondary') {
+    this.rangeActive = true;
+    this.root.replaceChildren(growthRangeView(structuredClone(this.draft),slot,()=>{
+      this.rangeActive = false; this.draw(career);
+    }));
+    this.root.scrollIntoView({block:'start'});
   }
   private draw(career: GrowthCareerV3) {
     this.root.replaceChildren(); this.root.className = 'visual-armory growth-armory growth-armory-v3';
@@ -88,7 +97,7 @@ export class GrowthCareerPanel {
         node('p', '非空 / 空仓换弹 ' + growthReloadTicks(id, parts, false) + ' / ' + growthReloadTicks(id, parts, true) + ' tick · 切入 ' + Math.ceil(resolved.prepare) + ' tick'),
         node('p', '有效射程 ' + Math.round(resolved.falloffStart) + ' px · 最远 ' + Math.round(resolved.maxRange) + ' px · 散布 ±' + resolved.spread.toFixed(2) + '° · 持枪移速 ×' + resolved.speedScale.toFixed(2)));
       const range=button('进入实弹靶场 →',()=>{
-        this.root.replaceChildren(growthRangeView(structuredClone(this.draft),slot,()=>this.draw(career)));
+        this.openRange(career,slot);
       });range.id='growth-open-range';
       inventory.append(preview, button('移除全部配件', () => { this.draft.attachments[slot] = []; dirty(); }),range);
       const grid = node('div', '', 'growth-weapon-grid');
@@ -133,8 +142,8 @@ export class GrowthCareerPanel {
         const g = GROWTH_V3_GADGETS[id], pick = button('', () => { this.draft.gadgetId = id; dirty(); }, id === this.draft.gadgetId);
         pick.dataset.growthGadget = id; pick.className = 'growth-option-card';
         const symbol=node('span');symbol.innerHTML=growthIcon(id);pick.append(symbol);
-        pick.append(node('strong', g.name), node('span', '每局 ' + g.charges + '份 · 前摇 ' + (g.cast / 30).toFixed(2) + '秒' + (g.radius ? ' · 范围 ' + g.radius + 'px' : '')),
-          node('small', (g.damageMax ? '对人 ' + g.damageMax + '—' + g.damageMin + '伤害；' : '') + (g.health ? g.health + '耐久；' : '') + (g.duration ? '持续 ' + g.duration / 30 + '秒；' : '') + '死亡、重连和弹药补给不补回。'),
+        pick.append(node('strong', g.name), node('span', '最多储备 ' + g.charges + '次 · 前摇 ' + (g.cast / 30).toFixed(2) + '秒' + (g.radius ? ' · 范围 ' + g.radius + 'px' : '')),
+          node('small', (g.damageMax ? '对人 ' + g.damageMax + '—' + g.damageMin + '伤害；' : '') + (g.health ? g.health + '耐久；' : '') + (g.duration ? '持续 ' + g.duration / 30 + '秒；' : '') + '使用后按冷却恢复次数，死亡、重连不重置冷却。'),
           node('small', growthGadgetDescription(id))); inventory.append(pick);
       }
       const awakening=node('p', '', 'growth-awakening-preview');awakening.innerHTML=growthIcon(definition.ultimate);
@@ -170,6 +179,13 @@ export class GrowthCareerPanel {
       this.draw(career); this.send(this.room ? { type:'growthEquip', loadout } : { type:'growthSave', slot:this.slot, loadout });
     });
     save.id = 'growth-career-save'; save.disabled = this.pending || !this.valid();
+    const trials = node('div', '', 'growth-range-entry');
+    trials.append(node('strong','改完就试：使用当前配装草稿，无需先保存'));
+    for (const slot of (this.smithSlot ? [this.smithSlot] : ['primary','secondary'] as const)) {
+      const trial=button(`${slot==='primary'?'主武器':'副武器'}试射 · ${GROWTH_V3_WEAPONS[this.draft[slot]].name}`,()=>this.openRange(career,slot));
+      trial.dataset.growthTry=slot;trial.disabled=!this.valid();trials.append(trial);
+    }
+    footer.append(trials);
     footer.append(status, node('p', 'E、G和整套配装进入对局后锁定。账号等级仅解锁配装槽；战斗选项按当前装备池开放。'), save);
     if (!this.valid()) footer.append(node('p', '请保持成长池恰好八张、每类 Perk 一项，并检查配件数量。'));
     this.root.append(footer);

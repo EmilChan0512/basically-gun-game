@@ -1,3 +1,4 @@
+import { GROWTH_V3_ATTACHMENTS, resolveGrowthWeapon } from '../../shared/content/growth-v3/Attachments';
 import { GrowthRangeSession, type RangeTarget } from '../session/GrowthRangeSession';
 import type { GrowthLoadoutV3 } from '../../shared/content/growth-v3/Loadout';
 import { GROWTH_V3_WEAPONS } from '../../shared/content/growth-v3/Weapons';
@@ -8,6 +9,10 @@ import { combatMotion } from './CombatMotion';
 export function growthRangeView(loadout: GrowthLoadoutV3, slot: 'primary'|'secondary', back:()=>void) {
   const root=document.createElement('section');root.className='growth-range';root.setAttribute('aria-label','成长实弹靶场');
   root.innerHTML='<header><h2>实弹靶场</h2><button data-range-back>返回改装台</button></header><p>使用当前草稿试枪。鼠标按住射击，半自动需逐次点击；R换弹，Q切枪，S蹲伏，E技能，G专属道具。不会产生账号经验。</p><div class="growth-range-controls"><label>距离 <input data-range-distance type="number" min="60" max="1800" step="10" value="180"> px</label><label>靶标生命 <select data-range-health><option>90</option><option>95</option><option selected>100</option><option>115</option></select></label><label>护甲 <select data-range-armor><option selected>0</option><option>15</option><option>25</option></select></label><label>自动测试瞄点 <select data-range-aim><option value="body">胸部</option><option value="head">头部</option></select></label><button data-range-reset>重置靶标与弹药</button><button data-range-auto>自动连续测试</button></div><canvas width="1000" height="360" tabindex="0" aria-label="实弹射击区域"></canvas><output data-range-result aria-live="off"></output><p>TTK从首发到击杀计时，含未命中和换弹；单次固定种子测试不代表平均命中率。改变条件后会重置本次测试。</p>';
+  const equipped=document.createElement('p');equipped.dataset.rangeLoadout=loadout[slot];
+  const weapon=GROWTH_V3_WEAPONS[loadout[slot]],parts=loadout.attachments[slot],stats=resolveGrowthWeapon(loadout[slot],parts);
+  equipped.textContent=`当前试射：${weapon.name} · ${parts.length?parts.map(id=>GROWTH_V3_ATTACHMENTS[id].name).join(' / '):'原装无配件'} · 弹匣${stats.magazine}发。返回后保留所有改装，可继续调整或保存。`;
+  root.querySelector('header')!.after(equipped);
   const canvas=root.querySelector('canvas')!,ctx=canvas.getContext('2d')!,output=root.querySelector('output')!;
   const graphics=new CanvasGrowthGraphics(ctx);
   const distance=root.querySelector<HTMLInputElement>('[data-range-distance]')!,health=root.querySelector<HTMLSelectElement>('[data-range-health]')!,armor=root.querySelector<HTMLSelectElement>('[data-range-armor]')!,aimSelect=root.querySelector<HTMLSelectElement>('[data-range-aim]')!;
