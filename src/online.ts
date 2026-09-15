@@ -467,7 +467,7 @@ export class OnlineScene extends Phaser.Scene {
         label.setVisible(true).setPosition(position.x, position.y - (motion.crouching ? 72 : 92))
           .setText(`【${marker}】${name}`).setColor(friendly ? '#88e8df' : '#ff7777');
       }
-      this.rig.soldier(position.x, position.y, motion.crouching, motion.vx, motion.jumping, this.animationFrame, actor.id === message.actorId ? aim : pose.aim, actor.weapon, friendly ? 0x88e8df : 0xff7777, actor.life.alive, actor.reload, this.network.shots.visible(now).some(e => !e.reflected && e.actorId === actor.id), actor.offhand, actor.classId ?? 'medic', actor.id,
+      this.rig.soldier(position.x, position.y, motion.crouching, motion.vx, motion.jumping, this.animationFrame, actor.id === message.actorId ? aim : pose.aim, actor.weapon, friendly ? 0xd5f7f4 : 0xffcfcf, actor.life.alive, actor.reload, this.network.shots.visible(now).some(e => !e.reflected && e.actorId === actor.id), actor.offhand, actor.classId ?? 'medic', actor.id,
         isConcealed({ kit: actor.skill ? { skill: actor.skill } : null, skillFrames: actor.skillFrames, stealthFrames: actor.stealthFrames }), actor.growthV3 ? 0 : this.feedback.flinch(actor.id), actor.growthV3?.flashScale ?? 1,
         actor.growthV3 ? actor.growthV3.recoilDegrees * combatMotion.scale : undefined,
         !!self?.growthV3?.contrast && actor.team !== self.team && actor.life.alive);

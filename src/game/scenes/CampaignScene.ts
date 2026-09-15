@@ -114,7 +114,8 @@ export class CampaignScene extends Phaser.Scene {
   private soldier(actor: Actor) {
     const g = this.art, m = actor.movement, x = m.x, y = m.y;
     const color = actor.team === this.battle.player.team ? 0x88e8df : 0xff7777;
-    this.rig.soldier(x, y, m.crouching, m.vx, m.jumping, this.battle.frame, actor.aim, actor.arsenal.selected, color, actor.life.alive,
+    const bodyTint = actor.team === this.battle.player.team ? 0xd5f7f4 : 0xffcfcf;
+    this.rig.soldier(x, y, m.crouching, m.vx, m.jumping, this.battle.frame, actor.aim, actor.arsenal.selected, bodyTint, actor.life.alive,
       actor.arsenal.gun.reloadFrames, this.battle.effects.some(e => !e.reflected && e.actorId === actor.id && this.battle.frame - e.frame < 2), actor.offhand?.view(), actor.kit?.classId ?? 'medic', actor.id, isConcealed(actor), this.feedback.flinch(actor.id));
     if (!actor.life.alive) return;
     const h = m.crouching ? 44 : 66;
