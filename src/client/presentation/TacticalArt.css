@@ -1,0 +1,169 @@
+/* Local ComfyUI artwork. Source, editable workflows and rerolls: art/ui-kit/README.md.
+   CSS only lays out/slices the painted plates, renders text and signals interaction.
+   Frame centers are deliberately quiet so text stays readable at every size. */
+:root {
+  --art-button:url('/assets/ui-kit/v1/button.png');
+  --art-hover:url('/assets/ui-kit/v1/button-hover.png');
+  --art-pressed:url('/assets/ui-kit/v1/button-pressed.png');
+  --art-primary:url('/assets/ui-kit/v1/button-primary.png');
+  --art-disabled:url('/assets/ui-kit/v1/button-disabled.png');
+  --art-tab:url('/assets/ui-kit/v1/tab.png');
+  --art-tab-selected:url('/assets/ui-kit/v1/tab-selected.png');
+  --art-panel:url('/assets/ui-kit/v1/panel.png');
+  --art-dialog:url('/assets/ui-kit/v1/dialog.png');
+  --art-card:url('/assets/ui-kit/v1/card.png');
+  --art-card-selected:url('/assets/ui-kit/v1/card-selected.png');
+  --art-input:url('/assets/ui-kit/v1/input.png');
+  --art-vitals:url('/assets/ui-kit/v1/hud-vitals.png');
+  --art-score:url('/assets/ui-kit/v1/hud-score.png');
+  --art-notice:url('/assets/ui-kit/v1/notice.png');
+  --future-bg:#101722;--future-panel:#182230;--future-line:#576372;
+  --future-cyan:#95d6cf;--future-olive:#ddc58f;--future-muted:#aebbc7;
+}
+body {
+  background:linear-gradient(#0c152066,#0c1520bb),url('/assets/ui-kit/v1/command-room.png') center top/cover fixed;
+  color:#e4e9ec;
+}
+:is(.online-app,.campaign-app) {font-family:'Segoe UI','Microsoft YaHei',sans-serif}
+:is(.online-app,.campaign-app) :is(h1,h2,h3) {color:#eee9dc}
+:is(.online-app,.campaign-app) :is(.eyebrow,.arsenal-eyebrow) {color:#ddc58f;letter-spacing:2px}
+
+/* One painted button family in menus and combat overlays. */
+:is(.online-app,.campaign-app) button, #audio-settings button,
+:is(.online-header nav,.campaign-nav) a, .arsenal-back, #audio-settings summary {
+  --plate:var(--art-button);
+  background:none!important;
+  border:1px solid transparent!important;
+  border-image:var(--plate) 40 fill / 8px / 0 stretch!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  color:#e2e9e9!important;
+  text-shadow:0 1px 2px #0009;
+  transition:filter .12s,transform .12s;
+}
+:is(.online-app,.campaign-app) button:hover:not(:disabled), #audio-settings button:hover,
+:is(.online-header nav,.campaign-nav) a:hover, .arsenal-back:hover, #audio-settings summary:hover {
+  --plate:var(--art-hover);filter:brightness(1.08);
+}
+:is(.online-app,.campaign-app) button:active:not(:disabled), #audio-settings button:active,
+:is(.online-header nav,.campaign-nav) a:active {--plate:var(--art-pressed);transform:translateY(1px)}
+:is(.online-app,.campaign-app) button:disabled {--plate:var(--art-disabled);color:#bcc1c8!important;text-shadow:none;filter:none;cursor:not-allowed}
+:is(.online-app,.campaign-app) :is(button,a,input,select):focus-visible,
+#audio-settings :is(button,summary,input):focus-visible {outline:2px solid #e4c487;outline-offset:3px}
+:is(.online-app,.campaign-app) :is(#deploy,#resume,#continue-campaign,#growth-career-save,#account-signin,#ready,[data-smith-apply],.arsenal-back) {
+  --plate:var(--art-primary);color:#171e26!important;text-shadow:none;font-weight:750;
+}
+:is(.online-app,.campaign-app) :is(#deploy,#resume,#continue-campaign,#growth-career-save,#account-signin,#ready,[data-smith-apply],.arsenal-back):hover:not(:disabled) {
+  --plate:var(--art-primary);filter:brightness(1.14);
+}
+:is(.online-app,.campaign-app) :is(#deploy,#resume,#continue-campaign,#growth-career-save,#account-signin,#ready,[data-smith-apply],.arsenal-back):active:not(:disabled) {
+  --plate:var(--art-pressed);color:#e2e9e9!important;filter:none;
+}
+:is(.online-app,.campaign-app) :is(#deploy,#resume,#continue-campaign,#growth-career-save,#account-signin,#ready,[data-smith-apply]):disabled {
+  --plate:var(--art-disabled);color:#aab1bc!important;
+}
+
+/* Navigation uses its own generated pair, shared by all inventory rule tabs. */
+:is(.online-header nav,.campaign-nav) a,
+:is(.armory-rule-tabs,.arsenal-tabs,.growth-inventory-tabs,.class-tabs,.smith-categories) button {
+  --plate:var(--art-tab);padding:12px 18px;min-height:40px;text-decoration:none;
+}
+:is(.online-header nav,.campaign-nav) {gap:8px;flex-wrap:wrap}
+:is(.online-header nav,.campaign-nav) a[aria-current='page'],
+:is(.online-app,.campaign-app) :is(button[aria-pressed='true'],button.active,button.is-active) {
+  --plate:var(--art-tab-selected);color:#bef0e5!important;
+}
+.online-app .armory-rule-tabs {background:none;border:0;padding:0}
+
+/* Nine-slice frames keep painted corners crisp across small and large panels. */
+:is(.online-app,.campaign-app) :is(#online-account,#online-connection,#online-preflight,#offline-setup,.growth-inventory,.smith-inspector,.loadout-brief,.arsenal-footer,.growth-range),
+#growth-panel,#audio-settings[open] {
+  background:none!important;border:1px solid transparent!important;
+  border-image:var(--art-panel) 64 fill / 12px / 0 stretch!important;
+  border-radius:0!important;box-shadow:none!important;
+}
+:is(.online-app,.campaign-app) :is(.compact-panel,.growth-match-result) {
+  background:none!important;border:1px solid transparent!important;
+  border-image:var(--art-dialog) 64 fill / 14px / 0 stretch!important;
+  border-radius:0!important;box-shadow:0 16px 50px #0006!important;
+}
+:is(.online-app,.campaign-app) :is(.arsenal-card,.gear-card,.growth-option-card,.growth-weapon-card,.operator-card,.equipped-slot,.mission-card,.smith-parts button),
+.online-app .growth-cards>button {
+  --plate:var(--art-card);
+  background:none!important;border:1px solid transparent!important;
+  border-image:var(--plate) 48 fill / 10px / 0 stretch!important;
+  border-radius:0!important;box-shadow:none!important;
+}
+:is(.online-app,.campaign-app) :is(.arsenal-card.is-equipped,.gear-card.equipped,.growth-option-card.is-equipped,.growth-weapon-card[aria-pressed='true'],.operator-card.is-active,.operator-card[aria-pressed='true'],.equipped-slot.is-active,.smith-parts button[aria-pressed='true'],.growth-option-card[aria-pressed='true']),
+.online-app .growth-cards>button:hover:not(:disabled),.online-app .growth-cards>button.is-submitting {
+  --plate:var(--art-card-selected);
+}
+:is(.online-app,.campaign-app) :is(.growth-option-card,.growth-weapon-card,.operator-card,.equipped-slot,.mission-card,.smith-parts button):hover:not(:disabled) {--plate:var(--art-card-selected)}
+:is(.online-app,.campaign-app) :is(.growth-option-card,.growth-weapon-card,.operator-card,.equipped-slot,.mission-card,.smith-parts button):disabled {filter:grayscale(.7);opacity:.55}
+
+/* Illustration-led screens; featured mode cards keep their existing ComfyUI art. */
+.online-app .online-lobby-title {
+  background:linear-gradient(90deg,#101a28e6,#101a2833),url('/assets/ui-kit/v1/command-room.png') center/cover;
+  border:1px solid transparent;border-image:var(--art-panel) 64 / 12px / 0 stretch;
+  min-height:220px;padding:38px;
+}
+.campaign-app .menu-panel {
+  background:linear-gradient(90deg,#111a2799,#111a2766),url('/assets/ui-kit/v1/campaign-table.png') center/cover!important;
+  border:1px solid transparent;border-image:var(--art-panel) 64 / 12px / 0 stretch;
+}
+.online-app .operator-stage,.online-app .smith-bench,.campaign-app .smith-bench {
+  background:linear-gradient(#111a2722,#111a2755),url('/assets/ui-kit/v1/armory-bay.png') center/cover!important;
+  border:1px solid transparent!important;border-image:var(--art-panel) 64 / 12px / 0 stretch!important;
+}
+.online-app .online-room-actions :is(#create,#create-growth,#join-debug) {
+  border-image:var(--art-card) 48 / 10px / 0 stretch!important;
+  background:linear-gradient(90deg,#111a27ec,#111a2733),var(--mode-art) center/cover!important;
+  color:#f0eee6!important;text-shadow:0 2px 4px #000;
+}
+.online-room-actions #create{--mode-art:url('/assets/ui-kit/v1/mode-classic.png')}
+.online-room-actions #create-growth{--mode-art:url('/assets/ui-kit/v1/mode-growth.png')}
+.online-room-actions #join-debug{--mode-art:url('/assets/ui-kit/v1/mode-coop.png')}
+.online-app .online-room-actions :is(#create,#create-growth,#join-debug):hover:not(:disabled) {border-image-source:var(--art-card-selected)!important}
+
+/* Fields remain native controls, with the same generated recessed plate. */
+:is(.online-app,.campaign-app) :is(input:not([type='checkbox']):not([type='radio']):not([type='range']),select,textarea) {
+  background:#0e1522!important;border:1px solid transparent!important;
+  border-image:var(--art-input) 40 fill / 7px / 0 stretch!important;
+  border-radius:0!important;color:#e6ecec!important;padding:10px 12px;min-height:40px;
+}
+:is(.online-app,.campaign-app) option {background:#172130;color:#e6ecec}
+
+/* Combat frames are confined to existing HUD bounds, with pointer routing intact. */
+:is(.hud-vitals,.hud-equipment,.hud-ability),#battle-bottom :is(.hud-vitals,.hud-equipment,.hud-ability) {
+  background:none!important;border:1px solid transparent!important;
+  border-image:var(--art-vitals) 40 fill / 7px / 0 stretch!important;box-shadow:none!important;
+}
+:is(.hud-score,.scoreline,.hud-mission) {
+  background:none!important;border:1px solid transparent!important;
+  border-image:var(--art-score) 40 fill / 7px / 0 stretch!important;box-shadow:none!important;
+}
+:is(.combat-status,.combat-ammo,.growth-build-details),#audio-settings summary {
+  background:none!important;border:1px solid transparent!important;
+  border-image:var(--art-notice) 40 fill / 6px / 0 stretch!important;
+}
+.combat-death {background:#0d1523df;border-top:0}
+.combat-death.observing {background:none;border:1px solid transparent;border-image:var(--art-dialog) 64 fill / 10px / 0 stretch}
+.online-app .growth-build-chip {background:#1c2c38;color:#d1e6df;border-color:#536b76}
+.hud-health-track i,.growth-xp-track i {background:#8fcfc0!important}
+.campaign-stage,.online-app #online-game {border-color:#5b6877}
+.online-header,.campaign-nav {border-bottom-color:#4c5d6d}
+.online-app #online-preflight {padding:24px}
+.online-app #offline-growth-start {--plate:var(--art-primary);color:#171e26!important;text-shadow:none;font-weight:750}
+.online-app .growth-armory-v3 .operator-card {padding:14px!important}
+.online-app .online-room-actions :is(#join,#reconnect) {min-height:44px;align-self:start}
+.online-app .online-mark,.campaign-app .mark {background-image:url('/assets/ui-kit/v1/strike-emblem.png')}
+
+@media(max-width:700px) {
+  .online-app #online-preflight {padding:16px}
+  :is(.online-header nav,.campaign-nav) a {padding:10px;font-size:12px;min-height:38px}
+  .online-app .online-lobby-title {padding:26px;min-height:180px}
+  :is(.online-app,.campaign-app) :is(.compact-panel,.growth-match-result) {border-image-width:10px!important}
+}
+@media(prefers-reduced-motion:reduce) {
+  :is(.online-app,.campaign-app) button,#audio-settings button {transition:none;transform:none!important}
+}

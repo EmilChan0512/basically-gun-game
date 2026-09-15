@@ -1,0 +1,224 @@
+{
+  "version": 1,
+  "revision": "v1",
+  "generator": "Local ComfyUI / FLUX.2 Klein 4B",
+  "assets": [
+    {
+      "id": "command-room",
+      "file": "command-room.png",
+      "width": 1536,
+      "height": 864,
+      "sha256": "4e360afc6040e5b6e6f9762857325d70afbb07c1e05295c0041d85c90a90c948"
+    },
+    {
+      "id": "campaign-table",
+      "file": "campaign-table.png",
+      "width": 1536,
+      "height": 864,
+      "sha256": "a2b252d3382d18fe519554fe37b3fa54f167c844a0b8c2dc4cc01715666b7697"
+    },
+    {
+      "id": "armory-bay",
+      "file": "armory-bay.png",
+      "width": 1536,
+      "height": 864,
+      "sha256": "a65cab725f05faff7ea3a5de3361674d713d1b157bc2ec7ca0d20bd660712727"
+    },
+    {
+      "id": "panel",
+      "file": "panel.png",
+      "width": 768,
+      "height": 768,
+      "sha256": "08c69fc1daf0bc466d3854ba3c431bbe679b834752a3ec639a6f7fc8abe33a15"
+    },
+    {
+      "id": "dialog",
+      "file": "dialog.png",
+      "width": 768,
+      "height": 768,
+      "sha256": "e7acbf2f3f291ea4a0e2bfa29d25e71c47119738b8d8e6222f9bce6b07b628d6"
+    },
+    {
+      "id": "card",
+      "file": "card.png",
+      "width": 512,
+      "height": 512,
+      "sha256": "f6ea411e2acde2ad405f44259f88b56249a4f8a99ab828562f8526e66461c0ab"
+    },
+    {
+      "id": "card-selected",
+      "file": "card-selected.png",
+      "width": 512,
+      "height": 512,
+      "sha256": "2c0c7fd0a3dca214735ee1d85a7968987941a4abc6c7c657cd40b6e93db83642"
+    },
+    {
+      "id": "button",
+      "file": "button.png",
+      "width": 768,
+      "height": 192,
+      "sha256": "2ade9828d57485230d13f60542b0bce481d2910489653cfabc32e0c2c346777f"
+    },
+    {
+      "id": "button-hover",
+      "file": "button-hover.png",
+      "width": 768,
+      "height": 192,
+      "sha256": "f6f585a1999671fe6fcb36a902697f997d9dbf28a2e47af83e3ff32deeff1786"
+    },
+    {
+      "id": "button-pressed",
+      "file": "button-pressed.png",
+      "width": 768,
+      "height": 192,
+      "sha256": "48d531b69240e17690a33c7abc5095f6c33a53335c79e635ec23e7118295a377"
+    },
+    {
+      "id": "button-primary",
+      "file": "button-primary.png",
+      "width": 768,
+      "height": 192,
+      "sha256": "ea55500ec863b950a897cb58a7ec5cd64af61eb252946b3e40a377e152c28c8c"
+    },
+    {
+      "id": "button-disabled",
+      "file": "button-disabled.png",
+      "width": 768,
+      "height": 192,
+      "sha256": "b3e0282803caefd7225e7c8549580ed969cab294d366df48d5a92130353c69a6"
+    },
+    {
+      "id": "tab",
+      "file": "tab.png",
+      "width": 768,
+      "height": 192,
+      "sha256": "f3cd09c6682a151974085e07c6956d6cd93883d3987b61c0539f9a54289c75cb"
+    },
+    {
+      "id": "tab-selected",
+      "file": "tab-selected.png",
+      "width": 768,
+      "height": 192,
+      "sha256": "c518f7ff05f3cd696872a59c8cb53a3185dcd864293f4ed9fdc39dd65f90699e"
+    },
+    {
+      "id": "input",
+      "file": "input.png",
+      "width": 768,
+      "height": 192,
+      "sha256": "62ffc2b3449090811ad5960c95315a27ec9caf84a0b8869a1e3ffa27c45195f2"
+    },
+    {
+      "id": "hud-vitals",
+      "file": "hud-vitals.png",
+      "width": 768,
+      "height": 256,
+      "sha256": "1afbf6db26bb2482a09aba360681a97895a443420aab029155a30e4276469714"
+    },
+    {
+      "id": "hud-score",
+      "file": "hud-score.png",
+      "width": 768,
+      "height": 256,
+      "sha256": "387541062a4fd76bc7a4956c0361acab3c455c7c12aa9ee976369029dd015c43"
+    },
+    {
+      "id": "notice",
+      "file": "notice.png",
+      "width": 768,
+      "height": 192,
+      "sha256": "2d0f19f0b25c09eee42e37a1b54e34750e546466ac1ed675860148147361e952"
+    },
+    {
+      "id": "operator-assault",
+      "file": "operator-assault.png",
+      "width": 768,
+      "height": 1024,
+      "sha256": "ecbf37ea1b96f822677dbafd1864e550296ddc1484566a1400d9f8db1ce745fd"
+    },
+    {
+      "id": "operator-tank",
+      "file": "operator-tank.png",
+      "width": 768,
+      "height": 1024,
+      "sha256": "0208fcccad6e3a45a6cf283de15ba390cf0a822082acbef4ea4fc9e10edc66b8"
+    },
+    {
+      "id": "operator-sniper",
+      "file": "operator-sniper.png",
+      "width": 768,
+      "height": 1024,
+      "sha256": "50a6b677127bae4564b7e1093e1fcb8258fd71d9acd9c0b2051de90945cb8063"
+    },
+    {
+      "id": "operator-medic",
+      "file": "operator-medic.png",
+      "width": 768,
+      "height": 1024,
+      "sha256": "0f73959f9db0f116df19578edd58edbcd5cebf560847bb985251579332005298"
+    },
+    {
+      "id": "category-ability",
+      "file": "category-ability.png",
+      "width": 512,
+      "height": 512,
+      "sha256": "22d2066406593711edadc8225cedb38b48428c21909c847f19f08893f58e5c10"
+    },
+    {
+      "id": "category-mobility",
+      "file": "category-mobility.png",
+      "width": 512,
+      "height": 512,
+      "sha256": "ef84735ed3be176a6f871d5acd9ee2c505429da3757b721429faff649da2dbb1"
+    },
+    {
+      "id": "category-weapon",
+      "file": "category-weapon.png",
+      "width": 512,
+      "height": 512,
+      "sha256": "0a35874023ff0241d579cfb2056a9932f66dc934390d906dcdcffb6f81957269"
+    },
+    {
+      "id": "category-defense",
+      "file": "category-defense.png",
+      "width": 512,
+      "height": 512,
+      "sha256": "ac289b2c356d172f883bcb0a43b440620cf8b5acd25721a4f77b6af019eb6eb2"
+    },
+    {
+      "id": "category-utility",
+      "file": "category-utility.png",
+      "width": 512,
+      "height": 512,
+      "sha256": "ba4e5c0bb929759b4ffcc6e6dc8ce73da4727827d292c4dda1db247b3fc5ff2a"
+    },
+    {
+      "id": "mode-growth",
+      "file": "mode-growth.png",
+      "width": 1024,
+      "height": 576,
+      "sha256": "4fe67a11b5bb930cd9191905113fe8b2d77cd50db3ccd401b9b15dc021c09f2a"
+    },
+    {
+      "id": "mode-classic",
+      "file": "mode-classic.png",
+      "width": 1024,
+      "height": 576,
+      "sha256": "46323257293cd78e915ddd4471ec9d11f1ca3b707366ada7699e7a65e7732a72"
+    },
+    {
+      "id": "mode-coop",
+      "file": "mode-coop.png",
+      "width": 1024,
+      "height": 576,
+      "sha256": "856fa7c4d5dc60d7ef54b49f8846e61c130b214620490fec9f05318389df6f3a"
+    },
+    {
+      "id": "strike-emblem",
+      "file": "strike-emblem.png",
+      "width": 512,
+      "height": 512,
+      "sha256": "13f4b5f7f4968339a4152465c11e67180eeb49d9a734e1d8b5cfd3c3b0282725"
+    }
+  ]
+}

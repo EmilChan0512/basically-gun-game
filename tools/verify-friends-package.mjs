@@ -7,6 +7,8 @@ import { verifyUIArt } from './verify-ui-art.mjs';
 
 const folder = resolve(process.argv[2]);
 console.log(`Portable UI art: ${JSON.stringify(verifyUIArt(join(folder, 'dist/assets/ui-v2/v1')))}`);
+const uiKitIds = JSON.parse(readFileSync(new URL('../art/ui-kit/assets.json', import.meta.url), 'utf8')).assets.map(asset => asset.id);
+console.log(`Portable UI kit: ${JSON.stringify(verifyUIArt(join(folder, 'dist/assets/ui-kit/v1'), uiKitIds))}`);
 console.log(`Portable gunsmith art: ${JSON.stringify(verifyGunsmith(join(folder, 'dist/assets/gunsmith/v2')))}`);
 const child = spawn(join(folder, 'runtime/node.exe'), ['tools/start-friends.mjs', '--test', '--solo'],
   { cwd: folder, windowsHide: true, env: { ...process.env, PATH: '' }, stdio: ['ignore', 'pipe', 'pipe'] });

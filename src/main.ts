@@ -3,6 +3,7 @@ import { startCampaign } from './campaign';
 import { startOnline } from './online';
 import { startOfflineGrowth } from './offlineGrowth';
 import { installAudioUI } from './client/audio/AudioSettings';
+import './client/presentation/TacticalArt.css';
 const query = new URLSearchParams(location.search);
 if (query.has('lab') || ['lab', 'original'].includes(query.get('rules') ?? '')) startOfflineGrowth(true);
 else if (query.has('online')) startOnline();

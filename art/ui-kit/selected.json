@@ -1,0 +1,219 @@
+{
+  "command-room": {
+    "candidate": "initial-01",
+    "seed": 157200852905071,
+    "sha256": "4e360afc6040e5b6e6f9762857325d70afbb07c1e05295c0041d85c90a90c948",
+    "graphSha256": "4b650cd24ee1d9d6ab4f21e23d510b190eb955ed77d631069f9b6eb1ba385872",
+    "selectedAt": "2026-09-15T15:22:13.527Z"
+  },
+  "campaign-table": {
+    "candidate": "initial-01",
+    "seed": 8247800662943,
+    "sha256": "a2b252d3382d18fe519554fe37b3fa54f167c844a0b8c2dc4cc01715666b7697",
+    "graphSha256": "611442af3991fee8aaf1a238d26e2d84325bf4f66e6069f9cc453fa962599de2",
+    "selectedAt": "2026-09-15T15:22:13.536Z"
+  },
+  "armory-bay": {
+    "candidate": "initial-01",
+    "seed": 151075606260003,
+    "sha256": "a65cab725f05faff7ea3a5de3361674d713d1b157bc2ec7ca0d20bd660712727",
+    "graphSha256": "025e3e5edd54c49c1c1b984181b97577042aa9bee4ecdce93047952996253d55",
+    "selectedAt": "2026-09-15T15:22:13.544Z"
+  },
+  "panel": {
+    "candidate": "softer-02",
+    "seed": 172270889952383,
+    "sha256": "08c69fc1daf0bc466d3854ba3c431bbe679b834752a3ec639a6f7fc8abe33a15",
+    "graphSha256": "951f245e6300a6f49fb2215a4a1f2c6929aec5f86a553de475c310d12a2485a8",
+    "selectedAt": "2026-09-15T15:24:11.657Z"
+  },
+  "dialog": {
+    "candidate": "initial-01",
+    "seed": 56246236671165,
+    "sha256": "e7acbf2f3f291ea4a0e2bfa29d25e71c47119738b8d8e6222f9bce6b07b628d6",
+    "graphSha256": "83d3d5407e2e2d4671fb0fe3ebc51c90980c743779371893d880f84490c94c03",
+    "selectedAt": "2026-09-15T15:22:13.557Z"
+  },
+  "card": {
+    "candidate": "softer-02",
+    "seed": 78343132583713,
+    "sha256": "f6ea411e2acde2ad405f44259f88b56249a4f8a99ab828562f8526e66461c0ab",
+    "graphSha256": "a1c5438625279d3810524c8000a08684c628daf3dae92d8ebb6fed2aef1151c8",
+    "selectedAt": "2026-09-15T15:24:16.047Z"
+  },
+  "card-selected": {
+    "candidate": "softer-02",
+    "seed": 46722818072365,
+    "sha256": "2c0c7fd0a3dca214735ee1d85a7968987941a4abc6c7c657cd40b6e93db83642",
+    "graphSha256": "bb525da66e5ba35e87d7f20db9fc17667b5aded9c31ed442879d5d28b74bbef5",
+    "selectedAt": "2026-09-15T15:24:18.245Z"
+  },
+  "button": {
+    "candidate": "softer-02",
+    "seed": 252225740269525,
+    "sha256": "2ade9828d57485230d13f60542b0bce481d2910489653cfabc32e0c2c346777f",
+    "graphSha256": "ad98f57862b66b2844412ec62e789d91704d5f34a9c6198d2701a06f5fc34d6b",
+    "selectedAt": "2026-09-15T15:33:18.824Z"
+  },
+  "button-hover": {
+    "candidate": "initial-01",
+    "seed": 51507708143171,
+    "sha256": "f6f585a1999671fe6fcb36a902697f997d9dbf28a2e47af83e3ff32deeff1786",
+    "graphSha256": "1a3db581686b9ba17b932d8b6a7d748b5714870597459fe8cb345067971a1573",
+    "selectedAt": "2026-09-15T15:22:13.582Z"
+  },
+  "button-pressed": {
+    "candidate": "initial-01",
+    "seed": 125836674076353,
+    "sha256": "48d531b69240e17690a33c7abc5095f6c33a53335c79e635ec23e7118295a377",
+    "graphSha256": "b00620197467be4ac1e16e91aa1cdc16b14e582bd15df634001d08bfb6362851",
+    "selectedAt": "2026-09-15T15:22:13.589Z"
+  },
+  "button-primary": {
+    "candidate": "initial-01",
+    "seed": 251521723471260,
+    "sha256": "ea55500ec863b950a897cb58a7ec5cd64af61eb252946b3e40a377e152c28c8c",
+    "graphSha256": "df7ea9a587d1a1d286e6277ce6229aa4e7cfe8f98f8ed548ee41da0f65b32628",
+    "selectedAt": "2026-09-15T15:22:13.594Z"
+  },
+  "button-disabled": {
+    "candidate": "initial-01",
+    "seed": 167257243375999,
+    "sha256": "b3e0282803caefd7225e7c8549580ed969cab294d366df48d5a92130353c69a6",
+    "graphSha256": "2c94c27982543883c0c6ae65bc4af792afa4db09fa55cd69265f770b451f0ac2",
+    "selectedAt": "2026-09-15T15:22:13.600Z"
+  },
+  "tab": {
+    "candidate": "softer-02",
+    "seed": 51070799787064,
+    "sha256": "f3cd09c6682a151974085e07c6956d6cd93883d3987b61c0539f9a54289c75cb",
+    "graphSha256": "077278d36535f4fca1946ec5990c6c56bba7a5c27896ac4e80ebf8301c54b7fe",
+    "selectedAt": "2026-09-15T15:24:20.603Z"
+  },
+  "tab-selected": {
+    "candidate": "softer-02",
+    "seed": 206382496685550,
+    "sha256": "c518f7ff05f3cd696872a59c8cb53a3185dcd864293f4ed9fdc39dd65f90699e",
+    "graphSha256": "b23def04c00d0a3e61eff9d3cdbf2e7fb74bfa755ffd95c05434921c55d7883d",
+    "selectedAt": "2026-09-15T15:24:22.798Z"
+  },
+  "input": {
+    "candidate": "initial-01",
+    "seed": 2853193724409,
+    "sha256": "62ffc2b3449090811ad5960c95315a27ec9caf84a0b8869a1e3ffa27c45195f2",
+    "graphSha256": "06dbc0cd3e2f7455044060e82e599827f3ef0a82b5a59b08113d59d1cb647372",
+    "selectedAt": "2026-09-15T15:22:13.618Z"
+  },
+  "hud-vitals": {
+    "candidate": "initial-01",
+    "seed": 252388412839699,
+    "sha256": "1afbf6db26bb2482a09aba360681a97895a443420aab029155a30e4276469714",
+    "graphSha256": "61c85954b9d03fe2f0d3f82529e08ff73a19bfd5ee2ace577330cda55fb886d5",
+    "selectedAt": "2026-09-15T15:22:13.624Z"
+  },
+  "hud-score": {
+    "candidate": "initial-01",
+    "seed": 70129319649341,
+    "sha256": "387541062a4fd76bc7a4956c0361acab3c455c7c12aa9ee976369029dd015c43",
+    "graphSha256": "37828b58fd4874d32fb288465a42676aaa068e2bb9188adb2e4b69f2a4a755ee",
+    "selectedAt": "2026-09-15T15:22:13.630Z"
+  },
+  "notice": {
+    "candidate": "initial-01",
+    "seed": 206987596373458,
+    "sha256": "2d0f19f0b25c09eee42e37a1b54e34750e546466ac1ed675860148147361e952",
+    "graphSha256": "05796a0baaaf47c0b685f0a166b1bd46dac001a516415ce3863469a00444fc09",
+    "selectedAt": "2026-09-15T15:22:13.636Z"
+  },
+  "operator-assault": {
+    "candidate": "initial-01",
+    "seed": 36649788425324,
+    "sha256": "ecbf37ea1b96f822677dbafd1864e550296ddc1484566a1400d9f8db1ce745fd",
+    "graphSha256": "a0ce62c397faa60e8e4e6abf96bd5ac77bd17b996ee5008693128f29aa04a1e5",
+    "selectedAt": "2026-09-15T15:22:17.781Z"
+  },
+  "operator-tank": {
+    "candidate": "initial-01",
+    "seed": 205694228946380,
+    "sha256": "0208fcccad6e3a45a6cf283de15ba390cf0a822082acbef4ea4fc9e10edc66b8",
+    "graphSha256": "4ac258e2e7f9c381c62784830b5fd335af0e45cf3a19631d2a9876c1d97ec862",
+    "selectedAt": "2026-09-15T15:22:21.908Z"
+  },
+  "operator-sniper": {
+    "candidate": "initial-01",
+    "seed": 67645250889658,
+    "sha256": "50a6b677127bae4564b7e1093e1fcb8258fd71d9acd9c0b2051de90945cb8063",
+    "graphSha256": "06a043e93b33005f578376a55989183453b9a5bec7171ca3fb3a88665421cc09",
+    "selectedAt": "2026-09-15T15:22:26.026Z"
+  },
+  "operator-medic": {
+    "candidate": "initial-01",
+    "seed": 165739875993913,
+    "sha256": "0f73959f9db0f116df19578edd58edbcd5cebf560847bb985251579332005298",
+    "graphSha256": "86388566f412c245f8bcfe4c3a21d95778e8f040e9427376f65e5de1c38e2a47",
+    "selectedAt": "2026-09-15T15:22:30.156Z"
+  },
+  "category-ability": {
+    "candidate": "initial-01",
+    "seed": 272315522458010,
+    "sha256": "22d2066406593711edadc8225cedb38b48428c21909c847f19f08893f58e5c10",
+    "graphSha256": "ffa8f352117bc6e7fd3f89cc9df449aad7349bcdc339e04a2d722cbe91443bad",
+    "selectedAt": "2026-09-15T15:22:32.285Z"
+  },
+  "category-mobility": {
+    "candidate": "initial-01",
+    "seed": 98402638812804,
+    "sha256": "ef84735ed3be176a6f871d5acd9ee2c505429da3757b721429faff649da2dbb1",
+    "graphSha256": "16cb5173af0ab96f35beb9f249883a8fada1a5383b4d1bf5574e4d9e722a1845",
+    "selectedAt": "2026-09-15T15:22:34.419Z"
+  },
+  "category-weapon": {
+    "candidate": "initial-01",
+    "seed": 15132599698148,
+    "sha256": "0a35874023ff0241d579cfb2056a9932f66dc934390d906dcdcffb6f81957269",
+    "graphSha256": "85a5632293700b0c58748711ef5fb02bd702ab044fded9738a8366ced311d0be",
+    "selectedAt": "2026-09-15T15:22:36.546Z"
+  },
+  "category-defense": {
+    "candidate": "initial-01",
+    "seed": 100971694881010,
+    "sha256": "ac289b2c356d172f883bcb0a43b440620cf8b5acd25721a4f77b6af019eb6eb2",
+    "graphSha256": "8c82e39dcc5f79775c6d52ca209d549a5bf6016ae927d429a8be17b7bb6f5a68",
+    "selectedAt": "2026-09-15T15:22:38.828Z"
+  },
+  "category-utility": {
+    "candidate": "initial-01",
+    "seed": 77663270084974,
+    "sha256": "ba4e5c0bb929759b4ffcc6e6dc8ce73da4727827d292c4dda1db247b3fc5ff2a",
+    "graphSha256": "8e25dc2a4e5b6ff43d417a7ed8e5d5f4bdd0c340acf9f914354f95a55d0c22bf",
+    "selectedAt": "2026-09-15T15:22:40.948Z"
+  },
+  "mode-growth": {
+    "candidate": "initial-01",
+    "seed": 134529290469157,
+    "sha256": "4fe67a11b5bb930cd9191905113fe8b2d77cd50db3ccd401b9b15dc021c09f2a",
+    "graphSha256": "534eaba5b41a858f239a936c19307a594d17f6816acc93d865865687d70212ac",
+    "selectedAt": "2026-09-15T15:22:43.082Z"
+  },
+  "mode-classic": {
+    "candidate": "initial-01",
+    "seed": 232027129494587,
+    "sha256": "46323257293cd78e915ddd4471ec9d11f1ca3b707366ada7699e7a65e7732a72",
+    "graphSha256": "27b8b5fba565a73ec158566d7d32b47acf6eade1178ab57a8ff2a28747d363f0",
+    "selectedAt": "2026-09-15T15:22:45.206Z"
+  },
+  "mode-coop": {
+    "candidate": "initial-01",
+    "seed": 243477547984010,
+    "sha256": "856fa7c4d5dc60d7ef54b49f8846e61c130b214620490fec9f05318389df6f3a",
+    "graphSha256": "f7483a6e6e6ff9a2f0fdc81da33823713326b0e5e28c04f8de81e61a33d3b731",
+    "selectedAt": "2026-09-15T15:22:47.323Z"
+  },
+  "strike-emblem": {
+    "candidate": "initial-01",
+    "seed": 219670434337054,
+    "sha256": "13f4b5f7f4968339a4152465c11e67180eeb49d9a734e1d8b5cfd3c3b0282725",
+    "graphSha256": "4d0f199b05d54d16500f95d8966e24eb37a7108fde593783d7efbbfe4d1aed4f",
+    "selectedAt": "2026-09-15T15:22:49.611Z"
+  }
+}

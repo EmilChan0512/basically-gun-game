@@ -1,0 +1,307 @@
+{
+  "version": 1,
+  "title": "Project Strike · 战术漫画界面",
+  "style": "Production game UI artwork for one coherent 2D military comic game. Hand inked clean outlines, restrained angular cel shading, matte midnight navy and desaturated blue grey painted steel, fine warm grey edge wear, tiny muted turquoise indicator lights. Flat front view, orthographic, crisp shapes, understated professional game art, no photorealism, no 3D render, no text, no letters, no numbers, no logos, no watermark. Quiet readable surfaces, no busy patterns, no neon glow.",
+  "models": {
+    "unet": "flux-2-klein-4b.safetensors",
+    "clip": "qwen_3_4b.safetensors",
+    "vae": "flux2-vae.safetensors"
+  },
+  "steps": 4,
+  "assets": [
+    {
+      "id": "command-room",
+      "name": "指挥室背景",
+      "kind": "background",
+      "width": 1536,
+      "height": 864,
+      "usage": "大厅及全局页面背景",
+      "prompt": "Panoramic illustrated military command room, massive blue grey steel beams frame the edges, muted cyan map screens and small warm amber lamps on the far right. Spacious shadowy center and left with very little detail for interface content. Wide establishing environment painting, cinematic atmosphere but readable flat comic shapes, no characters."
+    },
+    {
+      "id": "campaign-table",
+      "name": "战役沙盘背景",
+      "kind": "background",
+      "width": 1536,
+      "height": 864,
+      "usage": "战役任务选择",
+      "prompt": "Panoramic illustrated tabletop tactical map, dark navy map surface occupies most of the center, subtle topographic contour lines and only a few tiny amber route pins near far right. Cropped metal map case corners and restrained military props only at outer edges. Empty dark left and middle for mission cards, horizontal graphic game menu environment."
+    },
+    {
+      "id": "armory-bay",
+      "name": "军械库背景",
+      "kind": "background",
+      "width": 1536,
+      "height": 864,
+      "usage": "局外配装、武器工坊",
+      "prompt": "Wide illustrated military armory workbench bay, empty center platform framed by navy steel weapon lockers on both edges, modest warm overhead work lamp and muted turquoise strips, dark quiet central wall for presenting equipment and soldiers. Clean comic illustration, no people, no floating interface, no text."
+    },
+    {
+      "id": "panel",
+      "name": "通用内容面板",
+      "kind": "frame",
+      "width": 768,
+      "height": 768,
+      "slice": 64,
+      "usage": "账号、房间、配装内容区",
+      "prompt": "One square blank game interface panel filling the ENTIRE canvas edge to edge. A narrow illustrated steel frame confined to outermost 6 percent, small squared reinforced corners, sparse tiny bolts in corners only. Center 88 percent is completely empty uniform very dark navy painted metal. Straight rectangular edges touch all four canvas boundaries, no surrounding background, no inset floating object, no compartments."
+    },
+    {
+      "id": "dialog",
+      "name": "暂停与结算面板",
+      "kind": "frame",
+      "width": 768,
+      "height": 768,
+      "slice": 64,
+      "usage": "暂停、结算、弹窗",
+      "prompt": "One square blank command briefing interface panel fills canvas edge to edge. Thin warm grey steel rim, slightly reinforced industrial corners, short muted amber accent in upper left border only. Center 88 percent uniform very dark navy, entirely empty and flat for readable text. Border confined to outermost 6 percent. No inner divisions, no objects, no surrounding scene."
+    },
+    {
+      "id": "card",
+      "name": "装备与成长卡底",
+      "kind": "frame",
+      "width": 512,
+      "height": 512,
+      "slice": 48,
+      "usage": "装备、武器、技能、成长选项卡",
+      "prompt": "One blank square military equipment card backing, edge to edge full canvas. Narrow inked blue grey metal border with slightly worn corner brackets, flat nearly black navy empty center occupying 86 percent. Very restrained texture at border only. No object or icon, no internal partition, no writing, no surrounding space."
+    },
+    {
+      "id": "card-selected",
+      "name": "选中卡底",
+      "kind": "frame",
+      "width": 512,
+      "height": 512,
+      "slice": 48,
+      "usage": "已装备、选中的卡片",
+      "prompt": "One blank square selected military equipment card backing, edge to edge full canvas. Narrow inked blue grey steel border with a thin muted turquoise inset rim and subtle turquoise corner markers. Flat dark navy empty center occupying 86 percent. No glowing halo, no object or icon, no internal partition, no writing, no surrounding space."
+    },
+    {
+      "id": "button",
+      "name": "普通按钮",
+      "kind": "button",
+      "width": 768,
+      "height": 192,
+      "slice": 40,
+      "usage": "所有普通操作按钮",
+      "prompt": "One single wide horizontal blank tactical game button fills entire 4 to 1 canvas edge to edge. Dark desaturated blue grey painted steel plate, clean thin ink outline, lightly beveled outer rim, tiny worn metal corners, broad entirely blank flat navy center for label. Only one rectangular button, no symbols, no lettering, no surrounding background, no decorative inner divisions."
+    },
+    {
+      "id": "button-hover",
+      "name": "按钮悬停",
+      "kind": "button",
+      "width": 768,
+      "height": 192,
+      "slice": 40,
+      "usage": "悬停、键盘焦点",
+      "prompt": "One single wide horizontal blank tactical game button fills entire 4 to 1 canvas edge to edge. Desaturated blue grey steel plate with slightly brighter muted turquoise thin rim indicating hover, clean ink outline, lightly beveled edge, broad empty flat dark teal navy center. Only one rectangle, no symbols, no lettering, no surrounding background, no neon."
+    },
+    {
+      "id": "button-pressed",
+      "name": "按钮按下",
+      "kind": "button",
+      "width": 768,
+      "height": 192,
+      "slice": 40,
+      "usage": "鼠标按下反馈",
+      "prompt": "One single wide horizontal blank recessed tactical game button fills entire 4 to 1 canvas edge to edge. Pressed inward dark navy steel plate, thin black inner bevel and subdued turquoise edge, clean illustrated ink outline, broad empty flat very dark blue center. Only one rectangle, no symbols, no lettering, no surrounding background."
+    },
+    {
+      "id": "button-primary",
+      "name": "主要行动按钮",
+      "kind": "button",
+      "width": 768,
+      "height": 192,
+      "slice": 40,
+      "usage": "出战、继续、保存、登录",
+      "prompt": "One single wide horizontal blank primary action button fills entire 4 to 1 canvas edge to edge. Muted weathered ochre brass military steel plate, subdued warm golden yellow flat center, clean dark ink outlines and narrow reinforced grey metal edge, subtle corner wear. Readable empty center for dark lettering. No symbols, no lettering, no stripes across center, no surrounding background."
+    },
+    {
+      "id": "button-disabled",
+      "name": "禁用按钮",
+      "kind": "button",
+      "width": 768,
+      "height": 192,
+      "slice": 40,
+      "usage": "未解锁、不可操作",
+      "prompt": "One single wide horizontal blank inactive tactical game button fills entire 4 to 1 canvas edge to edge. Muted graphite grey steel plate, very low contrast thin dark rim, no indicator lights, broad empty flat charcoal center. Clean illustrated ink outline, slightly worn corners. Only one rectangle, no symbols, no lettering, no surrounding background."
+    },
+    {
+      "id": "tab",
+      "name": "导航标签",
+      "kind": "button",
+      "width": 768,
+      "height": 192,
+      "slice": 40,
+      "usage": "主导航、分类标签",
+      "prompt": "One wide horizontal blank military folder index tab, fills entire 4 to 1 canvas edge to edge. Navy blue painted steel, thin understated blue grey top and side rim, flat dark navy center, small reinforced corners. Clean comic ink, completely empty, no symbols or text, no surrounding space."
+    },
+    {
+      "id": "tab-selected",
+      "name": "选中导航标签",
+      "kind": "button",
+      "width": 768,
+      "height": 192,
+      "slice": 40,
+      "usage": "当前页面、当前分类",
+      "prompt": "One wide horizontal blank selected military folder index tab, fills entire 4 to 1 canvas edge to edge. Navy blue painted steel, thin muted turquoise bottom rim and tiny turquoise corner lamps, flat dark teal navy empty center. Clean comic ink, no symbols or text, no surrounding space."
+    },
+    {
+      "id": "input",
+      "name": "输入框底板",
+      "kind": "button",
+      "width": 768,
+      "height": 192,
+      "slice": 40,
+      "usage": "账号、房间码、搜索、选择框",
+      "prompt": "One horizontal recessed military terminal input field fills the entire 4 to 1 canvas. Very dark almost black navy center entirely blank and uniform, thin sunken blue grey metal border and subtle worn inner corners. Narrow edge only. Flat comic game interface, no text, no cursor, no symbols, no surrounding background."
+    },
+    {
+      "id": "hud-vitals",
+      "name": "生命与弹药 HUD 底板",
+      "kind": "button",
+      "width": 768,
+      "height": 256,
+      "slice": 40,
+      "usage": "生命、弹药、技能状态",
+      "prompt": "One wide blank compact military combat HUD readout panel fills entire canvas edge to edge. Very narrow navy steel edge, small muted turquoise upper corner indicator, empty uniform dark navy center occupying 88 percent. Clean cel shaded ink outline, no internal divisions, no bars, no symbols, no letters, no numbers. Restrained lightweight interface."
+    },
+    {
+      "id": "hud-score",
+      "name": "比分 HUD 底板",
+      "kind": "button",
+      "width": 768,
+      "height": 256,
+      "slice": 40,
+      "usage": "局内比分、时间、任务提示",
+      "prompt": "One wide blank military combat score display housing fills entire canvas edge to edge. Symmetrical narrow grey blue steel rim, tiny muted cyan accent at left corner and tiny muted warm amber accent at right corner, empty flat almost black navy center occupying 88 percent. No compartments, no symbols, no numerals, no lettering, flat illustrated game UI."
+    },
+    {
+      "id": "notice",
+      "name": "提示条底板",
+      "kind": "button",
+      "width": 768,
+      "height": 192,
+      "slice": 40,
+      "usage": "战斗提示、音频设置、状态通知",
+      "prompt": "One wide slim blank tactical notification plate fills entire 4 to 1 canvas edge to edge. Dark navy center, thin grey blue inked rim, single very small muted amber indicator on extreme left border only. Empty flat center, no symbols, no text, restrained industrial comic game UI, no surrounding background."
+    },
+    {
+      "id": "operator-assault",
+      "width": 768,
+      "height": 1024,
+      "prompt": "One full-body assault soldier, confident forward stance, chunky olive tactical armor, enclosed helmet and cyan visor slit, compact assault rifle held safely across chest, centered boots fully visible, three-quarter front view, dark plain studio background, character roster illustration.",
+      "name": "突击兵插画",
+      "kind": "illustration",
+      "usage": "职业与配装"
+    },
+    {
+      "id": "operator-tank",
+      "width": 768,
+      "height": 1024,
+      "prompt": "One full-body heavy defender soldier, broad powerful silhouette, bulky graphite and olive armor, reinforced pauldrons and cyan shield generator, heavy machine gun held across chest, boots fully visible, three-quarter front view, dark plain studio background, character roster illustration.",
+      "name": "重装兵插画",
+      "kind": "illustration",
+      "usage": "职业与配装"
+    },
+    {
+      "id": "operator-sniper",
+      "width": 768,
+      "height": 1024,
+      "prompt": "One full-body agile sniper soldier, slim olive tactical armor and short hood, narrow cyan optical visor, long precision rifle held diagonally across body, boots fully visible, three-quarter front view, dark plain studio background, character roster illustration.",
+      "name": "狙击手插画",
+      "kind": "illustration",
+      "usage": "职业与配装"
+    },
+    {
+      "id": "operator-medic",
+      "width": 768,
+      "height": 1024,
+      "prompt": "One full-body field medic soldier, compact olive and pale mint armor, rounded medical equipment backpack, cyan healing emitter on wrist, compact rifle safely lowered, boots fully visible, three-quarter front view, dark plain studio background, character roster illustration.",
+      "name": "医疗兵插画",
+      "kind": "illustration",
+      "usage": "职业与配装"
+    },
+    {
+      "id": "category-ability",
+      "width": 512,
+      "height": 512,
+      "prompt": "Single large tactical wrist device emitting a cyan energy pulse, square game skill card illustration, centered isolated subject on dark graphite background, high readability at thumbnail size.",
+      "name": "技能分类插画",
+      "kind": "illustration",
+      "usage": "技能和成长卡图"
+    },
+    {
+      "id": "category-mobility",
+      "width": 512,
+      "height": 512,
+      "prompt": "Single armored boot with compact cyan thruster and a dynamic motion trail, square game mobility card illustration, centered on dark graphite background, high readability at thumbnail size.",
+      "name": "机动分类插画",
+      "kind": "illustration",
+      "usage": "技能和成长卡图"
+    },
+    {
+      "id": "category-weapon",
+      "width": 512,
+      "height": 512,
+      "prompt": "Single futuristic tactical rifle mechanism with cyan targeting optic, square game weapon handling card illustration, centered on dark graphite background, high readability at thumbnail size.",
+      "name": "武器分类插画",
+      "kind": "illustration",
+      "usage": "技能和成长卡图"
+    },
+    {
+      "id": "category-defense",
+      "width": 512,
+      "height": 512,
+      "prompt": "Single angular olive armor plate in front of a cyan energy shield, square game defense card illustration, centered on dark graphite background, high readability at thumbnail size.",
+      "name": "防御分类插画",
+      "kind": "illustration",
+      "usage": "技能和成长卡图"
+    },
+    {
+      "id": "category-utility",
+      "width": 512,
+      "height": 512,
+      "prompt": "Single open futuristic tactical supply case containing ammo and cyan medical cartridges, square game utility card illustration, centered on dark graphite background, high readability at thumbnail size.",
+      "name": "辅助分类插画",
+      "kind": "illustration",
+      "usage": "技能和成长卡图"
+    },
+    {
+      "id": "mode-growth",
+      "width": 1024,
+      "height": 576,
+      "prompt": "Three armored soldiers advancing toward a glowing cyan upgrade beacon through a military training arena, dynamic 2D action composition, subjects on the right half, dark quiet negative space on the left for UI title, landscape mode card artwork.",
+      "name": "成长模式插画",
+      "kind": "illustration",
+      "usage": "大厅模式入口"
+    },
+    {
+      "id": "mode-classic",
+      "width": 1024,
+      "height": 576,
+      "prompt": "Two squads of tactical soldiers facing across a fortified industrial checkpoint at dusk, olive military equipment with cyan visor lights, subjects on right half, dark quiet negative space on left for UI title, landscape mode card artwork.",
+      "name": "经典模式插画",
+      "kind": "illustration",
+      "usage": "大厅模式入口"
+    },
+    {
+      "id": "mode-coop",
+      "width": 1024,
+      "height": 576,
+      "prompt": "Three armored teammates defending an extraction platform against distant silhouettes, cyan landing lights and amber warning lamps, subjects on right half, dark quiet negative space on left for UI title, landscape mode card artwork.",
+      "name": "合作模式插画",
+      "kind": "illustration",
+      "usage": "大厅模式入口"
+    },
+    {
+      "id": "strike-emblem",
+      "width": 512,
+      "height": 512,
+      "prompt": "One bold angular metallic shield emblem containing a lightning bolt shape, olive graphite steel and cyan luminous edge, symmetrical centered composition on dark graphite background, original military science fiction badge, no text.",
+      "name": "行动徽章",
+      "kind": "illustration",
+      "usage": "全局品牌徽章"
+    }
+  ]
+}

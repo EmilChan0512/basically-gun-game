@@ -6,6 +6,10 @@ Asset dimensions and SHA256 hashes: v1/manifest.json.
 Source workflow and local execution records are maintained in the development workspace, not distributed with the game.
 No model weights, ComfyUI code or Python runtime are included in this package.
 
+UI kit: 31 background, control-state, panel, HUD, operator, category and mode images generated locally with ComfyUI / FLUX.2 Klein 4B, Qwen 3 4B and Flux2 VAE.
+The current selected outputs are in assets/ui-kit/v1; manifest.json records dimensions and SHA256 hashes. PNG text and workflow metadata are removed without changing pixels.
+Independent editable workflows, selected workflow/seed snapshots and reroll history are retained in the development workspace. Alternative candidates are not distributed. No manual painting or remote image service was used for this collection.
+
 Gunsmith v1: four dedicated 768x512 attachment illustrations generated locally with ComfyUI / FLUX.2 Klein 4B. First output of each fixed-seed job; no rerolls. Runtime PNGs contain no source workflow metadata. Generation specification is retained in the development repository.
 
 Gunsmith v2: 18 reference-conditioned components for six original weapon SVGs. Generated locally with ComfyUI ReferenceLatent / FLUX.2 Klein 4B, one output per component; white matte removed and palette mapped to its original weapon, then anchored for layered armory preview. Runtime PNGs exclude workflow metadata. Original reference asset provenance follows the existing character asset manifest.
