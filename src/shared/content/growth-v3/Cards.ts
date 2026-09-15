@@ -5,289 +5,289 @@ export const GROWTH_V3_CARDS = {
   "as_C1": {
     "classId": "assault",
     "name": "战术换弹",
-    "description": "非空仓手动换弹耗时×.80，空仓无效",
+    "description": "手动换弹耗时减少40%，空仓同样生效。",
     "group": "C"
   },
   "as_C2": {
     "classId": "assault",
     "name": "稳定短点",
-    "description": "静止15tick后前3次扳机中心散布×.80；移动清次数，重新静止15tick重新获得",
+    "description": "静止0.5秒后前3发伤害+20%、中心散布减少50%；移动后重新蓄势。",
     "group": "C"
   },
   "as_C3": {
     "classId": "assault",
     "name": "战地拾取",
-    "description": "距敌死亡点≤80px，补当前枪floor(基础M×.25)备弹至少1，每参与者每死亡事件一次；死亡点存180tick",
+    "description": "240距离内拾取敌人死亡补给，恢复10生命并补充一整基础弹匣的备弹；每个死亡点限一次。",
     "group": "C"
   },
   "as_C4": {
     "classId": "assault",
     "name": "副手预备",
-    "description": "主枪空仓切副枪时从副枪备弹转2发，CD240tick，不提前结束切枪准备",
+    "description": "主枪空仓切副枪时从备弹补满副枪，副枪伤害+30%持续3秒，冷却3秒；可叠加双枪狂热。",
     "group": "C"
   },
   "as_A1": {
     "classId": "assault",
     "name": "翻滚装填",
-    "description": "翻滚生效时从当前枪备弹转3发至弹匣",
+    "description": "翻滚时从备弹补满当前弹匣。",
     "group": "A"
   },
   "as_A2": {
     "classId": "assault",
     "name": "轻装翻滚",
-    "description": "翻滚基础CD240→210tick，加速50%→35%",
+    "description": "翻滚冷却缩短40%至4.8秒，加速提高至80%。",
     "group": "A"
   },
   "as_A3": {
     "classId": "assault",
     "name": "滚后稳定",
-    "description": "翻滚结束后30tick内下一次扳机散布×.75，死亡或使用即清",
+    "description": "翻滚结束后3秒内下一发伤害+30%、中心散布减少50%；与翻滚突袭增伤加算。",
     "group": "A"
   },
   "as_B1": {
     "classId": "assault",
-    "name": "增量装填",
-    "description": "突进装填转移4→6发，不生成弹药",
+    "name": "突进杀阵",
+    "description": "突进从备弹补满弹匣，结束后伤害+25%持续4秒；与满膛突进的射速联动。",
     "group": "B"
   },
   "as_B2": {
     "classId": "assault",
     "name": "延长突进",
-    "description": "持续18→24tick，但CD330→360tick",
+    "description": "突进持续1秒、加速60%，不增加冷却。",
     "group": "B"
   },
   "as_B3": {
     "classId": "assault",
     "name": "突进整备",
-    "description": "技能结束后90tick内下一次手动换弹耗时×.85",
+    "description": "突进结束获得30护甲4秒，4秒内下一次手动换弹耗时减少40%。",
     "group": "B"
   },
   "as_G1": {
     "classId": "assault",
     "name": "爆破储备",
-    "description": "选择后当前突击专属G库存+1，仅当次选卡发放、每局一次",
+    "description": "立即增加1次专属道具库存，后续道具恢复时间减半；当前剩余恢复时间也减半，每局仅授予一次库存。",
     "group": "G"
   },
   "as_G2": {
     "classId": "assault",
     "name": "扩域破阵",
-    "description": "三种G爆炸半径×1.15；对人最大/最小伤害×.85，对部署物伤害不变",
+    "description": "突击道具爆炸半径+40%、对人伤害+30%、对部署物伤害+50%。",
     "group": "G"
   },
   "tk_C1": {
     "classId": "tank",
     "name": "稳固支撑",
-    "description": "地面蹲伏静止时个人减伤15%，与屏障等取最高",
+    "description": "地面蹲伏静止时减伤30%，与屏障叠加，合成减伤最高65%。",
     "group": "C"
   },
   "tk_C2": {
     "classId": "tank",
     "name": "掩护换弹",
-    "description": "蹲伏开始非空仓手动换弹耗时×.80，开始锁定",
+    "description": "手动换弹耗时减少40%，换弹期间减伤20%；空仓和站立也生效。",
     "group": "C"
   },
   "tk_C3": {
     "classId": "tank",
     "name": "防爆衬垫",
-    "description": "对爆炸个人减伤25%，与其他个人减伤取最高",
+    "description": "受到爆炸伤害减少50%，可叠加其他减伤至65%。",
     "group": "C"
   },
   "tk_C4": {
     "classId": "tank",
     "name": "战地回收",
-    "description": "击杀敌人补当前主武器10发备弹，CD150tick，容量封顶",
+    "description": "击杀恢复20生命，主枪补充一整基础弹匣的备弹，冷却2秒。",
     "group": "C"
   },
   "tk_A1": {
     "classId": "tank",
     "name": "移动屏障",
-    "description": "屏障移速惩罚25%→10%，CD360→390tick",
+    "description": "屏障期间移动速度提高15%，不增加冷却，可与移动堡垒联动。",
     "group": "A"
   },
   "tk_A2": {
     "classId": "tank",
     "name": "屏障冷却",
-    "description": "屏障期间实际阻止>0敌方伤害后CD减30tick，每30tick一次；每次E最多60tick",
+    "description": "屏障实际减免敌伤后返还2秒冷却，每0.5秒一次，每次施放最多返还6秒；总返还仍有上限。",
     "group": "A"
   },
   "tk_A3": {
     "classId": "tank",
     "name": "应急衬板",
-    "description": "屏障自然结束且本次吸收过伤害，获10护甲60tick；主动取消不触发",
+    "description": "屏障自然结束且减免过敌伤，获得40护甲6秒。",
     "group": "A"
   },
   "tk_B1": {
     "classId": "tank",
     "name": "加固盾面",
-    "description": "盾吸收预算120→150HP，技能移速惩罚15%→20%",
+    "description": "定向盾基础预算提高至300，叠加攻城盾牌达到420；不降低移速。",
     "group": "B"
   },
   "tk_B2": {
     "classId": "tank",
     "name": "快速收盾",
-    "description": "前摇6→3tick，结束后摇6→3tick；盾持续90→75tick",
+    "description": "举盾与收盾无前后摇，盾持续延长至4秒。",
     "group": "B"
   },
   "tk_B3": {
     "classId": "tank",
     "name": "守护接力",
-    "description": "盾自然结束或耗尽预算后120px内最近可见队友获10护甲60tick，无队友则自己；主动取消无效",
+    "description": "盾自然结束或耗尽后，240距离内最近可见队友获得40护甲6秒，无队友则给自己。",
     "group": "B"
   },
   "tk_G1": {
     "classId": "tank",
     "name": "防御储备",
-    "description": "当前重装专属G库存+1，每局一次",
+    "description": "立即增加1次专属道具库存，后续道具恢复时间减半；当前剩余恢复时间也减半，每局仅授予一次库存。",
     "group": "G"
   },
   "tk_G2": {
     "classId": "tank",
     "name": "精工防护",
-    "description": "掩体HP120→150、寿命360→300；拦截器HP40→55、寿命300→240；装甲包额度15→20、持续120→90tick",
+    "description": "掩体300耐久/24秒；拦截器100耐久/20秒/6次拦截；装甲包40护甲8秒。",
     "group": "G"
   },
   "sn_C1": {
     "classId": "sniper",
     "name": "稳定瞄准",
-    "description": "地面静止30tick后散布×.75，移动解除",
+    "description": "地面静止0.5秒后伤害+20%、中心散布减少60%，移动解除。",
     "group": "C"
   },
   "sn_C2": {
     "classId": "sniper",
     "name": "首发精准",
-    "description": "满弹匣第一扳机散布×.70，不与更强收益相乘",
+    "description": "满弹匣首发伤害+35%、中心散布减少60%，与专注和Perk增伤加算。",
     "group": "C"
   },
   "sn_C3": {
     "classId": "sniper",
     "name": "副手应战",
-    "description": "移动时副枪散布×.75",
+    "description": "移动时副枪伤害+30%、中心散布减少50%。",
     "group": "C"
   },
   "sn_C4": {
     "classId": "sniper",
     "name": "计划换弹",
-    "description": "非空且当前弹匣少于容量一半时手动换弹×.75",
+    "description": "弹匣不足一半时手动换弹耗时减少40%，空仓同样生效。",
     "group": "C"
   },
   "sn_A1": {
     "classId": "sniper",
     "name": "快速专注",
-    "description": "CD360→300tick，持续90→60tick",
+    "description": "专注冷却缩短40%至7.2秒，持续延长至4秒。",
     "group": "A"
   },
   "sn_A2": {
     "classId": "sniper",
     "name": "精准循环",
-    "description": "专注期间爆头造成>0生命伤害后CD减30tick；每30tick一次，每次E最多60tick",
+    "description": "专注期间爆头造成生命伤害后返还2秒冷却，每0.5秒一次，每次施放最多6秒；可联动完美猎杀。",
     "group": "A"
   },
   "sn_A3": {
     "classId": "sniper",
     "name": "专注备弹",
-    "description": "发动专注从备弹转1发到当前枪弹匣，满匣/无备弹不转",
+    "description": "专注开始从备弹补满当前弹匣，专注期间前2发伤害+20%。",
     "group": "A"
   },
   "sn_B1": {
     "classId": "sniper",
     "name": "延长转移",
-    "description": "持续45→60tick，CD360→390tick；前15tick禁火不变",
+    "description": "转移持续延长至3秒，冷却缩短20%至9.6秒。",
     "group": "B"
   },
   "sn_B2": {
     "classId": "sniper",
     "name": "转移整备",
-    "description": "转移期间开始手动换弹耗时×.80",
+    "description": "转移开始从备弹补满弹匣，期间手动换弹耗时减少40%。",
     "group": "B"
   },
   "sn_B3": {
     "classId": "sniper",
     "name": "转移掩声",
-    "description": "转移脚步半径倍率.50→.25，但加速20%→15%",
+    "description": "转移脚步半径减少90%，加速提高至40%，叠加游猎转移达到60%。",
     "group": "B"
   },
   "sn_G1": {
     "classId": "sniper",
     "name": "侦察储备",
-    "description": "当前狙击专属G库存+1，每局一次",
+    "description": "立即增加1次专属道具库存，后续道具恢复时间减半；当前剩余恢复时间也减半，每局仅授予一次库存。",
     "group": "G"
   },
   "sn_G2": {
     "classId": "sniper",
     "name": "广域侦察",
-    "description": "信标圆形视野半径880→1100；EMP半径160→190、停机90→60tick；诱饵声半径480→600、寿命150→120tick",
+    "description": "信标视野1320/标记2秒/寿命120秒；EMP半径240/停机6秒；诱饵声半径900/耐久40/寿命10秒。",
     "group": "G"
   },
   "md_C1": {
     "classId": "medic",
     "name": "紧急分诊",
-    "description": "E对低于30%最大HP的目标：脉冲额外+10HP；治疗链每跳额外+1HP（自用同样+1），按实际治疗时判断",
+    "description": "E治疗生命低于50%的目标时，脉冲额外恢复30生命，治疗链每跳额外恢复4生命。",
     "group": "C"
   },
   "md_C2": {
     "classId": "medic",
     "name": "救援奔袭",
-    "description": "E实际治疗其他队友后自己加速15%持续60tick，CD180tick",
+    "description": "E实际治疗队友后双方加速30%持续4秒，冷却3秒；同类移速取最高。",
     "group": "C"
   },
   "md_C3": {
     "classId": "medic",
     "name": "救援整备",
-    "description": "E第一次有效治疗后60tick内下一次手动换弹×.80；每次施放只授予一次",
+    "description": "每次E首次有效治疗后，4秒内下一次换弹耗时减少40%；恢复敌伤还使自身伤害+20%持续4秒。",
     "group": "C"
   },
   "md_C4": {
     "classId": "medic",
     "name": "自疗训练",
-    "description": "脉冲对自己额外+5HP；治疗链自用每跳3→4HP；不增治疗XP",
+    "description": "脉冲对自己额外恢复25生命，治疗链自疗每跳额外恢复4生命。",
     "group": "C"
   },
   "md_A1": {
     "classId": "medic",
     "name": "广域脉冲",
-    "description": "半径180→240px，每目标基础治疗25→20HP",
+    "description": "脉冲半径扩大至300，每目标治疗额外+15；叠加强效急救达到65生命。",
     "group": "A"
   },
   "md_A2": {
     "classId": "medic",
     "name": "快速急救",
-    "description": "基础CD420→336tick，每目标基础治疗再−5HP",
+    "description": "脉冲冷却缩短40%至8.4秒，不降低治疗量。",
     "group": "A"
   },
   "md_A3": {
     "classId": "medic",
     "name": "流动诊疗",
-    "description": "移除脉冲成功后的10%减速，但CD倍率额外+10%",
+    "description": "脉冲期间加速20%；有效恢复敌伤时给目标25护甲4秒，不增加冷却。",
     "group": "A"
   },
   "md_B1": {
     "classId": "medic",
     "name": "延伸治疗",
-    "description": "链距离240→300px，每跳治疗基础−1HP（队友和自用均生效）",
+    "description": "治疗链距离提高至420，队友每跳治疗+3、自疗+2；叠加战地输血队友每跳12生命。",
     "group": "B"
   },
   "md_B2": {
     "classId": "medic",
     "name": "稳定连接",
-    "description": "施法者受到敌方生命伤害时不立即中断，改为连续15tick没有新伤害后恢复治疗；受伤暂停期间不治疗，90tick寿命继续",
+    "description": "治疗链不因受伤中断或暂停，持续延长至4秒；距离、遮挡和死亡仍会断链。",
     "group": "B"
   },
   "md_B3": {
     "classId": "medic",
     "name": "加速输注",
-    "description": "治疗总持续90→60tick、间隔15→10tick，仍6跳；按新治疗速率参与§7.3有效来源仲裁",
+    "description": "治疗链间隔缩短至0.2秒，基础持续3秒共15跳；可叠加稳定连接延长至20跳。",
     "group": "B"
   },
   "md_G1": {
     "classId": "medic",
     "name": "医疗储备",
-    "description": "当前医疗专属G库存+1，每局一次",
+    "description": "立即增加1次专属道具库存，后续道具恢复时间减半；当前剩余恢复时间也减半，每局仅授予一次库存。",
     "group": "G"
   },
   "md_G2": {
     "classId": "medic",
     "name": "扩域支援",
-    "description": "烟雾半径150→180、持续150→120；急救站半径140→180、预算90→72HP；弹药箱领取半径60→100、每人补给比例20%→15%",
+    "description": "烟雾半径220/8秒；急救站半径240/每秒8治疗/预算240/20秒；弹药箱半径140/每人补50%/20秒。",
     "group": "G"
   }
 } as const;
@@ -296,7 +296,7 @@ export const GROWTH_V3_EVOLUTIONS = {
   "as_EV_A": {
     "classId": "assault",
     "name": "双段机动",
-    "description": "变2充能、逐个恢复360tick、两次最少60tick；选中时仅1充能，另一开始恢复；加速保持A2的35%，装填保持3发；替代A2的210CD",
+    "description": "双充能翻滚，每充能6秒恢复、两次间隔0.5秒；每次滚后恢复20生命并获得20护甲3秒，保留满膛和高速。",
     "group": "A",
     "requires": [
       "as_A1",
@@ -306,7 +306,7 @@ export const GROWTH_V3_EVOLUTIONS = {
   "as_EV_B": {
     "classId": "assault",
     "name": "流动火力",
-    "description": "每次转移6→8发，CD按B2基础360再+30=390tick；持续24不变",
+    "description": "突进冷却缩短至6.6秒，结束后5秒伤害+40%、射速+30%；可叠加突进杀阵和满膛突进。",
     "group": "B",
     "requires": [
       "as_B1",
@@ -315,8 +315,8 @@ export const GROWTH_V3_EVOLUTIONS = {
   },
   "tk_EV_A": {
     "classId": "tank",
-    "name": "移动堡垒",
-    "description": "屏障期间移速惩罚10%→0，减伤35%→30%；A1的390CD和A2返还保留",
+    "name": "战争堡垒",
+    "description": "屏障持续6秒、加速20%、射速+35%；基础减伤45%，叠加移动堡垒达到65%，保留受击返还。",
     "group": "A",
     "requires": [
       "tk_A1",
@@ -326,7 +326,7 @@ export const GROWTH_V3_EVOLUTIONS = {
   "tk_EV_B": {
     "classId": "tank",
     "name": "反攻窗口",
-    "description": "自然结束/耗尽预算后，60tick内主枪下一次切入准备时间×.50；主动取消不触发，不能绕过现有shootReadyTick",
+    "description": "盾自然结束或耗尽后从备弹补满主枪，5秒伤害+40%、射速+35%，保留快速切主枪与攻城盾护甲。",
     "group": "B",
     "requires": [
       "tk_B1",
@@ -336,7 +336,7 @@ export const GROWTH_V3_EVOLUTIONS = {
   "sn_EV_A": {
     "classId": "sniper",
     "name": "定点狙击",
-    "description": "专注期间地面静止散布倍率.35→.25；发生移动则恢复.35；CD300、持续60与返还规则保留",
+    "description": "专注持续6秒，所有射击伤害+35%，静止中心散布倍率降至15%；与强化首发加算。",
     "group": "A",
     "requires": [
       "sn_A1",
@@ -346,7 +346,7 @@ export const GROWTH_V3_EVOLUTIONS = {
   "sn_EV_B": {
     "classId": "sniper",
     "name": "游击射手",
-    "description": "前15tick禁火不变；其后转移剩余时间内移动散布×.70，CD按B1的390再+30=420tick",
+    "description": "转移全程可以开火，移动中心散布减少50%、转移期间伤害+25%；保留转移补满弹匣。",
     "group": "B",
     "requires": [
       "sn_B1",
@@ -356,7 +356,7 @@ export const GROWTH_V3_EVOLUTIONS = {
   "md_EV_A": {
     "classId": "medic",
     "name": "救援脉冲",
-    "description": "对其他队友实际治疗后额外给10护甲60tick；每目标300tick共享CD；与觉醒同次触发时只取觉醒15/90，两类CD均开始",
+    "description": "实际恢复队友敌伤后给35护甲6秒，双方伤害+25%持续4秒；每目标5秒冷却。",
     "group": "A",
     "requires": [
       "md_A1",
@@ -366,7 +366,7 @@ export const GROWTH_V3_EVOLUTIONS = {
   "md_EV_B": {
     "classId": "medic",
     "name": "医疗伴随",
-    "description": "链成功结束（满持续且至少一跳有效）后目标获10护甲90tick；被打断/主动取消不触发；与其他护甲同槽",
+    "description": "治疗链期间可开火、切枪和换弹；完整结束且有有效治疗后，双方获得40护甲6秒。",
     "group": "B",
     "requires": [
       "md_B1",

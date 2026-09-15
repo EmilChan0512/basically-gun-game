@@ -33,4 +33,8 @@ test('old offline equipment migrates and each skill offers only its matching cla
   await page.reload(); await page.locator('#growth-tab-perks').click();
   await expect(page.locator('[data-growth-option="tk_steel"]')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('[data-growth-option="tk_revenge"]')).toHaveAttribute('aria-pressed', 'true');
+  await page.locator('#growth-tab-pool').click();
+  await expect(page.locator('[data-growth-option="tk_A1"]')).toContainText('移动速度提高15%');
+  await expect(page.locator('[data-growth-option="tk_G2"]')).toContainText('掩体300耐久');
+  await page.screenshot({ path: 'artifacts/qa/empowered-growth-pool.png', fullPage: true });
 });

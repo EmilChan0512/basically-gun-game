@@ -38,9 +38,26 @@ export function isGadgetId(value: unknown): value is GrowthGadgetId {
   return typeof value === 'string' && Object.hasOwn(GROWTH_V3_GADGETS, value);
 }
 /** G2 changes only the equipped operator's three exclusive tools. */
-export function resolveGadget(id: GrowthGadgetId, upgraded: boolean): GadgetDefinition {
+export function resolveGadget(id: GrowthGadgetId, upgraded: boolean, empowered = false, stocked = false): GadgetDefinition {
   const def = { ...GROWTH_V3_GADGETS[id] };
+  if (empowered && stocked) def.cooldown = Math.round(def.cooldown * .5);
   if (!upgraded) return def;
+  if (empowered) {
+    switch (id) {
+      case 'as_frag': case 'as_concussion': case 'as_charge':
+        def.radius *= 1.4; def.damageMax *= 1.3; def.damageMin *= 1.3; def.structureDamageMax *= 1.5; def.structureDamageMin *= 1.5; break;
+      case 'tk_cover': def.health = 300; def.duration = 720; break;
+      case 'tk_interceptor': def.health = 100; def.duration = 600; def.intercepts = 6; def.interval = 10; break;
+      case 'tk_plate': def.armor = 40; def.armorTicks = 240; break;
+      case 'sn_beacon': def.radius = 1320; def.markTicks = 60; def.duration = 3600; break;
+      case 'sn_emp': def.radius = 240; def.empTicks = 180; break;
+      case 'sn_decoy': def.noiseRadius = 900; def.duration = 300; def.health = 40; break;
+      case 'md_smoke': def.radius = 220; def.duration = 240; break;
+      case 'md_station': def.radius = 240; def.heal = 8; def.healBudget = 240; def.duration = 600; break;
+      case 'md_ammo': def.radius = 140; def.ammoScale = .5; def.duration = 600; break;
+    }
+    return def;
+  }
   switch (id) {
     case 'as_frag': case 'as_concussion': case 'as_charge': def.radius *= 1.15; def.damageMax *= .85; def.damageMin *= .85; break;
     case 'tk_cover': def.health = 150; def.duration = 300; break;

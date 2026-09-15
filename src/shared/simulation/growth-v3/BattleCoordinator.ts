@@ -12,7 +12,7 @@ import { validateGrowthLoadoutV3, type GrowthLoadoutV3 } from '../../content/gro
 import { GROWTH_V3_OPERATORS, GROWTH_V3_ABILITIES } from '../../content/growth-v3/Operators';
 import { GROWTH_V3_WEAPONS, type GrowthWeaponId } from '../../content/growth-v3/Weapons';
 import { resolveGrowthWeapon } from '../../content/growth-v3/Attachments';
-import type { GrowthUpgradeId } from '../../content/growth-v3/Cards';
+import { GROWTH_V3_CARDS, GROWTH_V3_EVOLUTIONS, type GrowthUpgradeId } from '../../content/growth-v3/Cards';
 import type { GrowthPerkId } from '../../content/growth-v3/Perks';
 import { GrowthArsenalV3, pelletDamageHp, type GrowthWeaponCheckpoint } from './WeaponRules';
 import { AbilitySimulation, type AbilityCheckpoint, type AbilityPort, type ActiveAbility } from './AbilitySimulation';
@@ -103,6 +103,8 @@ export class GrowthBattleCoordinator {
   participant(id: string) { const p = this.participants.get(id); if (!p) throw Error('Unknown growth participant'); return p; }
   private gun(id: string) { return this.weapons.get(id)!; }
   private has(id: string, card: GrowthUpgradeId) { return this.participant(id).progression.selected.includes(card); }
+  private strong(id: string) { return this.participant(id).loadout.perks.some(perk => !perk.startsWith('pk_')); }
+  private boosted(id: string, card: GrowthUpgradeId) { return this.strong(id) && this.has(id, card); }
   private perk(id: string, perk: GrowthPerkId) { return this.participant(id).loadout.perks.includes(perk); }
   private buff(id: string, key: string) { return (this.participant(id).buffs[key] ?? 0) > this.tick; }
   private ready(id: string, key: string) { return (this.participant(id).cooldowns[key] ?? 0) <= this.tick; }
@@ -153,6 +155,7 @@ export class GrowthBattleCoordinator {
         const p = this.participant(id);
         delete p.buffs.resetKill;
         Object.assign(p.perkState, { castStart: this.tick, refunded: 0, cardRefund: 0, tankTaken: 0, tankBlocked: 0, cycleHealing: 0, cycleRefund: 0, focusReset: 0 });
+        if (cast.definition.empowered && cast.selected.includes('sn_A3')) p.perkState.focusCardsShots = 2;
         if (this.perk(id, 'sn_execute')) p.buffs.execute = cast.endTick;
         if (p.loadout.perks.some(perk => !perk.startsWith('pk_'))) this.perkFeedback(id, '职业技能强化');
         this.battle.journal.emit({ tick: this.tick, kind: 'skill', actorId: id, ability: cast.definition.id });
@@ -224,7 +227,7 @@ export class GrowthBattleCoordinator {
       a.growth = undefined; a.kit = null; a.equipment = undefined; a.offhand = undefined; a.shield = undefined;
       a.life = new OriginalLife(GROWTH_V3_OPERATORS[loadout.classId].health + (loadout.perks.includes('tk_steel') ? 35 : 0)); a.stealthFrames = 0;
       this.mirrorArsenal(a);
-      this.abilities.register(a.id, loadout); this.gadgets.register(a.id, loadout.classId, loadout.gadgetId);
+      this.abilities.register(a.id, loadout); this.gadgets.register(a.id, loadout.classId, loadout.gadgetId, this.strong(a.id));
     }
     this.abilities.step(0); this.gadgets.step(0); this.abilities.finishHealingPhase(0);
     for (const a of this.actors()) { this.gun(a.id).step(0, false, pose(a), this.ports.random); this.sync(a); }
@@ -275,9 +278,10 @@ export class GrowthBattleCoordinator {
     const p = this.participant(id);
     if (reroll) return rerollGrowthV3(p.progression, p.loadout, batch, this.tick, this.ports.random);
     if (!chooseGrowthV3(p.progression, p.loadout, batch, upgrade, this.tick, this.ports.random)) return false;
-    if (String(upgrade).endsWith('_G1')) this.gadgets.extraCharge(id);
+    if (String(upgrade).endsWith('_G1')) this.gadgets.extraCharge(id, this.tick);
     if (String(upgrade).endsWith('_G2')) this.gadgets.upgrade(id);
-    this.abilities.updateBuild(id, p.progression.selected, this.tick); this.sync(this.actor(id)); return true;
+    this.abilities.updateBuild(id, p.progression.selected, this.tick);
+    this.perkFeedback(id, `${String(upgrade).includes('_EV_') ? '进化完成' : '成长强化'} · ${{...GROWTH_V3_CARDS,...GROWTH_V3_EVOLUTIONS}[upgrade as GrowthUpgradeId].name}`); this.sync(this.actor(id)); return true;
   }
   carryObjective(id: string) {
     const gun = this.gun(id);
@@ -300,8 +304,9 @@ export class GrowthBattleCoordinator {
     p.metrics.switches++;
     if (!toSide) delete p.buffs.shieldCounter;
     if (cardFeed || perkFeed) {
-      gun.transfer(2);
-      if (this.has(id, 'as_C4')) p.cooldowns.sidecard = this.tick + 240;
+      gun.transfer(cardFeed && this.strong(id) ? 1000000 : 2);
+      if (cardFeed && this.strong(id)) p.buffs.sideCardPower = this.tick + 90;
+      if (this.has(id, 'as_C4')) p.cooldowns.sidecard = this.tick + (this.strong(id) ? 90 : 240);
       if (this.perk(id, 'pk_sidefeed')) p.cooldowns.sidefeed = this.tick + 240;
     }
     this.battle.journal.emit({ tick: this.tick, kind: 'swap', actorId: id, weapon: GROWTH_V3_WEAPONS[gun.selectedId].artId });
@@ -310,11 +315,13 @@ export class GrowthBattleCoordinator {
     const id = a.id, gun = this.gun(id), p = this.participant(id), nonempty = gun.current.ammo > 0;
     if (this.abilities.locks(id, this.tick).reload || this.gadgets.inventory(id).cast) return this.error(id, 'busy');
     const def = resolveGrowthWeapon(gun.selectedId, p.loadout.attachments[gun.selectedSlot]);
-    const benefits = [this.buff(id, 'ambushReload') ? .6 : 1, this.perk(id, 'tk_steel') && a.life.health < a.life.maxHealth / 2 ? .7 : 1, !nonempty && this.perk(id, 'pk_emptyreload') ? .92 : 1,
+    const benefits = [this.boosted(id, 'as_C1') || this.boosted(id, 'tk_C2') || this.boosted(id, 'sn_C4') && gun.current.ammo < def.magazine / 2 ? .6 : 1,
+      this.boosted(id, 'sn_B2') && this.abilities.actorState(id).active?.definition.id === 'sn_relocate' ? .6 : 1,
+      this.buff(id, 'ambushReload') ? .6 : 1, this.perk(id, 'tk_steel') && a.life.health < a.life.maxHealth / 2 ? .7 : 1, !nonempty && this.perk(id, 'pk_emptyreload') ? .92 : 1,
       nonempty && this.has(id, 'as_C1') ? .8 : 1, nonempty && a.movement.crouching && this.has(id, 'tk_C2') ? .8 : 1,
       nonempty && gun.current.ammo < def.magazine / 2 && this.has(id, 'sn_C4') ? .75 : 1,
       this.has(id, 'sn_B2') && this.abilities.actorState(id).active?.definition.id === 'sn_relocate' ? .8 : 1,
-      this.buff(id, 'rushReload') ? .85 : 1, this.buff(id, 'medReload') ? .8 : 1];
+      this.buff(id, 'rushReload') ? this.strong(id) ? .6 : .85 : 1, this.buff(id, 'medReload') ? this.strong(id) ? .6 : .8 : 1];
     if (gun.reload(this.tick, benefits, this.perk(id, 'pk_reloadguard') ? [1.1] : [])) {
       if (nonempty) p.metrics.tacticalReloads++; else p.metrics.emptyReloads++;
       delete p.buffs.rushReload; delete p.buffs.medReload;
@@ -341,7 +348,7 @@ export class GrowthBattleCoordinator {
   private movement(a: Actor, control: BattleInput) {
     const id = a.id, p = this.participant(id), m = a.movement, gun = this.gun(id), locks = this.abilities.locks(id, this.tick);
     const skillSpeed = locks.moveScale, gCast = !!this.gadgets.inventory(id).cast;
-    const ordinaryBoost = Math.max(this.buff(id, 'escape') ? .3 : 0, this.buff(id, 'adrenaline') ? .15 : 0, this.buff(id, 'berserker') ? .2 : 0, this.buff(id, 'medRun') ? .15 : 0,
+    const ordinaryBoost = Math.max(this.buff(id, 'escape') ? .3 : 0, this.buff(id, 'adrenaline') ? .15 : 0, this.buff(id, 'berserker') ? .2 : 0, this.buff(id, 'medRun') ? this.strong(id) ? .3 : .15 : 0,
       this.buff(id, 'supplyrun') ? .1 : 0, gun.selectedSlot === 'secondary' && this.perk(id, 'pk_sidewalk') ? .03 : 0);
     const definition = resolveGrowthWeapon(gun.selectedId, p.loadout.attachments[gun.selectedSlot]);
     const airborne = m.jumping, previousX = m.x;
@@ -373,21 +380,22 @@ export class GrowthBattleCoordinator {
     const base = resolveGrowthWeapon(gun.selectedId, p.loadout.attachments[gun.selectedSlot]);
     const spread = [active ? still ? active.definition.stationarySpread : active.definition.spread : 1,
       p.loadout.classId === 'sniper' && p.focusedReady ? .85 : 1,
-      this.has(id, 'as_C2') && p.stillShots > 0 && p.stationary >= 15 ? .8 : 1,
-      this.has(id, 'sn_C1') && p.stationary >= 30 ? .75 : 1,
-      this.has(id, 'sn_C2') && current.ammo === base.magazine ? .7 : 1,
-      this.has(id, 'sn_C3') && !still && gun.selectedSlot === 'secondary' ? .75 : 1,
-      active?.selected.includes('sn_EV_B') && active.definition.id === 'sn_relocate' && this.tick >= active.startTick + 15 && !still ? .7 : 1,
+      this.has(id, 'as_C2') && p.stillShots > 0 && p.stationary >= 15 ? this.strong(id) ? .5 : .8 : 1,
+      this.has(id, 'sn_C1') && p.stationary >= (this.strong(id) ? 15 : 30) ? this.strong(id) ? .4 : .75 : 1,
+      this.has(id, 'sn_C2') && current.ammo === base.magazine ? this.strong(id) ? .4 : .7 : 1,
+      this.has(id, 'sn_C3') && !still && gun.selectedSlot === 'secondary' ? this.strong(id) ? .5 : .75 : 1,
+      active?.selected.includes('sn_EV_B') && active.definition.id === 'sn_relocate' && this.tick >= active.startTick + (active.definition.empowered ? 0 : 15) && !still ? active.definition.empowered ? .5 : .7 : 1,
       this.perk(id, 'pk_landing') && this.buff(id, 'landing') ? .85 : 1,
       this.perk(id, 'pk_firstshot') && this.tick - current.lastShotTick >= 30 ? .9 : 1,
-      this.buff(id, 'rollSpread') ? .75 : 1];
+      this.buff(id, 'rollSpread') ? this.strong(id) ? .5 : .75 : 1];
     if (this.tick - current.lastShotTick >= 15) p.perkState.platformStart = this.tick;
     const platform = this.perk(id, 'tk_platform') && this.tick - (p.perkState.platformStart ?? this.tick) >= 24 && this.tick - current.lastShotTick < 15;
-    const rateBonus = (platform ? .25 : 0) + (this.buff(id, 'fullrush') ? .25 : 0) + (this.buff(id, 'adrenaline') ? .2 : 0);
+    const rateBonus = (platform ? .25 : 0) + (this.buff(id, 'fullrush') ? .25 : 0) + (this.buff(id, 'adrenaline') ? .2 : 0) + (this.buff(id, 'rushEvolution') ? .3 : 0)
+      + (this.buff(id, 'counterEvolution') ? .35 : 0) + (active?.definition.empowered && active.selected.includes('tk_EV_A') ? .35 : 0);
     const wasReload = current.reloadUntil;
     const shot = gun.step(this.tick, control.fire, { ...pose(a), stationaryTicks: p.stationary, braceTicks: p.braceTicks }, this.ports.random, spread,
       !a.life.alive || a.life.spawnProtectionFrames > 0 || this.abilities.locks(id, this.tick).fire || !!this.gadgets.inventory(id).cast
-      || this.damageQueue.some(d => d.targetId === id && !d.sourceId), rateBonus, platform ? .6 : 1);
+      || this.damageQueue.some(d => d.targetId === id && !d.sourceId), rateBonus, platform ? .6 : 1, this.strong(id) ? .1 : .25);
     if (wasReload && !current.reloadUntil) {
       if (p.perkState.armedSlot === (gun.selectedSlot === 'primary' ? 0 : 1)) p.perkState.armedShots = 0;
       if (p.weaponMetrics[gun.selectedId]) p.weaponMetrics[gun.selectedId]!.magazineKills = 0;
@@ -398,6 +406,18 @@ export class GrowthBattleCoordinator {
     let bonus = (this.buff(id, 'ambush') ? .4 : 0) + (this.buff(id, 'hunt') ? .35 : 0)
       + (this.buff(id, 'execute') && active?.definition.id === 'sn_focus' ? .45 : 0)
       + (this.buff(id, 'dual') && gun.selectedSlot === 'secondary' ? .35 : 0);
+    if (this.strong(id)) {
+      bonus += (this.has(id, 'as_C2') && p.stillShots > 0 && p.stationary >= 15 ? .2 : 0)
+        + (this.has(id, 'sn_C1') && still && p.stationary >= 15 ? .2 : 0)
+        + (this.has(id, 'sn_C2') && current.ammo === base.magazine - 1 ? .35 : 0)
+        + (this.has(id, 'sn_C3') && !still && gun.selectedSlot === 'secondary' ? .3 : 0)
+        + (this.buff(id, 'rollSpread') ? .3 : 0) + (this.buff(id, 'rushDamage') ? .25 : 0)
+        + (this.buff(id, 'rushEvolution') ? .4 : 0) + (this.buff(id, 'counterEvolution') ? .4 : 0)
+        + (this.buff(id, 'sideCardPower') && gun.selectedSlot === 'secondary' ? .3 : 0)
+        + (this.buff(id, 'medCardPower') ? .2 : 0) + (this.buff(id, 'rescuePower') ? .25 : 0)
+        + (active?.selected.includes('sn_EV_A') ? .35 : 0) + (active?.selected.includes('sn_EV_B') ? .25 : 0);
+      if (active?.definition.id === 'sn_focus' && (p.perkState.focusCardsShots ?? 0) > 0) { bonus += .2; p.perkState.focusCardsShots--; }
+    }
     if (this.buff(id, 'revenge') && (p.perkState.revengeShots ?? 0) > 0) { bonus += p.perkState.revengeBonus; p.perkState.revengeShots--; }
     if ((p.perkState.armedShots ?? 0) > 0 && p.perkState.armedSlot === (gun.selectedSlot === 'primary' ? 0 : 1)) { bonus += .25; p.perkState.armedShots--; }
     delete p.buffs.ambush; delete p.buffs.hunt; delete p.buffs.execute;
@@ -482,8 +502,9 @@ export class GrowthBattleCoordinator {
       armorBypass: source && event.weaponId && this.perk(source.id, 'sn_pierce') ? .6 : 0,
       additiveReduction: this.linkReduction(id),
       personalReductions: [cast?.definition.id === 'tk_barrier' ? cast.definition.reduction : 0,
-        this.has(id, 'tk_C1') && target.movement.crouching && !target.movement.jumping && Math.abs(target.movement.vx) < .1 ? .15 : 0,
-        event.explosion && this.has(id, 'tk_C3') ? .25 : 0, event.explosion && this.perk(id, 'pk_blast') ? .1 : 0,
+        this.has(id, 'tk_C1') && target.movement.crouching && !target.movement.jumping && Math.abs(target.movement.vx) < .1 ? this.strong(id) ? .3 : .15 : 0,
+        this.boosted(id, 'tk_C2') && this.gun(id).current.reloadUntil > this.tick ? .2 : 0,
+        event.explosion && this.has(id, 'tk_C3') ? this.strong(id) ? .5 : .25 : 0, event.explosion && this.perk(id, 'pk_blast') ? .1 : 0,
         this.perk(id, 'pk_reloadguard') && this.gun(id).current.reloadUntil > this.tick ? .1 : 0] });
     if (enemy && cast) {
       p.perkState.tankTaken = (p.perkState.tankTaken ?? 0) + defense.shield + defense.personal + defense.armor + Math.min(healthUnits(target.life.health), defense.life);
@@ -568,19 +589,29 @@ export class GrowthBattleCoordinator {
       this.abilities.markHealing(castId, amount);
       if (!p.healedCasts.includes(castId)) {
         p.healedCasts.push(castId); p.healedCasts = p.healedCasts.slice(-8);
-        if (cast?.selected.includes('md_C3') && source.life.alive) p.buffs.medReload = this.tick + 60;
+        if (cast?.selected.includes('md_C3') && source.life.alive) {
+          p.buffs.medReload = this.tick + (cast.definition.empowered ? 120 : 60);
+          if (cast.definition.empowered && eligible > 0) p.buffs.medCardPower = this.tick + 120;
+        }
       }
       if (sourceId !== targetId && source.life.alive && cast?.selected.includes('md_C2') && this.ready(sourceId, 'medRun')) {
-        p.buffs.medRun = this.tick + 60; p.cooldowns.medRun = this.tick + 180;
+        p.buffs.medRun = this.tick + (cast.definition.empowered ? 120 : 60); p.cooldowns.medRun = this.tick + (cast.definition.empowered ? 90 : 180);
+        if (cast.definition.empowered) t.buffs.medRun = this.tick + 120;
       }
     }
     if (sourceId !== targetId) {
       const ultimate = p.progression.ultimate && p.loadout.classId === 'medic' && this.ready(targetId, 'lifeline');
       const evolution = !!castId && cast?.selected.includes('md_EV_A') && p.loadout.abilityId === 'md_pulse' && this.ready(targetId, 'pulseArmor');
       if (ultimate) { this.giveArmor(targetId,15,90,sourceId); t.cooldowns.lifeline = this.tick + 600; }
-      if (evolution) { if (!ultimate) this.giveArmor(targetId,10,60,sourceId); t.cooldowns.pulseArmor = this.tick + 300; }
+      if (evolution) {
+        if (cast?.definition.empowered && eligible > 0) {
+          this.giveArmor(targetId,35,180,sourceId); p.buffs.rescuePower = t.buffs.rescuePower = this.tick + 120;
+          t.cooldowns.pulseArmor = this.tick + 150;
+        } else if (!cast?.definition.empowered) { if (!ultimate) this.giveArmor(targetId,10,60,sourceId); t.cooldowns.pulseArmor = this.tick + 300; }
+      }
     }
     if (source.life.alive && eligible > 0) {
+      if (cast?.definition.empowered && cast.selected.includes('md_A3')) this.giveArmor(targetId,25,120,sourceId);
       if (cast?.definition.id === 'md_pulse' && this.perk(sourceId, 'md_emergency') && requested > amount)
         this.giveArmor(targetId, Math.min(30, (requested - amount) / 1000), 150, sourceId);
       if (sourceId !== targetId) {
@@ -622,19 +653,26 @@ export class GrowthBattleCoordinator {
       }
       if (reason !== 'expired') continue;
       const has = (card: GrowthUpgradeId) => cast.selected.includes(card);
-      if (cast.definition.id === 'as_roll' && has('as_A3')) p.buffs.rollSpread = this.tick + 30;
-      if (cast.definition.id === 'as_reloadrush' && has('as_B3')) p.buffs.rushReload = this.tick + 90;
-      if (cast.definition.id === 'tk_barrier' && cast.absorbed > 0 && has('tk_A3')) this.giveArmor(id,10,60,id);
+      const power = !!cast.definition.empowered;
+      if (power && has('as_EV_A')) { this.heal(id,id,20000); this.giveArmor(id,20,90,id); }
+      if (power && has('as_B1')) p.buffs.rushDamage = this.tick + 120;
+      if (power && has('as_B3')) this.giveArmor(id,30,120,id);
+      if (power && has('as_EV_B')) p.buffs.rushEvolution = this.tick + 150;
+      if (power && has('tk_EV_B')) { p.buffs.counterEvolution = this.tick + 150; this.gun(id).transfer(1000000,'primary'); }
+      if (power && String(cast.definition.id).startsWith('tk_') && has('tk_EV_B')) this.perkFeedback(id,'反攻窗口 · 满膛爆发');
+      if (cast.definition.id === 'as_roll' && has('as_A3')) p.buffs.rollSpread = this.tick + (power ? 90 : 30);
+      if (cast.definition.id === 'as_reloadrush' && has('as_B3')) p.buffs.rushReload = this.tick + (power ? 120 : 90);
+      if (cast.definition.id === 'tk_barrier' && cast.absorbed > 0 && has('tk_A3')) this.giveArmor(id,power ? 40 : 10,power ? 180 : 60,id);
       if (cast.definition.id === 'tk_shield') {
         if (has('tk_EV_B')) p.buffs.shieldCounter = this.tick + 60;
         if (has('tk_B3')) {
-          const ally = this.actors().filter(b => b !== a && b.team === a.team && b.life.alive && distance(chest(a), chest(b)) <= 120 && this.gadgets.clearRay(chest(a), chest(b), true))
+          const ally = this.actors().filter(b => b !== a && b.team === a.team && b.life.alive && distance(chest(a), chest(b)) <= (power ? 240 : 120) && this.gadgets.clearRay(chest(a), chest(b), true))
             .sort((b, c) => distance(chest(a), chest(b)) - distance(chest(a), chest(c)) || byId(b, c))[0] ?? a;
-          this.giveArmor(ally.id,10,60,id);
+          this.giveArmor(ally.id,power ? 40 : 10,power ? 180 : 60,id);
         }
       }
       if (cast.definition.id === 'md_link' && cast.effectiveHealing && has('md_EV_B') && cast.targetId && this.actor(cast.targetId).life.alive)
-        this.giveArmor(cast.targetId,10,90,id);
+        { this.giveArmor(cast.targetId,power ? 40 : 10,power ? 180 : 90,id); if (power) this.giveArmor(id,40,180,id); }
     }
   }
   private finishDeaths() {
@@ -679,7 +717,7 @@ export class GrowthBattleCoordinator {
           if (this.perk(id, 'pk_dressing') && source.life.health < source.life.maxHealth * .5 && this.ready(id, 'dressing')) {
             this.heal(id, id, 5000); p.cooldowns.dressing = this.tick + 300;
           }
-          if (this.has(id, 'tk_C4') && this.ready(id, 'reclaim')) { this.gun(id).supply(10, 'primary'); p.cooldowns.reclaim = this.tick + 150; }
+          if (this.has(id, 'tk_C4') && this.ready(id, 'reclaim')) { this.gun(id).supply(this.strong(id) ? GROWTH_V3_WEAPONS[p.loadout.primary].magazine : 10, 'primary'); if (this.strong(id)) this.heal(id,id,20000); p.cooldowns.reclaim = this.tick + (this.strong(id) ? 60 : 150); }
           if (p.progression.ultimate && p.loadout.classId === 'assault' && this.ready(id, 'berserker')) {
             this.heal(id, id, 15000); p.buffs.berserker = this.tick + 90; p.cooldowns.berserker = this.tick + 150;
           }
@@ -923,8 +961,10 @@ export class GrowthBattleCoordinator {
       p.scavenged = p.scavenged.filter(id => this.corpses.some(c => c.id === id));
       if (a.life.alive) {
         if (this.has(a.id, 'as_C3')) for (const corpse of this.corpses) {
-          if (corpse.team === a.team || p.scavenged.includes(corpse.id) || distance(chest(a), corpse.position) > 80) continue;
-          if (this.gun(a.id).supply(Math.max(1, Math.floor(GROWTH_V3_WEAPONS[this.gun(a.id).selectedId].magazine * .25)))) p.scavenged.push(corpse.id);
+          if (corpse.team === a.team || p.scavenged.includes(corpse.id) || distance(chest(a), corpse.position) > (this.strong(a.id) ? 240 : 80)) continue;
+          const supplied = this.gun(a.id).supply(Math.max(1, Math.floor(GROWTH_V3_WEAPONS[this.gun(a.id).selectedId].magazine * (this.strong(a.id) ? 1 : .25))));
+          const healed = this.strong(a.id) ? this.heal(a.id,a.id,10000) : 0;
+          if (supplied || healed) p.scavenged.push(corpse.id);
         }
         if (this.tick >= a.supplyReady && this.battle.mission.spawns[a.team - 1].some(s => distance(a.movement, s) < 65)) {
           if (this.supply(a.id)) this.battle.journal.emit({ tick: this.tick, kind: 'supply', actorId: a.id });
@@ -975,7 +1015,7 @@ export class GrowthBattleCoordinator {
       abilityId: p.loadout.abilityId, gadgetId: p.loadout.gadgetId, weaponId: weapon.selectedId, slot: weapon.selectedSlot,
       charges: ability.charges, maxCharges: ability.maxCharges, casting: !!ability.pending || !!this.gadgets.inventory(id).cast,
       activeAbility: ability.active?.definition.id,
-      perkPower: ['ambush','hunt','execute','fullrush','adrenaline'].some(key => this.buff(id, key))
+      perkPower: ['ambush','hunt','execute','fullrush','adrenaline','rushDamage','rushEvolution','counterEvolution','medCardPower','rescuePower','rollSpread','sideCardPower'].some(key => this.buff(id, key))
         || this.buff(id, 'revenge') && (p.perkState.revengeShots ?? 0) > 0
         || this.buff(id, 'dual') && weapon.selectedSlot === 'secondary'
         || (p.perkState.armedShots ?? 0) > 0 && p.perkState.armedSlot === (weapon.selectedSlot === 'primary' ? 0 : 1),

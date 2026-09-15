@@ -21,9 +21,10 @@ export function groupedShotDamage(weapon: ResolvedGrowthWeapon, hits: readonly {
 export function postureScale(c: WeaponConditions) {
   return c.airborne ? 1.4 : c.crouching ? c.moving ? 1.05 : .8 : c.moving ? 1.15 : 1;
 }
-export function shotSpread(weapon: ResolvedGrowthWeapon, bloom: number, conditions: WeaponConditions, benefits: readonly number[] = []) {
+export function shotSpread(weapon: ResolvedGrowthWeapon, bloom: number, conditions: WeaponConditions, benefits: readonly number[] = [], spreadFloor = .25) {
+  if (!Number.isFinite(spreadFloor) || spreadFloor <= 0 || spreadFloor > 1) throw Error('Invalid spread floor');
   if (benefits.some(v => !Number.isFinite(v) || v <= 0) || !Number.isFinite(bloom) || bloom < 0) throw Error('Invalid spread modifier');
-  return Math.max(GROWTH_V3_WEAPONS[weapon.id].spread * .25, (weapon.spread + bloom) * postureScale(conditions) * Math.min(1, ...benefits));
+  return Math.max(GROWTH_V3_WEAPONS[weapon.id].spread * spreadFloor, (weapon.spread + bloom) * postureScale(conditions) * Math.min(1, ...benefits));
 }
 export interface GrowthGunState {
   ammo: number; reserve: number; reloadUntil: number; lastShotTick: number; bloom: number;
@@ -116,7 +117,7 @@ export class GrowthArsenalV3 {
   resupply() { return this.supply(1000000, 'primary') + this.supply(1000000, 'secondary'); }
   /** Call once per authority tick, after movement/inputs and before damage resolution. */
   step(tick: number, held: boolean, conditions: Omit<WeaponConditions, 'first' | 'empty'>,
-    random: () => number, spreadBenefits: readonly number[] = [], blocked = false, rateBonus = 0, recoilScale = 1): GrowthShot | null {
+    random: () => number, spreadBenefits: readonly number[] = [], blocked = false, rateBonus = 0, recoilScale = 1, spreadFloor = .25): GrowthShot | null {
     validTick(tick);
     if (!Number.isFinite(recoilScale) || recoilScale <= 0 || recoilScale > 1) throw Error('Invalid recoil scale');
     if (!Number.isFinite(rateBonus) || rateBonus < 0 || rateBonus > 1) throw Error('Invalid fire rate');
@@ -143,7 +144,7 @@ export class GrowthArsenalV3 {
     if (this.state.burstRemaining > 0 && !continuing) return null;
     // Validate the RNG before mutating ammunition/timers, including non-finite hostile inputs.
     const unit = random(); if (!Number.isFinite(unit) || unit < 0 || unit >= 1) throw Error('Invalid random source');
-    const center = (unit * 2 - 1) * shotSpread(def, gun.bloom, c, spreadBenefits);
+    const center = (unit * 2 - 1) * shotSpread(def, gun.bloom, c, spreadBenefits, spreadFloor);
     const offsetsDegrees = Array.from({ length: def.pellets }, (_, i) => center + (def.pellets === 1 ? 0 : (i / (def.pellets - 1) - .5) * def.fanDegrees));
     if (def.mode === 'burst' && !continuing) this.state.burstRemaining = Math.min(3, gun.ammo);
     gun.ammo--; gun.lastShotTick = tick;

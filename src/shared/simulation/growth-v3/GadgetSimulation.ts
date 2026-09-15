@@ -34,7 +34,7 @@ export interface GadgetWorldPort {
 interface GadgetCast { target:CombatPoint; commitTick:number; definition:GadgetDefinition }
 export interface GadgetActorState {
   id:string; classId:GrowthClassId; gadgetId:GrowthGadgetId; charges:number; readyTick:number;
-  rechargeTick?:number; upgraded:boolean; extraGranted:boolean; cast:GadgetCast|null;
+  empowered?:boolean; rechargeTick?:number; upgraded:boolean; extraGranted:boolean; cast:GadgetCast|null;
 }
 export interface FlyingGadget {
   id:string; sourceId:string; team:1|2; gadgetId:GrowthGadgetId; definition:GadgetDefinition;
@@ -58,9 +58,9 @@ const byId=(a:{id:string},b:{id:string})=>a.id<b.id?-1:a.id>b.id?1:0;
 export class GadgetSimulation {
   private state:GadgetCheckpoint={actors:[],flying:[],entities:[],smoke:[],serial:0,lastTick:-1,finishedTick:-1};
   constructor(private readonly world:GadgetWorldPort) {}
-  register(id:string,classId:GrowthClassId,gadgetId:GrowthGadgetId) {
+  register(id:string,classId:GrowthClassId,gadgetId:GrowthGadgetId,empowered=false) {
     if(!id||this.state.actors.length>=8||this.state.actors.some(a=>a.id===id)||!Object.hasOwn(GROWTH_V3_GADGETS,gadgetId)||GROWTH_V3_GADGETS[gadgetId].classId!==classId)throw Error('not_owner_class');
-    this.state.actors.push({id,classId,gadgetId,charges:GROWTH_V3_GADGETS[gadgetId].charges,readyTick:0,upgraded:false,extraGranted:false,cast:null});
+    this.state.actors.push({id,classId,gadgetId,empowered,charges:GROWTH_V3_GADGETS[gadgetId].charges,readyTick:0,upgraded:false,extraGranted:false,cast:null});
     this.state.actors.sort(byId);
   }
   visionCircles(team:1|2,tick:number) {
@@ -78,6 +78,7 @@ export class GadgetSimulation {
       result.register(a.id,a.classId,a.gadgetId);
       if(!Number.isSafeInteger(a.charges)||a.charges<0||a.charges>3||!Number.isSafeInteger(a.readyTick)||a.readyTick<0
         ||(a.rechargeTick!==undefined&&(!Number.isSafeInteger(a.rechargeTick)||a.rechargeTick<0))
+        ||(a.empowered!==undefined&&typeof a.empowered!=='boolean')
         ||typeof a.extraGranted!=='boolean'||typeof a.upgraded!=='boolean')throw Error('Invalid gadget inventory');
     }
     const ids=new Set<string>();
@@ -88,8 +89,9 @@ export class GadgetSimulation {
     if(state.entities.length>8||state.smoke.length>8||state.flying.length>32)throw Error('Gadget checkpoint exceeds capacity');
     result.state=structuredClone(state);return result;
   }
-  extraCharge(id:string) {
+  extraCharge(id:string,tick=this.state.lastTick) {
     const state=this.inventory(id);if(state.extraGranted)return false;
+    if(state.empowered&&state.rechargeTick!==undefined)state.rechargeTick=tick+Math.max(1,Math.ceil((state.rechargeTick-tick)*.5));
     state.extraGranted=true;state.charges=Math.min(3,state.charges+1);return true;
   }
   upgrade(id:string) { this.inventory(id).upgraded=true; }
@@ -133,7 +135,7 @@ export class GadgetSimulation {
     return pointValid(aim)&&aim.x>=0&&aim.x<=this.world.width&&aim.y>=0&&aim.y<=this.world.height;
   }
   predictThrow(id:string,aim:CombatPoint):CombatPoint|null {
-    const actor=this.actor(id),state=this.inventory(id),definition=resolveGadget(state.gadgetId,state.upgraded);
+    const actor=this.actor(id),state=this.inventory(id),definition=resolveGadget(state.gadgetId,state.upgraded,state.empowered,state.extraGranted);
     if(!actor||!this.validAim(aim)||definition.kind!=='throw')return null;
     const angle=Math.atan2(aim.y-actor.position.y,aim.x-actor.position.x);
     let position:CombatPoint|null=null;
@@ -146,7 +148,7 @@ export class GadgetSimulation {
     return {...f.position};
   }
   canPlace(id:string,target:CombatPoint) {
-    const actor=this.actor(id),s=this.inventory(id),def=resolveGadget(s.gadgetId,s.upgraded);
+    const actor=this.actor(id),s=this.inventory(id),def=resolveGadget(s.gadgetId,s.upgraded,s.empowered,s.extraGranted);
     return !!actor&&def.kind==='deploy'&&this.validPlacement(actor,target,def);
   }
   /** Predict only an existing observed projectile; never advances authoritative state. */
@@ -197,7 +199,7 @@ export class GadgetSimulation {
     }
     if(tick<state.readyTick)return this.fail(state,tick,'not_ready');
     if(state.charges<=0)return this.fail(state,tick,'no_charge');
-    const def=resolveGadget(state.gadgetId,state.upgraded);
+    const def=resolveGadget(state.gadgetId,state.upgraded,state.empowered,state.extraGranted);
     if(def.reservesDeploySlot&&this.hasDeploymentReservation(id))return this.fail(state,tick,'existing_deployable');
     if(def.reservesSmokeSlot&&this.smokeCount()>=8)return this.fail(state,tick,'capacity');
     if(def.kind==='throw'&&this.state.flying.length+this.state.actors.filter(a=>a.cast?.definition.kind==='throw').length>=32)return this.fail(state,tick,'capacity');
@@ -304,7 +306,7 @@ export class GadgetSimulation {
     for(const state of this.state.actors)if(state.rechargeTick!==undefined&&tick>=state.rechargeTick) {
       const max=Math.min(3,GROWTH_V3_GADGETS[state.gadgetId].charges+(state.extraGranted?1:0));
       state.charges=Math.min(max,state.charges+1);
-      if(state.charges<max)state.rechargeTick=tick+resolveGadget(state.gadgetId,state.upgraded).cooldown;
+      if(state.charges<max)state.rechargeTick=tick+resolveGadget(state.gadgetId,state.upgraded,state.empowered,state.extraGranted).cooldown;
       else delete state.rechargeTick;
     }
     for(const e of [...this.state.entities])if(tick>=e.expiresTick)this.destroy(e,tick,'expired');

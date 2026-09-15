@@ -216,9 +216,9 @@ it.each(GROWTH_CLASS_IDS)('%s class perk state survives a deterministic checkpoi
 });
 
 it('ability cards add to class perks rather than erasing their investment', () => {
-  expect(resolveAbility('md_pulse', ['md_A1', 'md_A2'], ['md_emergency']).heal).toBe(40);
-  expect(resolveAbility('tk_shield', ['tk_B1'], ['tk_siege']).shieldBudget).toBe(270);
-  expect(resolveAbility('sn_relocate', ['sn_B3'], ['sn_hunt']).speed).toBeCloseTo(1.35);
+  expect(resolveAbility('md_pulse', ['md_A1', 'md_A2'], ['md_emergency']).heal).toBe(65);
+  expect(resolveAbility('tk_shield', ['tk_B1'], ['tk_siege']).shieldBudget).toBe(420);
+  expect(resolveAbility('sn_relocate', ['sn_B3'], ['sn_hunt']).speed).toBeCloseTo(1.6);
 });
 
 it('skill switching preserves user choices even when UI click order reordered the draft slots', () => {

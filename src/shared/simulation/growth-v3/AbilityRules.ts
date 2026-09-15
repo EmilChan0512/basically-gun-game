@@ -1,9 +1,11 @@
+import { empowerAbility } from './EmpoweredCards';
 import type { GrowthPerkId } from '../../content/growth-v3/Perks';
 import { GROWTH_V3_ABILITIES, type GrowthAbilityId } from '../../content/growth-v3/Operators';
 import type { GrowthClassId } from '../../content/growth-v3/Core';
 import { GROWTH_V3_CARDS, GROWTH_V3_EVOLUTIONS, legalGrowthCards, type GrowthUpgradeId } from '../../content/growth-v3/Cards';
 
 export interface ResolvedAbility {
+  empowered?: boolean;
   id: GrowthAbilityId; classId: GrowthClassId; name: string;
   cast: number; duration: number; cooldown: number; recovery: number;
   speed: number; reduction: number; spread: number; transfer: number; radius: number;
@@ -75,15 +77,16 @@ export function resolveAbility(id: GrowthAbilityId, selected: readonly GrowthUpg
       d.fireLock = d.gadgetLock = d.duration;
       break;
   }
+  d.cooldown = Math.ceil(Math.max(cooldownBase * .75, cooldownBase + cooldownDelta));
+  if (perks.some(id => !id.startsWith('pk_'))) empowerAbility(d, selected);
   if (perks.includes('as_fullrush') && id === 'as_reloadrush') d.transfer = 1000000;
-  if (perks.includes('tk_fortress') && id === 'tk_barrier') { d.reduction += .2; d.speed = 1; }
+  if (perks.includes('tk_fortress') && id === 'tk_barrier') { d.reduction += .2; d.speed = Math.max(1, d.speed); }
   if (perks.includes('tk_siege') && id === 'tk_shield') d.shieldBudget += 120;
   if (perks.includes('sn_hunt') && id === 'sn_relocate') d.speed += .2;
   if (perks.includes('md_emergency') && id === 'md_pulse') { d.heal += 25; d.selfHeal += 25; }
   if (perks.includes('md_transfusion') && id === 'md_link') d.heal += 4;
-  d.cooldown = Math.ceil(Math.max(cooldownBase * .75, cooldownBase + cooldownDelta));
   return d;
 }
 export function abilityHealing(def: ResolvedAbility, self: boolean, hp: number, maxHp: number, selected: readonly GrowthUpgradeId[]) {
-  return (self ? def.selfHeal : def.heal) + (selected.includes('md_C1') && hp < maxHp * .3 ? def.id === 'md_pulse' ? 10 : 1 : 0);
+  return (self ? def.selfHeal : def.heal) + (selected.includes('md_C1') && hp < maxHp * (def.empowered ? .5 : .3) ? def.id === 'md_pulse' ? def.empowered ? 30 : 10 : def.empowered ? 4 : 1 : 0);
 }

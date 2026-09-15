@@ -1,3 +1,4 @@
+import { GROWTH_V3_ABILITIES } from '../../content/growth-v3/Operators';
 import type { GrowthLoadoutV3 } from '../../content/growth-v3/Loadout';
 import type { GrowthUpgradeId } from '../../content/growth-v3/Cards';
 import { resolveAbility, abilityHealing, type ResolvedAbility } from './AbilityRules';
@@ -125,7 +126,7 @@ export class AbilitySimulation {
   private refund(s:AbilityActorState,tick:number) {
     const cast=s.active;if(!cast||!cast.definition.refundPerHit||tick<cast.refundReady||cast.refundUsed>=cast.definition.refundCap||!s.queue.length)return;
     const amount=Math.min(cast.definition.refundPerHit,cast.definition.refundCap-cast.refundUsed), before=s.queue[0];
-    s.queue[0]=Math.min(before,Math.max(cast.startTick+Math.ceil(cast.definition.cooldown*.5),s.queue[0]-amount));
+    s.queue[0]=Math.min(before,Math.max(cast.definition.empowered ? Math.max(tick+1,cast.startTick+Math.ceil(GROWTH_V3_ABILITIES[cast.definition.id].cooldown*.2)) : cast.startTick+Math.ceil(cast.definition.cooldown*.5),s.queue[0]-amount));
     const difference=before-s.queue[0];
     for(let i=1;i<s.queue.length;i++)s.queue[i]-=difference;
     cast.refundUsed+=difference;cast.refundReady=tick+cast.definition.refundGap;
