@@ -9,9 +9,15 @@ test('longshot is selectable and starts an eight-player control match', async ({
   await page.locator('#custom-mode').selectOption('dom');
   await page.locator('#custom-start').click();
   await page.waitForFunction(() => window.__strikeCampaign!.battle.frame > 10);
-  await expect(page.locator('#mission-label')).toHaveText('荒原 · 长线狙击');
+  await expect(page.locator('#mission-label')).toHaveText('太空站 · 轨道狙击');
   expect(await page.evaluate(() => window.__strikeCampaign!.battle.actors.length)).toBe(8);
   await page.screenshot({ path: 'artifacts/qa/longshot-battle.png' });
+  // Freeze only for an art/layout QA overview after the playable match checks above.
+  await page.evaluate(() => {
+    const scene = window.__strikeCampaign!;
+    scene.scene.pause(); scene.cameras.main.removeBounds().setZoom(1120 / 4800).centerOn(2400, 540);
+  });
+  await page.locator('.campaign-stage canvas').screenshot({ path: 'artifacts/qa/space-station-overview.png' });
 });
 
 test('longshot runs in the growth laboratory with the shared online renderer', async ({ page }) => {

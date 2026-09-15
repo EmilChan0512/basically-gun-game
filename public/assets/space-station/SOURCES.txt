@@ -1,0 +1,6 @@
+Project Strike — original orbital station environment assets
+Generated locally with ComfyUI using FLUX.2 Klein 4B (Apache-2.0 model), Qwen 3 4B text encoder and Flux2 VAE.
+Original project prompts; no third-party game image references used.
+Production PNGs omit workflow/prompt metadata. The hover module removes border-connected white background and crops to its alpha bounds; other generated pixels are unchanged.
+Model reference: https://huggingface.co/black-forest-labs/FLUX.2-klein-4B
+Editable workflows and generation records are development-only and are not included in the friend distribution.

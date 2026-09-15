@@ -9,7 +9,7 @@ if (!['127.0.0.1', 'localhost', '[::1]'].includes(endpoint.hostname) || endpoint
 const revision = option('--revision', 'v1'), only = option('--id', null);
 if (!/^v[1-9][0-9]*$/.test(revision)) throw Error('Revision must be v1, v2, ...');
 const collection = option('--collection', 'ui-v2');
-if (!['ui-v2', 'gunsmith', 'architecture'].includes(collection)) throw Error('Unknown art collection');
+if (!['ui-v2', 'gunsmith', 'architecture', 'space-station'].includes(collection)) throw Error('Unknown art collection');
 const manifest = JSON.parse(readFileSync(`art/${collection}/assets.json`, 'utf8'));
 const template = JSON.parse(readFileSync('art/ui-v2/workflow-api.json', 'utf8'));
 const directory = resolve('artifacts/comfy-ui', ...(collection === 'ui-v2' ? [] : [collection]), revision), publicDirectory = resolve('public/assets', collection, revision);
@@ -59,9 +59,11 @@ if (only && !manifest.assets.some(asset => asset.id === only)) throw Error('Unkn
 for (const [index, asset] of manifest.assets.entries()) {
   if (only && asset.id !== only) continue;
   if (!/^[a-z0-9-]+$/.test(asset.id) || asset.width % 16 || asset.height % 16) throw Error('Invalid asset specification');
-  const graph = structuredClone(template), seed = 531000 + index + (Number(revision.slice(1)) - 1) * 1000;
+  const prepared = resolve('art', collection, 'workflows', `${asset.id}.api.json`);
+  const graph = existsSync(prepared) ? JSON.parse(readFileSync(prepared, 'utf8')) : structuredClone(template), seed = 531000 + index + (Number(revision.slice(1)) - 1) * 1000;
   graph['1'].inputs.unet_name = manifest.models.unet; graph['2'].inputs.clip_name = manifest.models.clip; graph['10'].inputs.vae_name = manifest.models.vae;
-  graph['3'].inputs.text = `${manifest.style} ${asset.prompt}`; graph['5'].inputs.noise_seed = seed;
+  if (!existsSync(prepared)) graph['3'].inputs.text = `${manifest.style} ${asset.prompt}`;
+  graph['5'].inputs.noise_seed = seed;
   Object.assign(graph['7'].inputs, { steps: manifest.steps, width: asset.width, height: asset.height });
   Object.assign(graph['8'].inputs, { width: asset.width, height: asset.height });
   graph['12'].inputs.filename_prefix = `project-strike/${collection}/${revision}/${asset.id}`;

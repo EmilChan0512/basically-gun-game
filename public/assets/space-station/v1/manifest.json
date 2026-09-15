@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "revision": "v1",
+  "generator": "Local ComfyUI / FLUX.2 Klein 4B",
+  "assets": [
+    {
+      "id": "orbital-vista",
+      "file": "orbital-vista.png",
+      "width": 1536,
+      "height": 768,
+      "sha256": "8fc725beba809a988fb3c5af3d6a2a26e1ced005c0ea27078d4e99db3312a76a"
+    },
+    {
+      "id": "deck-hull",
+      "file": "deck-hull.png",
+      "width": 1024,
+      "height": 256,
+      "sha256": "eaf6e5c00fc032f82fb641dfde5eb69ab94b9a981b6b8067b42ee80748b7cb8d"
+    },
+    {
+      "id": "hover-module",
+      "file": "hover-module.png",
+      "width": 902,
+      "height": 371,
+      "sha256": "aa46eb51f6b9b0ccc16bc7376164cad9fae4221cfd277f0b3e882207d9dfffb1"
+    },
+    {
+      "id": "cargo-cell",
+      "file": "cargo-cell.png",
+      "width": 256,
+      "height": 256,
+      "sha256": "05306396adbc47077fdd8ba94881e7161512f97e4e50370ee1be4e1ad3f9cdff"
+    }
+  ]
+}

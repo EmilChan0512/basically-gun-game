@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "style": "Original science fiction 2D side-scrolling tactical game environment art. Clean painted hard-surface illustration, restrained gunmetal navy and cool cyan lighting with small amber accents, readable large shapes, realistic material detail. No people, no characters, no weapons, no writing, no letters, no logos, no watermarks. Orthographic side elevation, no isometric camera.",
+  "models": { "unet": "flux-2-klein-4b.safetensors", "clip": "qwen_3_4b.safetensors", "vae": "flux2-vae.safetensors" },
+  "steps": 4,
+  "assets": [
+    { "id": "orbital-vista", "width": 1536, "height": 768, "prompt": "Wide panoramic deep space orbital station exterior background. A luminous blue planet limb fills the bottom right third; black navy starfield with sparse stars above. Distant enormous orbital ring and a few small suspended satellite modules toward the edges. Very distant subdued detail, broad dark clear negative space in the middle for gameplay silhouettes. No foreground floor, no staircases, no terrain, no mountains, no desert. Full bleed landscape." },
+    { "id": "deck-hull", "width": 1024, "height": 256, "prompt": "Seamless horizontally repeatable rectangular side fascia of an orbital station deck, tightly cropped full bleed metal surface. Perfectly straight horizontal cyan illuminated walking edge across the very top. Layered dark steel armor panels, recessed vents, small amber safety insets and thin cyan conduits. Flat front elevation, no perspective, no background, no text. All features contained in the rectangle." },
+    { "id": "hover-module", "width": 1024, "height": 512, "prompt": "Single suspended orbital research module seen exactly from the side. Wide rectangular dark navy armored machinery housing filling the image edge to edge, straight flat upper landing deck, recessed cyan reactor windows, symmetrical magnetic levitation engines and blue ion-lit vents built into the bottom fascia. A usable platform side texture, no protrusions above the flat horizontal roof, no legs, no supporting pillars, no stairs, no scenery background. All machinery contained in a rectangular silhouette." },
+    { "id": "cargo-cell", "width": 256, "height": 256, "prompt": "One square industrial space station cargo crate front panel filling the entire image. Thick beveled titanium frame, dark blue gray armored center, a small amber power indicator, two recessed handles and restrained cyan corner lights. Straight orthographic front elevation, tightly cropped to its square rectangular edges, no floor or background." }
+  ]
+}

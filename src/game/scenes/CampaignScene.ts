@@ -9,7 +9,7 @@ import { AudioPresentation } from '../../client/audio/AudioPresentation';
 import { CLASSES } from '../campaign/Catalog';
 import { CombatFeedback } from '../../client/presentation/CombatFeedback';
 import { CombatFeedbackView } from '../../client/presentation/CombatFeedbackView';
-import { drawLongshotBackdrop } from '../../client/presentation/LongshotView';
+import { drawSpaceStation, preloadSpaceStation } from '../../client/presentation/LongshotView';
 
 import { ReferenceArt, preloadReferenceArt } from '../campaign/ReferenceArt';
 
@@ -35,7 +35,7 @@ export class CampaignScene extends Phaser.Scene {
   private hurtOverlay!: Phaser.GameObjects.Rectangle;
   private eventCursor = 0;
   constructor() { super('CampaignScene'); }
-  preload() { preloadReferenceArt(this); }
+  preload() { preloadReferenceArt(this); preloadSpaceStation(this); }
   create() {
     this.feedbackView = new CombatFeedbackView(document.querySelector('.campaign-stage')!, this.feedback);
     this.events.once('shutdown', () => this.feedbackView?.destroy());
@@ -81,6 +81,7 @@ export class CampaignScene extends Phaser.Scene {
     };
     const g = this.background; g.clear();
     this.cameras.main.setBackgroundColor(mission.palette.sky);
+    if (mission.id === 'custom-longshot') { this.scenery = drawSpaceStation(this, mission); return; }
     for (let x = 450; x < mission.width + 900; x += 900) {
       decor('hills', x, 350, 1000, 230, 0.35);
       decor('clouds', x - 100, 150, 650, 110, 0.32);
@@ -97,7 +98,6 @@ export class CampaignScene extends Phaser.Scene {
       g.lineStyle(1, mission.palette.trim, 0.12).strokeRect(x, top, 130, 400);
       for (let row = 0; row < 3; row++) g.fillStyle(mission.palette.trim, 0.12).fillRect(x + 15, top + 22 + row * 32, 70, 7);
     }
-    if (mission.id === 'custom-longshot') drawLongshotBackdrop(g);
     for (const t of [...mission.terrain, ...(mission.stairTreads ?? [])]) {
       g.fillStyle(mission.palette.wall).fillRect(t.x, t.y, t.width, t.height);
       g.fillStyle(mission.palette.trim).fillRect(t.x, t.y, t.width, 3);

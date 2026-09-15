@@ -7,6 +7,9 @@
     "node": "^20.19.0 || >=22.12.0"
   },
   "scripts": {
+    "art:station:prepare": "node tools/space-station-art.mjs prepare",
+    "art:station:generate": "node tools/comfy-ui.mjs generate --collection space-station --revision v1 && node tools/space-station-art.mjs finish && npm run art:station:verify",
+    "art:station:verify": "node tools/space-station-art.mjs verify",
     "art:ui:prepare": "node tools/ui-art.mjs prepare",
     "art:ui:generate": "node tools/ui-art.mjs generate",
     "art:ui:select": "node tools/ui-art.mjs select",
@@ -21,7 +24,7 @@
     "preview": "vite preview --host 127.0.0.1",
     "play": "node tools/serve-game.mjs",
     "package:game": "npm run build && node tools/package-game.mjs && node tools/package-friends.mjs",
-    "release": "npm run art:ui:verify && npm run package:game && npm run package:server && npm run test:offline",
+    "release": "npm run art:ui:verify && npm run art:station:verify && npm run package:game && npm run package:server && npm run test:offline",
     "package:server": "node tools/package-server.mjs",
     "archaeology": "tsx tools/archaeology/cli.ts pipeline",
     "archaeology:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/archaeology/setup.ps1",

@@ -26,6 +26,7 @@ Copy-Item -LiteralPath (Join-Path $taskRoot 'public/assets/audio/SOURCES.txt') -
 Copy-Item -LiteralPath (Join-Path $taskRoot 'public/assets/audio/Kenney-CC0.txt') -Destination (Join-Path $taskFolder 'licenses/Kenney-CC0.txt')
 Copy-Item -LiteralPath (Join-Path $taskRoot 'public/assets/ui-v2/SOURCES.txt') -Destination (Join-Path $taskFolder 'licenses/UI-Art-Sources.txt')
 Copy-Item -LiteralPath (Join-Path $taskRoot 'public/assets/architecture/SOURCES.txt') -Destination (Join-Path $taskFolder 'licenses/Architecture-Art-Sources.txt')
+Copy-Item -LiteralPath (Join-Path $taskRoot 'public/assets/space-station/SOURCES.txt') -Destination (Join-Path $taskFolder 'licenses/Space-Station-Art-Sources.txt')
 $taskCache = Join-Path $taskRoot "tools/vendor/node-$($taskRuntime.version)-LICENSE.txt"
 if (!(Test-Path -LiteralPath $taskCache)) {
   New-Item -ItemType Directory -Path (Split-Path -Parent $taskCache) -Force | Out-Null
@@ -45,7 +46,7 @@ Project Strike - 破晓行动（Windows 64位便携版）
 
 已内置 Node.js，无需安装 Node、npm 或开发工具。请完整保留所有文件夹。
 单机免登录；进度保存在同一浏览器及本地地址下，不包含发行者的账号或存档。
-“荒原 · 长线狙击”地图：4800宽的双高台战场，支持团队交火和据点争夺。高台之间适合狙击步枪远射；每个高台两侧均可上下，地面有遮蔽和低掩体。A/D沿踏步上楼，S穿过踏步下楼，中央地面为争夺据点。在自定义地图或联机房间中选择此地图。
+“太空站 · 轨道狙击”地图：4800宽的轨道设施，双侧悬浮高地、四条连续坡道、中央三级悬浮平台，支持团队交火和据点争夺。A/D沿坡道移动，S可穿过坡面回到下层，跳跃登上中央悬浮据点。高地之间保留远距离狙击射界，下层舱道和货箱提供掩护。独立太空站素材由本地ComfyUI生成。
 单机菜单点击“四干员成长训练”，可配装突击兵、重装兵、狙击手或医疗兵，进行4v4机器人训练。专属E/G、18枪与36配件均可离线使用，训练不计入联网账号资产。保存配装后开始，可暂停或返回配装重开。
 “大楼 · 四层攻坚”地图：四层楼、24间房间、左侧折返楼梯、右侧连续斜坡和逐层掩体。沿楼梯移动上楼，按住S穿过楼梯踏步下楼（不会穿透实心楼板）；大厅与单机菜单的“成长实验室”可测试联机同源成长规则。
 公文包争夺：大楼双方公文包位于四楼两端，抢到敌方公文包后只能使用副武器，带回一楼己方出生点得1分，先得3分获胜。携带者死亡或离场时公文包立即归位，每队只有一个公文包。

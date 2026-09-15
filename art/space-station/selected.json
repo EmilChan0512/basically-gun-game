@@ -1,0 +1,41 @@
+{
+  "orbital-vista": {
+    "seed": 531000,
+    "graphSha256": "e1e47a02921b463f6fc78396968eb7d83018ed1dd567fdc745b5dbaaa453e7d6",
+    "originalSha256": "c4d3095df9b8763aca4601871a5957e6abaa372294514851747c22bd336af5c7",
+    "sha256": "8fc725beba809a988fb3c5af3d6a2a26e1ced005c0ea27078d4e99db3312a76a",
+    "width": 1536,
+    "height": 768
+  },
+  "deck-hull": {
+    "seed": 531001,
+    "graphSha256": "969f938a72c1767f7adcb2892ce313c2f4d43f88d0e09c2c7ce94887231c858e",
+    "originalSha256": "b81cc9640dea8c8b15aa7cbde71b557ad0665143a304ed31dea27e2a80a1543c",
+    "sha256": "eaf6e5c00fc032f82fb641dfde5eb69ab94b9a981b6b8067b42ee80748b7cb8d",
+    "width": 1024,
+    "height": 256
+  },
+  "hover-module": {
+    "seed": 531002,
+    "graphSha256": "c15d2cc572094f2ed26d3398ca83564da3696c3fd024c088d2ab2a9032b6bcd4",
+    "originalSha256": "3c6e3835dcd1ff2fcfc99c55a04998199093e21fff2486c5f76d9b6b46ea7b42",
+    "sha256": "aa46eb51f6b9b0ccc16bc7376164cad9fae4221cfd277f0b3e882207d9dfffb1",
+    "width": 902,
+    "height": 371,
+    "transform": "border-connected neutral white removal and tight alpha crop",
+    "sourceBounds": [
+      63,
+      64,
+      965,
+      435
+    ]
+  },
+  "cargo-cell": {
+    "seed": 531003,
+    "graphSha256": "d34d3c3d19a066b0464eb89b31b80cae66fde9e5cf739b2b469a95e39fc70c86",
+    "originalSha256": "1ae15d713b6595d19882a8bd55c9154536fabd2a7035c801b90205e5e9faeb15",
+    "sha256": "05306396adbc47077fdd8ba94881e7161512f97e4e50370ee1be4e1ad3f9cdff",
+    "width": 256,
+    "height": 256
+  }
+}
