@@ -19,6 +19,7 @@ export interface GadgetWorldPort {
   width:number; height:number; spawns:readonly CombatPoint[]; objectives:readonly CombatPoint[];
   actors():readonly GadgetActor[];
   wall(x:number,y:number):boolean;
+  groundSupport?(x:number,y:number):boolean;
   /** Checks E-specific gadget lock, room state and action ordering. */
   canUse(actorId:string):boolean;
   interruptWeapon(actorId:string):void;
@@ -33,7 +34,7 @@ export interface GadgetWorldPort {
 interface GadgetCast { target:CombatPoint; commitTick:number; definition:GadgetDefinition }
 export interface GadgetActorState {
   id:string; classId:GrowthClassId; gadgetId:GrowthGadgetId; charges:number; readyTick:number;
-  upgraded:boolean; extraGranted:boolean; cast:GadgetCast|null;
+  rechargeTick?:number; upgraded:boolean; extraGranted:boolean; cast:GadgetCast|null;
 }
 export interface FlyingGadget {
   id:string; sourceId:string; team:1|2; gadgetId:GrowthGadgetId; definition:GadgetDefinition;
@@ -76,6 +77,7 @@ export class GadgetSimulation {
     for(const a of state.actors) {
       result.register(a.id,a.classId,a.gadgetId);
       if(!Number.isSafeInteger(a.charges)||a.charges<0||a.charges>3||!Number.isSafeInteger(a.readyTick)||a.readyTick<0
+        ||(a.rechargeTick!==undefined&&(!Number.isSafeInteger(a.rechargeTick)||a.rechargeTick<0))
         ||typeof a.extraGranted!=='boolean'||typeof a.upgraded!=='boolean')throw Error('Invalid gadget inventory');
     }
     const ids=new Set<string>();
@@ -164,19 +166,20 @@ export class GadgetSimulation {
   }
   private validPlacement(actor:GadgetActor,target:CombatPoint,def:GadgetDefinition) {
     if(!pointValid(target)||distance(actor.position,target)>80||target.x-def.width/2<0||target.x+def.width/2>this.world.width||target.y-def.height<0||target.y>this.world.height)return false;
-    if(this.world.spawns.some(p=>distance(p,target)<120)||this.world.objectives.some(p=>distance(p,target)<60))return false;
+    if(def.classId!=='tank'&&def.classId!=='medic'&&(this.world.spawns.some(p=>distance(p,target)<120)||this.world.objectives.some(p=>distance(p,target)<60)))return false;
     if(!this.clearRay(actor.position,{x:target.x,y:target.y-def.height/2}))return false;
     for(let x=target.x-def.width/2;x<=target.x+def.width/2;x+=2)for(let y=target.y-def.height;y<target.y;y+=2)if(this.world.wall(x,y))return false;
-    if(!this.world.wall(target.x,target.y+2))return false;
+    if(!(this.world.groundSupport ?? this.world.wall)(target.x,target.y+2))return false;
     return !this.state.entities.some(e=>Math.abs(e.position.x-target.x)<(e.definition.width+def.width)/2
       &&Math.abs(e.position.y-(target.y-def.height/2))<(e.definition.height+def.height)/2);
   }
   /** A human crosshair selects the nearby side; placement still uses authority geometry. */
-  private beaconPlacement(actor:GadgetActor,aim:CombatPoint,def:GadgetDefinition):CombatPoint|null {
+  private groundPlacement(actor:GadgetActor,aim:CombatPoint,def:GadgetDefinition):CombatPoint|null {
     if(this.validPlacement(actor,aim,def))return aim;
-    const x=actor.feet.x+Math.max(-48,Math.min(48,aim.x-actor.feet.x));
+    const side=Math.sign(aim.x-actor.feet.x)||1;
+    const xs=[actor.feet.x+Math.max(-48,Math.min(48,aim.x-actor.feet.x)),actor.feet.x+side*32,actor.feet.x+side*16,actor.feet.x];
     // Search only around the current floor, never down through an entire storey.
-    for(let offset=0;offset<=32;offset++)for(const sign of (offset?[1,-1]:[1])) {
+    for(const x of xs)for(let offset=0;offset<=32;offset++)for(const sign of (offset?[1,-1]:[1])) {
       const target={x,y:actor.feet.y+offset*sign};
       if(this.validPlacement(actor,target,def))return target;
     }
@@ -198,9 +201,9 @@ export class GadgetSimulation {
     if(def.reservesDeploySlot&&this.hasDeploymentReservation(id))return this.fail(state,tick,'existing_deployable');
     if(def.reservesSmokeSlot&&this.smokeCount()>=8)return this.fail(state,tick,'capacity');
     if(def.kind==='throw'&&this.state.flying.length+this.state.actors.filter(a=>a.cast?.definition.kind==='throw').length>=32)return this.fail(state,tick,'capacity');
-    if(state.gadgetId==='sn_beacon') {
-      const placement=this.beaconPlacement(actor,target,def);
-      if(!placement)return this.fail(state,tick,'beacon_placement');
+    if(def.kind==='deploy') {
+      const placement=this.groundPlacement(actor,target,def);
+      if(!placement)return this.fail(state,tick,state.gadgetId==='sn_beacon'?'beacon_placement':'deployment_placement');
       target=placement;
     }
     if(def.kind==='deploy'&&!this.validPlacement(actor,target,def))return this.fail(state,tick,'invalid_target');
@@ -230,7 +233,7 @@ export class GadgetSimulation {
         position:origin,vx:Math.cos(angle)*13,vy:Math.sin(angle)*13-5,detonateTick:tick+def.fuse});
       this.world.event({kind:'released',tick,sourceId:state.id,gadgetId:state.gadgetId,position:{...origin}});
     }
-    state.charges--;state.readyTick=tick+30;this.world.recoverUntil(state.id,tick+def.recovery);
+    state.charges--;state.rechargeTick ??= tick+def.cooldown;state.readyTick=tick+30;this.world.recoverUntil(state.id,tick+def.recovery);
   }
   private createEntity(sourceId:string,team:1|2,gadgetId:GrowthGadgetId,def:GadgetDefinition,position:CombatPoint,tick:number) {
     const entity:GadgetEntity={id:this.identity(),sourceId,team,gadgetId,definition:structuredClone(def),position:{...position},bornTick:tick,
@@ -298,6 +301,12 @@ export class GadgetSimulation {
     if(!Number.isSafeInteger(tick)||tick!==this.state.lastTick+1)throw Error('Gadget simulation must advance exactly once per tick');
     if(this.state.finishedTick!==this.state.lastTick)throw Error('Finish the prior gadget tick first');
     this.state.lastTick=tick;
+    for(const state of this.state.actors)if(state.rechargeTick!==undefined&&tick>=state.rechargeTick) {
+      const max=Math.min(3,GROWTH_V3_GADGETS[state.gadgetId].charges+(state.extraGranted?1:0));
+      state.charges=Math.min(max,state.charges+1);
+      if(state.charges<max)state.rechargeTick=tick+resolveGadget(state.gadgetId,state.upgraded).cooldown;
+      else delete state.rechargeTick;
+    }
     for(const e of [...this.state.entities])if(tick>=e.expiresTick)this.destroy(e,tick,'expired');
     for(const smoke of this.state.smoke)if(tick>=smoke.expiresTick)
       this.world.event({kind:'smoke-ended',tick,sourceId:smoke.sourceId,gadgetId:smoke.gadgetId,entityId:smoke.id,position:{...smoke.position},radius:smoke.radius});

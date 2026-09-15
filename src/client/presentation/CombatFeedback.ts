@@ -36,6 +36,7 @@ export class CombatFeedback {
       if (event.kind === 'error' && event.actorId === self?.id) {
         const messages: Record<string,string> = {
           no_charge:'次数已用尽',busy:'当前动作尚未结束',not_ready:'尚未冷却完成',
+          deployment_placement:'需要附近可站立地面，请离墙稍远后部署',
           beacon_placement:'信标需要附近地面，请离开出生区、据点或墙边再部署',
           invalid_target:'目标或部署位置无效',existing_deployable:'已有部署物，请等待其消失',
           no_effect:'当前没有可生效的目标',not_owner_class:'该装备不属于当前干员',room_locked:'本局配装已锁定',

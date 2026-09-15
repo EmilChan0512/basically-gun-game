@@ -139,6 +139,7 @@ export class GrowthBattleCoordinator {
     return { width: this.battle.mission.width, height: this.battle.mission.height ?? 700,
       spawns: this.battle.mission.spawns.flat(), objectives: this.battle.mission.mode === 'dom' ? [this.battle.mission.objective] : [],
       actors: () => this.worldActors(), wall: this.battle.wall,
+      groundSupport:(x,y)=>this.battle.wall(x,y)||!!this.battle.mission.stairTreads?.some(t=>x>=t.x&&x<t.x+t.width&&y>=t.y&&y<t.y+t.height),
       canUse: id => !this.abilities.locks(id, this.tick).gadget && this.battle.phase === 'running',
       interruptWeapon: id => this.gun(id).interrupt(), recoverUntil: (id, tick) => this.gun(id).blockUntil(tick),
       damage: (targetId, hp, sourceId, origin, gadgetId) => this.damageQueue.push({ targetId, hp, sourceId, origin: { ...origin }, explosion: true, gadgetId }),
@@ -210,7 +211,7 @@ export class GrowthBattleCoordinator {
     a.arsenal.gun.reloadFrames = Math.max(0, gun.current.reloadUntil - this.tick); a.arsenal.shots = this.participant(a.id).shots;
     a.skillCooldown = ability.charges ? 0 : Math.max(0, (ability.queue[0] ?? this.tick) - this.tick);
     a.skillFrames = ability.active ? Math.max(0, ability.active.endTick - this.tick) : 0;
-    a.itemCharges = gadget.charges; a.itemCooldown = Math.max(0, gadget.readyTick - this.tick);
+    a.itemCharges = gadget.charges; a.itemCooldown = Math.max(0, (gadget.charges?gadget.readyTick:gadget.rechargeTick??gadget.readyTick) - this.tick);
   }
   enqueue(actorId: string, action: PlayerAction, aim?: Point) {
     if (this.battle.phase !== 'running' || !this.participants.has(actorId) || !this.actor(actorId).life.alive) return false;

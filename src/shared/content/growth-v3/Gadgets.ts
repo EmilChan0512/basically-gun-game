@@ -2,7 +2,7 @@ import type { GrowthClassId } from './Core';
 
 export interface GadgetDefinition {
   classId: GrowthClassId; name: string; kind: 'throw' | 'deploy' | 'self';
-  charges: number; cast: number; recovery: number; fuse: number; arm: number;
+  cooldown: number; charges: number; cast: number; recovery: number; fuse: number; arm: number;
   duration: number; radius: number; width: number; height: number; health: number;
   damageMax: number; damageMin: number; structureDamageMax: number; structureDamageMin: number;
   slow: number; slowTicks: number; armor: number; armorTicks: number;
@@ -12,7 +12,7 @@ export interface GadgetDefinition {
 }
 function gadget(classId: GrowthClassId, name: string, kind: GadgetDefinition['kind'], charges: number,
   values: Partial<GadgetDefinition>): GadgetDefinition {
-  return { classId, name, kind, charges, cast: kind === 'deploy' ? 12 : 6, recovery: 6,
+  return { classId, name, kind, charges, cooldown: 1800, cast: kind === 'deploy' ? 12 : 6, recovery: 6,
     fuse: 0, arm: 0, duration: 0, radius: 0, width: 0, height: 0, health: 0,
     damageMax: 0, damageMin: 0, structureDamageMax: 0, structureDamageMin: 0,
     slow: 0, slowTicks: 0, armor: 0, armorTicks: 0, intercepts: 0, interval: 0,
@@ -26,7 +26,7 @@ export const GROWTH_V3_GADGETS = {
   tk_cover: gadget('tank','折叠掩体','deploy',1,{ width: 16, height: 52, health: 120, duration: 360 }),
   tk_interceptor: gadget('tank','投掷拦截器','deploy',1,{ arm: 15, width: 20, height: 20, health: 40, duration: 300, radius: 140, intercepts: 2, interval: 15, electronic: true }),
   tk_plate: gadget('tank','应急装甲包','self',2,{ cast: 30, armor: 15, armorTicks: 120 }),
-  sn_beacon: gadget('sniper','侦察信标','deploy',1,{ arm: 15, width: 16, height: 24, health: 35, duration: 2400, radius: 880, interval: 60, markTicks: 30, electronic: true }),
+  sn_beacon: gadget('sniper','侦察信标','deploy',1,{ arm: 15, width: 16, height: 24, health: 35, duration: 2400, cooldown: 2700, radius: 880, interval: 60, markTicks: 30, electronic: true }),
   sn_emp: gadget('sniper','EMP弹','throw',2,{ fuse: 24, radius: 160, empTicks: 90 }),
   sn_decoy: gadget('sniper','声光诱饵','throw',2,{ fuse: 15, width: 12, height: 12, health: 15, duration: 150, interval: 30, noiseRadius: 480, radarTicks: 15, electronic: true, reservesDeploySlot: true }),
   md_smoke: gadget('medic','救援烟雾','throw',2,{ fuse: 24, radius: 150, duration: 150, reservesSmokeSlot: true }),

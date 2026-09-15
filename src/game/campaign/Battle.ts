@@ -715,6 +715,6 @@ export class Battle {
         ...(this.growthV3 ? { growthV3: this.growthV3.actorView(a.id) } : {}),
         growth: this.growthV3 ? (({ classId, level, ultimate, ghost, armor }) => ({ classId, level, ultimate, ghost, armor }))(this.growthV3.actorView(a.id))
           : a.growth ? { classId: a.growth.classId, level: a.growth.level, ultimate: a.growth.ultimate, ghost: a.growth.ghostUntil > this.frame, armor: a.growth.armor } : undefined,
-        classId: this.growthV3 ? this.growthV3.actorView(a.id).art : a.growth ? GROWTH_CLASSES[a.growth.classId].art : a.kit?.classId ?? null, stealthFrames: a.stealthFrames, maxHealth: a.life.maxHealth, skill: a.kit?.skill ?? null, skillCooldown: a.skillCooldown, skillFrames: a.skillFrames, item: a.growth ? 'frag' as const : a.kit?.item ?? null, itemCharges: a.itemCharges })) };
+        classId: this.growthV3 ? this.growthV3.actorView(a.id).art : a.growth ? GROWTH_CLASSES[a.growth.classId].art : a.kit?.classId ?? null, stealthFrames: a.stealthFrames, maxHealth: a.life.maxHealth, skill: a.kit?.skill ?? null, skillCooldown: a.skillCooldown, skillFrames: a.skillFrames, item: a.growth ? 'frag' as const : a.kit?.item ?? null, itemCharges: a.itemCharges, itemCooldown: a.itemCooldown })) };
   }
 }

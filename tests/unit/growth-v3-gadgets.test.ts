@@ -4,6 +4,7 @@ import { defaultGrowthLoadoutV3 } from '../../src/shared/content/growth-v3/Loado
 import { expect, it } from 'vitest';
 import { GadgetSimulation, type GadgetActor, type GadgetEvent, type GadgetWorldPort } from '../../src/shared/simulation/growth-v3/GadgetSimulation';
 import { newArmor } from '../../src/shared/simulation/growth-v3/DamageRules';
+import { GROWTH_V3_GADGETS, type GrowthGadgetId } from '../../src/shared/content/growth-v3/Gadgets';
 
 function fixture() {
   const actors:GadgetActor[]=[
@@ -19,6 +20,38 @@ function fixture() {
     support:(id,xp)=>awards.push({id,xp}),event:event=>events.push(event)};
   return {actors,port,events,awards,supplies,acceptSupply:(count:number)=>{supplied=count;}};
 }
+
+it.each(Object.keys(GROWTH_V3_GADGETS) as GrowthGadgetId[])('%s refills exactly at its cooldown boundary after checkpoint restoration',id=>{
+ const f=fixture(),sim=new GadgetSimulation(f.port),def=GROWTH_V3_GADGETS[id];
+ sim.register('blue',def.classId,id);sim.use('blue',{x:340,y:600},0);
+ for(let t=0;t<=def.cast;t++)sim.step(t);
+ const due=def.cast+def.cooldown;
+ expect(sim.inventory('blue').rechargeTick).toBe(due);
+ const cp=sim.checkpoint();cp.lastTick=cp.finishedTick=due-2;
+ const restored=GadgetSimulation.restore(f.port,cp);restored.step(due-1);
+ expect(restored.inventory('blue').charges).toBe(def.charges-1);
+ restored.step(due);expect(restored.inventory('blue').charges).toBe(def.charges);
+ expect(restored.inventory('blue').rechargeTick).toBeUndefined();
+ restored.step(due+1);expect(restored.inventory('blue').charges).toBe(def.charges);
+});
+
+it.each(['tk_cover','tk_interceptor','md_station','md_ammo'] as const)('%s deploys from a distant crosshair at spawn and on a ramp, then can be used again',id=>{
+ for(const point of [{x:200,y:1439.5},{x:2415,y:1260}]) {
+  const b=new Battle({...customMatch('atrium'),allies:0,enemies:0});
+  const build=defaultGrowthLoadoutV3(GROWTH_V3_GADGETS[id].classId);build.gadgetId=id;b.enableGrowthV3({player:build},5);
+  b.player.human=true;b.player.life.spawnProtectionFrames=0;b.player.movement.reset(point.x,point.y);
+  for(let i=0;i<15;i++)b.tickPlayers(new Map());
+  expect(b.useItem({x:3000,y:400})).toBe(true);
+  for(let i=0;i<13;i++)b.tickPlayers(new Map());
+  const g=b.growthV3!.gadgets;expect(g.entities()).toHaveLength(1);
+  expect(b.snapshot().actors[0].itemCooldown).toBeGreaterThan(1700);
+  const due=g.inventory('player').rechargeTick!;
+  for(let i=b.frame;i<due;i++)b.tickPlayers(new Map());
+  expect(g.inventory('player').charges).toBe(1);expect(g.entities()).toHaveLength(0);
+  expect(b.useItem({x:3000,y:400})).toBe(true);
+  for(let i=0;i<13;i++)b.tickPlayers(new Map());expect(g.entities()).toHaveLength(1);
+ }
+});
 
 it.each([0,30,60,90,120,150,180,210,240,270,300,330])('clips a %s degree bot aim along its ray and releases at the predicted point',degrees=>{
   const f=fixture(),sim=new GadgetSimulation(f.port);sim.register('blue','medic','md_smoke');

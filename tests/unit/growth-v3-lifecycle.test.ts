@@ -367,7 +367,7 @@ it.each(abilities)('%s rejects use in spawn protection without starting cooldown
   expect(f.b.player.life.spawnProtectionFrames).toBeGreaterThan(0);
 });
 
-it.each(gadgets)('%s exhausts its real inventory and never regenerates charges with time', (id,cls,cast,charges,deploy)=>{
+it.each(gadgets)('%s exhausts its inventory before recharge and cannot spend nonexistent charges', (id,cls,cast,charges,deploy)=>{
   const build=defaultGrowthLoadoutV3(cls);build.gadgetId=id;const f=fixture(build);f.b.player.life.health=f.b.player.life.maxHealth;
   for(let used=0;used<charges;used++){
     f.send('item',deploy);f.step(cast);expect(f.b.player.itemCharges).toBe(charges-used-1);

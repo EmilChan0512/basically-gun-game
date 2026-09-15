@@ -51,6 +51,7 @@ it.each([-1,1])('tank AI puts cover on the visible threat side (%s)',direction=>
 it('tank AI retains cover when only positions behind it are legal',()=>{
   const original=fixture([defaultGrowthLoadoutV3('tank'),defaultGrowthLoadoutV3()],'dom');advance(original,31);
   const state=original.checkpoint();state.mission.objective={x:550,y:599.5};
+  state.mission.terrain.push({x:525,y:585,width:55,height:15});
   const b=Battle.restore(state);b.player.movement.reset(600,599.5);b.actors[1].movement.reset(420,599.5);
   const g=b.growthV3!.gadgets;
   expect(g.canPlace('player',{x:560,y:599.5})).toBe(false);expect(g.canPlace('player',{x:545,y:599.5})).toBe(false);

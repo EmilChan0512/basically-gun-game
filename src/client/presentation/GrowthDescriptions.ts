@@ -16,6 +16,9 @@ export function growthAbilityDescription(id: GrowthAbilityId): string {
 }
 
 export function growthGadgetDescription(id: GrowthGadgetId): string {
+  return `${gadgetEffectDescription(id)} 使用后每${GROWTH_V3_GADGETS[id].cooldown / 30}秒恢复1次，可重复使用。`;
+}
+function gadgetEffectDescription(id: GrowthGadgetId): string {
   const g = GROWTH_V3_GADGETS[id];
   switch (id) {
     case 'as_frag': return `释放后${g.fuse / 30}秒引爆，对部署物造成${g.structureDamageMax}—${g.structureDamageMin}伤害；墙体阻断爆炸。`;
