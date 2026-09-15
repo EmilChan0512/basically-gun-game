@@ -15,8 +15,7 @@ export const STATION_PODS = [
 export const STATION_CABIN = { x: 1680, y: 360, width: 1440, height: 64 };
 export const STATION_CABIN_COVERS = [1900, 2180, 2540, 2820].map(x => ({ x, y: 304, width: 80, height: 56 }));
 export const STATION_PORTALS = [
-  { id: 'west-up', entrance: { x: 1740, y: 959.5 }, exit: { x: 2040, y: 359.5 }, requiresCrouch: true },
-  { id: 'east-up', entrance: { x: 3060, y: 959.5 }, exit: { x: 2760, y: 359.5 }, requiresCrouch: true },
+  { id: 'center-up', entrance: { x: 2400, y: 959.5 }, exit: { x: 2400, y: 359.5 }, requiresCrouch: true },
   { id: 'west-down', entrance: { x: 1830, y: 359.5 }, exit: { x: 1620, y: 959.5 }, requiresCrouch: true },
   { id: 'east-down', entrance: { x: 2970, y: 359.5 }, exit: { x: 3180, y: 959.5 }, requiresCrouch: true },
 ];
@@ -33,7 +32,8 @@ const terrain: Terrain[] = [
   { x: 2976, y: 120, width: 24, height: 104 },
   ...STATION_CABIN_COVERS,
 ];
-const covers = [720, 1320, 2220, 2520, 3420, 4020];
+// Keep the low corridor beneath the central pods passable to the shared entrance.
+const covers = [720, 1320, 3420, 4020];
 for (const x of covers) terrain.push({ x, y: 912, width: 60, height: 48 });
 const navigation: Waypoint[] = [];
 const stairTreads: Terrain[] = [];

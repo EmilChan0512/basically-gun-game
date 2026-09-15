@@ -57,7 +57,7 @@ it.each([false, true])('bots from both teams contest the portal cabin (growth=%s
 it('predicts portal transport without interpolation across the map and replays acknowledgements', () => {
   const battle = new Battle(customMatch('longshot'), 'normal', 'm4', seededRandom(1));
   battle.actors.forEach(a => { a.human = true; });
-  battle.player.movement.reset(1705, 959.5);
+  battle.player.movement.reset(2365, 959.5);
   const host = new MatchSession(battle); host.bind('p', 'player');
   const packet = (): StateMessage => ({ type: 'state', roomId: 'portal', round: 1, actorId: 'player', mapId: 'longshot', mode: 'tdm',
     state: battle.snapshot(), result: null, ack: host.acknowledgements().p, movement: battle.player.movement.checkpoint(),
@@ -67,7 +67,7 @@ it('predicts portal transport without interpolation across the map and replays a
     const command = { sequence, input: { ...idleInput(), right: true, crouch: true }, actions: [] };
     const serial = prediction.movement!.portalSerial;
     prediction.input(sequence, command.input);
-    if (prediction.movement!.portalSerial !== serial) expect(prediction.position(.1, 0)).toEqual({ x: 2040, y: 359.5 });
+    if (prediction.movement!.portalSerial !== serial) expect(prediction.position(.1, 0)).toEqual({ x: 2400, y: 359.5 });
     host.submit('p', command); host.tick();
     if (sequence === 5 || sequence === 14) prediction.accept(packet());
   }
@@ -76,4 +76,17 @@ it('predicts portal transport without interpolation across the map and replays a
   const restored = Battle.restore(battle.checkpoint());
   battle.tickPlayers(new Map()); restored.tickPlayers(new Map());
   expect(restored.checkpoint()).toEqual(battle.checkpoint());
+});
+
+it('has one central ascent and no transport at the former side entrances', () => {
+  const map = customMatch('longshot');
+  expect(STATION_PORTALS.filter(p => p.id.endsWith('-up'))).toEqual([
+    { id: 'center-up', entrance: { x: 2400, y: 959.5 }, exit: { x: 2400, y: 359.5 }, requiresCrouch: true },
+  ]);
+  for (const x of [1740, 3060]) {
+    const movement = new OriginalMovement(wallFor(map), map.stairTreads, map.portals);
+    movement.reset(x, 959.5);
+    movement.tick({ left: false, right: false, crouch: true });
+    expect(movement.portalSerial).toBe(0);
+  }
 });

@@ -23,7 +23,7 @@ test('longshot is selectable and starts an eight-player control match', async ({
   expect(await page.evaluate(() => window.__strikeCampaign!.battle.player.arsenal.shots)).toBe(shots);
   await page.getByRole('button', { name: '恢复默认视野' }).click();
   await page.waitForFunction(() => window.__strikeCampaign!.cameras.main.zoom === 1);
-  await page.evaluate(() => window.__strikeCampaign!.battle.player.movement.reset(1740, 959.5));
+  await page.evaluate(() => window.__strikeCampaign!.battle.player.movement.reset(2400, 959.5));
   await page.keyboard.down('s');
   await page.waitForFunction(() => window.__strikeCampaign!.battle.player.movement.portalSerial === 1);
   await page.keyboard.up('s');

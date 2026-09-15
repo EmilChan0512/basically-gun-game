@@ -723,7 +723,9 @@ export class GrowthBattleCoordinator {
       ? trackedWaypoint(this.battle.mission.navigation, m, destination, brain.route ??= {})
       : nextWaypoint(this.battle.mission.navigation, m, destination);
     const holding = this.battle.mission.mode === 'dom' && distance(m, destination) < 45;
-    const stop = !delivery && !empty && !m.jumping && (holding || !!attackPoint && distance(chest(a), attackPoint) < Math.min(def.falloffStart, 450));
+    // Keep firing while advancing toward a portal-only objective above the fight.
+    const contestingHighGround = this.battle.mission.mode === 'dom' && !!this.battle.mission.portals?.length && destination.y < m.y - 70;
+    const stop = !delivery && !empty && !m.jumping && (holding || !contestingHighGround && !!attackPoint && distance(chest(a), attackPoint) < Math.min(def.falloffStart, 450));
     const dx = waypoint.x - m.x;
     brain.stuck = !stop && Math.abs(m.x - brain.lastX) < .5 ? brain.stuck + 1 : 0; brain.lastX = m.x;
     const input: BattleInput = { left: !stop && dx < -8, right: !stop && dx > 8, crouch: portalCrouch(this.battle.mission.portals, m, waypoint) || m.shouldDescendStairs(waypoint) || m.shouldDescendStairs(destination) || stop && !!target && this.tick % 120 < 35,
