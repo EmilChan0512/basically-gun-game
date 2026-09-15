@@ -37,5 +37,13 @@
     "sha256": "05306396adbc47077fdd8ba94881e7161512f97e4e50370ee1be4e1ad3f9cdff",
     "width": 256,
     "height": 256
+  },
+  "observation-bay": {
+    "seed": 531004,
+    "graphSha256": "998c1b813d58abbbfacf5ababd8554623f5c77c149925a28613fd0f10afe657f",
+    "originalSha256": "61b0b510476f3c5fc949e2e01ace7208d30227469be8aca796bad112f677815d",
+    "sha256": "e182a3a1beb5d6cc83172269400c9554327731d3c1a0cba084cd0905b66d4930",
+    "width": 1024,
+    "height": 256
   }
 }

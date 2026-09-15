@@ -62,8 +62,9 @@ it('presents the actual cover health and active tank shield in the range',()=>{
 
 
 it('reveals growth targets at the enlarged radius but still hides more distant targets',()=>{
-  const near=new GrowthRangeSession(defaultGrowthLoadoutV3('sniper'),{distance:900,health:100,armor:0});
+  const near=new GrowthRangeSession(defaultGrowthLoadoutV3('sniper'),{distance:1800,health:100,armor:0});
   const far=new GrowthRangeSession(defaultGrowthLoadoutV3('sniper'),{distance:1100,health:100,armor:0});
+  far.battle.mission.width = 3000; far.battle.actors[1].movement.reset(2620, 499.5);
   expect(near.presentation().state.actors.some(a=>a.id==='enemy-0')).toBe(true);
   expect(far.presentation().state.actors.some(a=>a.id==='enemy-0')).toBe(false);
   far.step({fire:true});

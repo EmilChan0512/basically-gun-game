@@ -1,3 +1,4 @@
+import type { Portal } from '../../shared/content/MapTypes';
 /** SFH1 Movement ordinary dry-terrain rules. Coordinates are feet, velocities px / 30Hz frame. */
 export interface OriginalMoveInput { left: boolean; right: boolean; crouch: boolean }
 export type WallMask = (x: number, y: number) => boolean;
@@ -13,17 +14,22 @@ export class OriginalMovement {
   hardLandingFrames = 0;
   rotation = 0;
   speedScale = 1;
+  portalCooldown = 0;
+  portalSerial = 0;
   private droppingStairs = false;
-  constructor(readonly wall: WallMask, private readonly stairTreads: readonly {x:number;y:number;width:number;height:number}[] = []) {}
+  constructor(readonly wall: WallMask, private readonly stairTreads: readonly {x:number;y:number;width:number;height:number}[] = [], private readonly portals: readonly Portal[] = []) {}
   checkpoint() {
     return { x: this.x, y: this.y, vx: this.vx, vy: this.vy, jumping: this.jumping, crouching: this.crouching,
       manualJump: this.manualJump, fallFrames: this.fallFrames, climb: this.climb, climbFrames: this.climbFrames,
-      hardLandingFrames: this.hardLandingFrames, rotation: this.rotation, speedScale: this.speedScale };
+      hardLandingFrames: this.hardLandingFrames, rotation: this.rotation, speedScale: this.speedScale,
+      portalCooldown: this.portalCooldown, portalSerial: this.portalSerial };
   }
   reset(x: number, y: number) {
     this.x = x; this.y = y; this.vx = this.vy = 0;
     this.jumping = this.crouching = this.manualJump = false;
     this.fallFrames = this.climb = this.climbFrames = this.hardLandingFrames = this.rotation = 0;
+    this.portalCooldown = this.portalSerial = 0;
+    this.droppingStairs = false;
   }
   private hit(x: number, y: number) { const px=Math.trunc(this.x+x),py=Math.trunc(this.y+y);
     return this.wall(px,py)||!this.droppingStairs&&!this.crouching&&this.stairTreads.some(t=>this.y<=t.y+28&&px>=t.x&&px<t.x+t.width&&py>=t.y&&py<t.y+t.height); }
@@ -38,6 +44,7 @@ export class OriginalMovement {
     return true;
   }
   tick(input: OriginalMoveInput) {
+    this.portalCooldown = Math.max(0, this.portalCooldown - 1);
     this.droppingStairs = input.crouch;
     // UnitMC frame396/408/449 callbacks release these movement locks.
     if (this.climbFrames > 0 && --this.climbFrames === 0) this.climb = 0;
@@ -98,5 +105,11 @@ export class OriginalMovement {
       if (left < 20 && right < 20) slope = Math.atan2(right - left, 20) * 180 / Math.PI;
     }
     this.rotation += (slope - this.rotation) * 0.3;
+    const portal = !this.portalCooldown && this.portals.find(p => (!p.requiresCrouch || input.crouch) && Math.abs(this.x - p.entrance.x) < 30 && Math.abs(this.y - p.entrance.y) < 42);
+    if (portal) {
+      const serial = this.portalSerial + 1;
+      this.reset(portal.exit.x, portal.exit.y);
+      this.portalSerial = serial; this.portalCooldown = 90;
+    }
   }
 }

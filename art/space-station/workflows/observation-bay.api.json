@@ -1,0 +1,125 @@
+{
+  "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "flux-2-klein-4b.safetensors",
+      "weight_dtype": "default"
+    }
+  },
+  "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "flux2",
+      "device": "default"
+    }
+  },
+  "3": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "Original science fiction 2D side-scrolling tactical game environment art. Clean painted hard-surface illustration, restrained gunmetal navy and cool cyan lighting with small amber accents, readable large shapes, realistic material detail. No people, no characters, no weapons, no writing, no letters, no logos, no watermarks. Orthographic side elevation, no isometric camera.\nFull bleed rectangular interior back wall of a spacious orbital observation command cabin. Strict flat side elevation for a 2D platform shooter. Panoramic dark blue armored observation windows across the center, black space and a distant cyan planet visible through glass, metal ribs and recessed terminal strips along lower wall, overhead conduits. Quiet low contrast background, no foreground furniture, no platforms, no stairs, no people, no text. Entire canvas filled edge to edge with the wall texture.",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Space station / observation-bay"
+    }
+  },
+  "4": {
+    "class_type": "BasicGuider",
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "conditioning": [
+        "3",
+        0
+      ]
+    }
+  },
+  "5": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 531004
+    }
+  },
+  "6": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler"
+    }
+  },
+  "7": {
+    "class_type": "Flux2Scheduler",
+    "inputs": {
+      "steps": 4,
+      "width": 1024,
+      "height": 256
+    }
+  },
+  "8": {
+    "class_type": "EmptyFlux2LatentImage",
+    "inputs": {
+      "width": 1024,
+      "height": 256,
+      "batch_size": 1
+    }
+  },
+  "9": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": [
+        "5",
+        0
+      ],
+      "guider": [
+        "4",
+        0
+      ],
+      "sampler": [
+        "6",
+        0
+      ],
+      "sigmas": [
+        "7",
+        0
+      ],
+      "latent_image": [
+        "8",
+        0
+      ]
+    }
+  },
+  "10": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    }
+  },
+  "11": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "9",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    }
+  },
+  "12": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "project-strike/space-station/v1/observation-bay",
+      "images": [
+        "11",
+        0
+      ]
+    }
+  }
+}

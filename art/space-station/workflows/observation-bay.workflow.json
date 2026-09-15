@@ -1,0 +1,570 @@
+{
+  "last_node_id": 12,
+  "last_link_id": 11,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "UNETLoader",
+      "pos": [
+        70,
+        70
+      ],
+      "size": [
+        320,
+        220
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            2
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "UNETLoader"
+      },
+      "widgets_values": [
+        "flux-2-klein-4b.safetensors",
+        "default"
+      ],
+      "title": "UNETLoader"
+    },
+    {
+      "id": 2,
+      "type": "CLIPLoader",
+      "pos": [
+        430,
+        70
+      ],
+      "size": [
+        320,
+        220
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            1
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPLoader"
+      },
+      "widgets_values": [
+        "qwen_3_4b.safetensors",
+        "flux2",
+        "default"
+      ],
+      "title": "CLIPLoader"
+    },
+    {
+      "id": 3,
+      "type": "CLIPTextEncode",
+      "pos": [
+        790,
+        70
+      ],
+      "size": [
+        320,
+        290
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            3
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        "Original science fiction 2D side-scrolling tactical game environment art. Clean painted hard-surface illustration, restrained gunmetal navy and cool cyan lighting with small amber accents, readable large shapes, realistic material detail. No people, no characters, no weapons, no writing, no letters, no logos, no watermarks. Orthographic side elevation, no isometric camera.\nFull bleed rectangular interior back wall of a spacious orbital observation command cabin. Strict flat side elevation for a 2D platform shooter. Panoramic dark blue armored observation windows across the center, black space and a distant cyan planet visible through glass, metal ribs and recessed terminal strips along lower wall, overhead conduits. Quiet low contrast background, no foreground furniture, no platforms, no stairs, no people, no text. Entire canvas filled edge to edge with the wall texture."
+      ],
+      "title": "Space station / observation-bay"
+    },
+    {
+      "id": 4,
+      "type": "BasicGuider",
+      "pos": [
+        1150,
+        70
+      ],
+      "size": [
+        320,
+        220
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 2
+        },
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "name": "GUIDER",
+          "type": "GUIDER",
+          "links": [
+            5
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "BasicGuider"
+      },
+      "widgets_values": [],
+      "title": "BasicGuider"
+    },
+    {
+      "id": 5,
+      "type": "RandomNoise",
+      "pos": [
+        70,
+        420
+      ],
+      "size": [
+        320,
+        220
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "NOISE",
+          "type": "NOISE",
+          "links": [
+            4
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "RandomNoise"
+      },
+      "widgets_values": [
+        531004,
+        "fixed"
+      ],
+      "title": "RandomNoise"
+    },
+    {
+      "id": 6,
+      "type": "KSamplerSelect",
+      "pos": [
+        430,
+        420
+      ],
+      "size": [
+        320,
+        220
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "SAMPLER",
+          "type": "SAMPLER",
+          "links": [
+            6
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "KSamplerSelect"
+      },
+      "widgets_values": [
+        "euler"
+      ],
+      "title": "KSamplerSelect"
+    },
+    {
+      "id": 7,
+      "type": "Flux2Scheduler",
+      "pos": [
+        790,
+        420
+      ],
+      "size": [
+        320,
+        220
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "SIGMAS",
+          "type": "SIGMAS",
+          "links": [
+            7
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Flux2Scheduler"
+      },
+      "widgets_values": [
+        4,
+        1024,
+        256
+      ],
+      "title": "Flux2Scheduler"
+    },
+    {
+      "id": 8,
+      "type": "EmptyFlux2LatentImage",
+      "pos": [
+        1150,
+        420
+      ],
+      "size": [
+        320,
+        220
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            8
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "EmptyFlux2LatentImage"
+      },
+      "widgets_values": [
+        1024,
+        256,
+        1
+      ],
+      "title": "EmptyFlux2LatentImage"
+    },
+    {
+      "id": 9,
+      "type": "SamplerCustomAdvanced",
+      "pos": [
+        70,
+        770
+      ],
+      "size": [
+        320,
+        220
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "noise",
+          "type": "NOISE",
+          "link": 4
+        },
+        {
+          "name": "guider",
+          "type": "GUIDER",
+          "link": 5
+        },
+        {
+          "name": "sampler",
+          "type": "SAMPLER",
+          "link": 6
+        },
+        {
+          "name": "sigmas",
+          "type": "SIGMAS",
+          "link": 7
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 8
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "LATENT",
+          "links": [
+            9
+          ],
+          "slot_index": 0
+        },
+        {
+          "name": "denoised_output",
+          "type": "LATENT",
+          "links": [],
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SamplerCustomAdvanced"
+      },
+      "widgets_values": [],
+      "title": "SamplerCustomAdvanced"
+    },
+    {
+      "id": 10,
+      "type": "VAELoader",
+      "pos": [
+        430,
+        770
+      ],
+      "size": [
+        320,
+        220
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            10
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAELoader"
+      },
+      "widgets_values": [
+        "flux2-vae.safetensors"
+      ],
+      "title": "VAELoader"
+    },
+    {
+      "id": 11,
+      "type": "VAEDecode",
+      "pos": [
+        790,
+        770
+      ],
+      "size": [
+        320,
+        220
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 9
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 10
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            11
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecode"
+      },
+      "widgets_values": [],
+      "title": "VAEDecode"
+    },
+    {
+      "id": 12,
+      "type": "SaveImage",
+      "pos": [
+        1150,
+        770
+      ],
+      "size": [
+        320,
+        220
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 11
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": [],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "project-strike/space-station/v1/observation-bay"
+      ],
+      "title": "SaveImage"
+    }
+  ],
+  "links": [
+    [
+      1,
+      2,
+      0,
+      3,
+      0,
+      "CLIP"
+    ],
+    [
+      2,
+      1,
+      0,
+      4,
+      0,
+      "MODEL"
+    ],
+    [
+      3,
+      3,
+      0,
+      4,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      4,
+      5,
+      0,
+      9,
+      0,
+      "NOISE"
+    ],
+    [
+      5,
+      4,
+      0,
+      9,
+      1,
+      "GUIDER"
+    ],
+    [
+      6,
+      6,
+      0,
+      9,
+      2,
+      "SAMPLER"
+    ],
+    [
+      7,
+      7,
+      0,
+      9,
+      3,
+      "SIGMAS"
+    ],
+    [
+      8,
+      8,
+      0,
+      9,
+      4,
+      "LATENT"
+    ],
+    [
+      9,
+      9,
+      0,
+      11,
+      0,
+      "LATENT"
+    ],
+    [
+      10,
+      10,
+      0,
+      11,
+      1,
+      "VAE"
+    ],
+    [
+      11,
+      11,
+      0,
+      12,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.65,
+      "offset": [
+        30,
+        30
+      ]
+    }
+  },
+  "version": 0.4
+}

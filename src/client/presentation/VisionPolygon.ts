@@ -1,4 +1,4 @@
-import { VISION_RADIUS, VISION_EYE_HEIGHT } from '../../shared/simulation/Vision';
+import { SCREEN_VISION_RADIUS as VISION_RADIUS, VISION_EYE_HEIGHT } from '../../shared/simulation/Vision';
 export type Point = { x: number; y: number };
 /** Ray march the same collision mask used by authority (including authored
  * pixel masks). Only friendly observers are used, never hidden enemy data. */

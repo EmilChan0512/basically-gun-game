@@ -1,6 +1,7 @@
 import { beaconCircles } from './shared/simulation/BeaconVision';
 import { preloadAtrium, drawAtrium } from './client/presentation/AtriumView';
 import { drawSpaceStation, preloadSpaceStation } from './client/presentation/LongshotView';
+import { ViewControls } from './client/presentation/ViewControls';
 import { defaultGrowthLoadoutV3 as defaultGrowthLoadout } from './shared/content/growth-v3/Loadout';
 import { GROWTH_V3_ABILITIES, type GrowthAbilityId } from './shared/content/growth-v3/Operators';
 import { GROWTH_V3_GADGETS, type GrowthGadgetId } from './shared/content/growth-v3/Gadgets';
@@ -325,6 +326,7 @@ export class OnlineScene extends Phaser.Scene {
   private actorLabels: Phaser.GameObjects.Text[] = [];
   private graphics!: Phaser.GameObjects.Graphics;
   private hud!: BattleHUD;
+  private viewControls!: ViewControls;
   private keys = new Set<string>();
   private elapsed = 0;
   private animationFrame = 0;
@@ -359,6 +361,8 @@ export class OnlineScene extends Phaser.Scene {
     this.vision = new VisionOverlay(this, new CollisionWorld(map.terrain, map.collisionMask).solid);
     this.rig = new ReferenceArt(this); this.graphics = this.add.graphics().setDepth(3);
     this.hud = new BattleHUD(document.getElementById('online-game')!);
+    this.viewControls = new ViewControls(document.getElementById('online-game')!, () => { this.keys.clear(); this.fire.clear(); this.network.clearActions(); });
+    this.events.once('shutdown', () => this.viewControls.destroy());
     const destroyHud = () => this.hud.destroy();
     this.events.once('shutdown', destroyHud); this.events.once('destroy', destroyHud);
     const down = (e: KeyboardEvent) => {
@@ -442,9 +446,9 @@ export class OnlineScene extends Phaser.Scene {
     const predicted = self && followed?.id === self.id ? this.network.prediction.position(renderAlpha, delta) ?? self
       : followed && this.network.interpolation.position(followed, now);
     const geometry = MAPS.find(m => m.id === message.mapId)!.geometry;
-    this.cameras.main.setZoom(mapView ? Math.min(1, this.scale.width / geometry.width, this.scale.height / (geometry.height ?? 700)) : 0.8*this.scale.height/620);
+    this.cameras.main.setZoom(mapView ? Math.min(1, this.scale.width / geometry.width, this.scale.height / (geometry.height ?? 700)) : 0.8*this.scale.height/620 / this.viewControls.factor);
     if (mapView) this.cameras.main.centerOn(geometry.width / 2, (geometry.height ?? 700) / 2);
-    else if (predicted) this.cameras.main.centerOn(predicted.x, predicted.y - 150);
+    else if (predicted) this.cameras.main.centerOn(predicted.x + this.viewControls.lookAhead(this.input.activePointer.x, this.scale.width), predicted.y - 150);
     this.rig.begin(); this.graphics.clear();
     for (const label of this.actorLabels) label.setVisible(false);
     let labelIndex = 0;

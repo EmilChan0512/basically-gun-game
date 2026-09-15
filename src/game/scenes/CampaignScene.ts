@@ -10,6 +10,7 @@ import { CLASSES } from '../campaign/Catalog';
 import { CombatFeedback } from '../../client/presentation/CombatFeedback';
 import { CombatFeedbackView } from '../../client/presentation/CombatFeedbackView';
 import { drawSpaceStation, preloadSpaceStation } from '../../client/presentation/LongshotView';
+import { ViewControls } from '../../client/presentation/ViewControls';
 
 import { ReferenceArt, preloadReferenceArt } from '../campaign/ReferenceArt';
 
@@ -22,6 +23,7 @@ export class CampaignScene extends Phaser.Scene {
   private audioPresentation = new AudioPresentation();
   private feedback = new CombatFeedback();
   private feedbackView?: CombatFeedbackView;
+  private viewControls!: ViewControls;
   onFrame?: () => void;
   onPause?: () => void;
   private keys = new Set<string>();
@@ -30,13 +32,15 @@ export class CampaignScene extends Phaser.Scene {
   private background!: Phaser.GameObjects.Graphics;
   private art!: Phaser.GameObjects.Graphics;
   private rig!: ReferenceArt;
-  private scenery: Phaser.GameObjects.Image[] = [];
+  private scenery: Phaser.GameObjects.GameObject[] = [];
   private labels: Phaser.GameObjects.Text[] = [];
   private hurtOverlay!: Phaser.GameObjects.Rectangle;
   private eventCursor = 0;
   constructor() { super('CampaignScene'); }
   preload() { preloadReferenceArt(this); preloadSpaceStation(this); }
   create() {
+    this.viewControls = new ViewControls(document.querySelector('.campaign-stage')!, () => this.clearInput());
+    this.events.once('shutdown', () => this.viewControls.destroy());
     this.feedbackView = new CombatFeedbackView(document.querySelector('.campaign-stage')!, this.feedback);
     this.events.once('shutdown', () => this.feedbackView?.destroy());
     this.rig = new ReferenceArt(this);
@@ -149,8 +153,9 @@ export class CampaignScene extends Phaser.Scene {
     }), snapshot.actors, b.player.id, b.result?.winner);
     this.eventCursor = b.journal.cursor;
     if (this.feedback.frozen && this.activeBattle && b.phase === 'running') { this.onFrame?.(); return; }
-    this.cameras.main.setZoom(mapView ? Math.min(1, 1120 / b.mission.width, 620 / (b.mission.height ?? 700)) : 1);
-    this.cameras.main.centerOn(mapView ? b.mission.width / 2 : followed.movement.x, mapView ? (b.mission.height ?? 700) / 2 : b.mission.height ? followed.movement.y - 150 : 355);
+    this.viewControls.root.hidden = !this.activeBattle;
+    this.cameras.main.setZoom(mapView ? Math.min(1, 1120 / b.mission.width, 620 / (b.mission.height ?? 700)) : 1 / this.viewControls.factor);
+    this.cameras.main.centerOn(mapView ? b.mission.width / 2 : followed.movement.x + this.viewControls.lookAhead(this.input.activePointer.x, this.scale.width), mapView ? (b.mission.height ?? 700) / 2 : b.mission.height ? followed.movement.y - 150 : 355);
     this.rig.begin();
     this.art.clear(); for (const label of this.labels) label.setVisible(false);
     if (b.mission.mode === 'dom') {

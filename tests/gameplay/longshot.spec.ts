@@ -11,6 +11,24 @@ test('longshot is selectable and starts an eight-player control match', async ({
   await page.waitForFunction(() => window.__strikeCampaign!.battle.frame > 10);
   await expect(page.locator('#mission-label')).toHaveText('太空站 · 轨道狙击');
   expect(await page.evaluate(() => window.__strikeCampaign!.battle.actors.length)).toBe(8);
+  const shots = await page.evaluate(() => window.__strikeCampaign!.battle.player.arsenal.shots);
+  for (let i = 0; i < 5; i++) await page.getByRole('button', { name: '拉远视野' }).click();
+  await expect(page.locator('[data-view=reset]')).toHaveText('视野 3.5× ↺');
+  await page.waitForFunction(() => Math.abs(window.__strikeCampaign!.cameras.main.zoom - 1 / 3.5) < .001);
+  await page.keyboard.down('d');
+  const startX = await page.evaluate(() => window.__strikeCampaign!.battle.player.movement.x);
+  await page.waitForFunction(x => window.__strikeCampaign!.battle.player.movement.x > x + 30, startX);
+  await page.keyboard.up('d');
+  expect(await page.evaluate(() => window.__strikeCampaign!.cameras.main.zoom)).toBeCloseTo(1 / 3.5);
+  expect(await page.evaluate(() => window.__strikeCampaign!.battle.player.arsenal.shots)).toBe(shots);
+  await page.getByRole('button', { name: '恢复默认视野' }).click();
+  await page.waitForFunction(() => window.__strikeCampaign!.cameras.main.zoom === 1);
+  await page.evaluate(() => window.__strikeCampaign!.battle.player.movement.reset(1740, 959.5));
+  await page.keyboard.down('s');
+  await page.waitForFunction(() => window.__strikeCampaign!.battle.player.movement.portalSerial === 1);
+  await page.keyboard.up('s');
+  expect(await page.evaluate(() => window.__strikeCampaign!.battle.player.movement.y)).toBeLessThan(400);
+  await page.screenshot({ path: 'artifacts/qa/space-station-cabin.png' });
   await page.screenshot({ path: 'artifacts/qa/longshot-battle.png' });
   // Freeze only for an art/layout QA overview after the playable match checks above.
   await page.evaluate(() => {
@@ -27,6 +45,8 @@ test('longshot runs in the growth laboratory with the shared online renderer', a
   await page.locator('#offline-growth-start').click();
   await expect(page.locator('#online-game canvas')).toBeVisible();
   await expect(page.locator('[data-hud=clock]')).not.toHaveText('15:00');
+  await page.getByRole('button', { name: '拉远视野' }).click();
+  await expect(page.locator('[data-view=reset]')).toHaveText('视野 1.5× ↺');
   await page.screenshot({ path: 'artifacts/qa/longshot-lab.png' });
   await page.locator('#offline-growth-leave').click();
   await expect(page.locator('#offline-setup')).toBeVisible();

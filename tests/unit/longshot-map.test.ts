@@ -2,7 +2,7 @@ import { expect, it } from 'vitest';
 import { customMatch } from '../../src/shared/content/Maps';
 import { wallFor } from '../../src/game/campaign/Missions';
 import { OriginalMovement } from '../../src/game/movement/OriginalMovement';
-import { trackedWaypoint } from '../../src/game/campaign/Navigation';
+import { trackedWaypoint, portalCrouch } from '../../src/game/campaign/Navigation';
 import { traversalJump } from '../../src/shared/simulation/Traversal';
 import { traceBulletLine } from '../../src/game/combat/Ballistics';
 
@@ -11,13 +11,13 @@ it.each([[120, 630], [2040, 1530], [2760, 3270], [4680, 4170]])('climbs and desc
   for (const reverse of [false, true]) {
     const start = { x: reverse ? top : base, y: reverse ? 719.5 : 959.5 };
     const goal = { x: reverse ? base : top, y: reverse ? 959.5 : 719.5 };
-    const movement = new OriginalMovement(wall, map.stairTreads); movement.reset(start.x, start.y);
+    const movement = new OriginalMovement(wall, map.stairTreads, map.portals); movement.reset(start.x, start.y);
     const route = {};
     for (let tick = 0; tick < 900; tick++) {
       if (Math.abs(movement.x-goal.x) < 35 && Math.abs(movement.y-goal.y) < 28) break;
       const target = trackedWaypoint(map.navigation, movement, goal, route), dx = target.x-movement.x;
       if (!movement.shouldDescendStairs(goal) && traversalJump(movement, target, wall)) movement.jump();
-      movement.tick({ left: dx < -8, right: dx > 8, crouch: movement.shouldDescendStairs(target) || movement.shouldDescendStairs(goal) });
+      movement.tick({ left: dx < -8, right: dx > 8, crouch: portalCrouch(map.portals, movement, target) || movement.shouldDescendStairs(target) || movement.shouldDescendStairs(goal) });
     }
     expect(Math.abs(movement.x-goal.x), JSON.stringify({reverse, x:movement.x,y:movement.y,goal,route})).toBeLessThan(35);
     expect(Math.abs(movement.y-goal.y)).toBeLessThan(28);
@@ -39,7 +39,7 @@ it('supports a 2100px sniper shot between nests while shielding the ground spawn
 });
 
 it.each([[120, 630], [2040, 1530], [2760, 3270], [4680, 4170]])('walks the smooth ramp at %s without jumping', (base, top) => {
-  const map = customMatch('longshot'), movement = new OriginalMovement(wallFor(map), map.stairTreads);
+  const map = customMatch('longshot'), movement = new OriginalMovement(wallFor(map), map.stairTreads, map.portals);
   movement.reset(base, 959.5);
   for (let tick = 0; tick < 300 && Math.abs(movement.x-top) > 20; tick++) {
     movement.tick({ left: top < movement.x, right: top > movement.x, crouch: false });
@@ -50,13 +50,13 @@ it.each([[120, 630], [2040, 1530], [2760, 3270], [4680, 4170]])('walks the smoot
 
 it.each([0, 1])('team %s can reach the floating control relay from its spawn', team => {
   const map = customMatch('longshot', 'dom'), wall = wallFor(map), goal = map.objective;
-  const movement = new OriginalMovement(wall, map.stairTreads), route = {};
+  const movement = new OriginalMovement(wall, map.stairTreads, map.portals), route = {};
   movement.reset(map.spawns[team][0].x, map.spawns[team][0].y);
   for (let tick = 0; tick < 2400; tick++) {
     if (Math.abs(movement.x-goal.x) < 45 && Math.abs(movement.y-goal.y) < 30) break;
     const target = trackedWaypoint(map.navigation, movement, goal, route), dx = target.x-movement.x;
     if (!movement.shouldDescendStairs(goal) && traversalJump(movement, target, wall)) movement.jump();
-    movement.tick({ left: dx < -8, right: dx > 8, crouch: movement.shouldDescendStairs(target) || movement.shouldDescendStairs(goal) });
+    movement.tick({ left: dx < -8, right: dx > 8, crouch: portalCrouch(map.portals, movement, target) || movement.shouldDescendStairs(target) || movement.shouldDescendStairs(goal) });
   }
   expect(Math.abs(movement.x-goal.x)).toBeLessThan(45);
   expect(Math.abs(movement.y-goal.y)).toBeLessThan(30);

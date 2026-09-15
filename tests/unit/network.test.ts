@@ -44,11 +44,13 @@ it('eight real WebSocket clients join, start and receive authoritative input res
     expect(server.rooms.get(code)!.session!.battle.actors.every(a => a.arsenal.selected === 'm4')).toBe(true);
     send(1, { type: 'input', roomId: code, round: 1, command: { sequence: 0, input: idleInput(), actions: ['swap'] } });
     await wait(() => logs[1].some(m => m.type === 'state' && m.ack === 0));
-    const state = logs[1].filter(m => m.type === 'state').at(-1).state;
+    const packet = logs[1].filter(m => m.type === 'state').at(-1), state = packet.state;
     expect(server.rooms.get(code)!.session!.battle.actors).toHaveLength(8);
-    expect(state.actors).toHaveLength(4); // Only the receiving team is visible at these spawns.
-    expect(state.actors.filter((a: any) => a.weapon === 'usp')).toHaveLength(1);
-    expect(state.actors.filter((a: any) => a.weapon === 'm4')).toHaveLength(3);
+    const team = state.actors.find((a: any) => a.id === packet.actorId).team;
+    const friendly = state.actors.filter((a: any) => a.team === team);
+    expect(friendly).toHaveLength(4);
+    expect(friendly.filter((a: any) => a.weapon === 'usp')).toHaveLength(1);
+    expect(friendly.filter((a: any) => a.weapon === 'm4')).toHaveLength(3);
     const battle = server.rooms.get(code)!.session!.battle;
     battle.journal.emit({ tick: battle.frame, kind: 'shot', actorId: battle.player.id });
     const cursor = battle.journal.cursor;

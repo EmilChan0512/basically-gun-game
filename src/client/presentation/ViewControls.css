@@ -1,0 +1,4 @@
+.view-controls{position:absolute;right:12px;top:158px;z-index:16;display:flex;gap:4px;padding:5px;background:#081723e8;border:1px solid #4a7485;border-radius:5px;pointer-events:auto}
+.view-controls button{font:12px 'Segoe UI','Microsoft YaHei',sans-serif;color:#d6edf5;background:#173242;border:1px solid #4a7485;border-radius:3px;padding:7px 9px;cursor:pointer;min-height:32px}
+.view-controls button:hover:not(:disabled){background:#24536a}.view-controls button:focus-visible{outline:2px solid #8eefff;outline-offset:2px}.view-controls button:disabled{opacity:.42;cursor:default}.view-controls[hidden]{display:none}
+@media(max-width:650px){.view-controls{right:6px;top:140px}.view-controls button{padding:5px;font-size:11px}}

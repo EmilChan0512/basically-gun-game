@@ -6,7 +6,7 @@ import { once } from 'node:events';
 import { verifyUIArt } from './verify-ui-art.mjs';
 
 const folder = resolve(process.argv[2]);
-console.log(`Portable station art: ${JSON.stringify(verifyUIArt(join(folder, 'dist/assets/space-station/v1'), ['orbital-vista', 'deck-hull', 'hover-module', 'cargo-cell']))}`);
+console.log(`Portable station art: ${JSON.stringify(verifyUIArt(join(folder, 'dist/assets/space-station/v1'), ['orbital-vista', 'deck-hull', 'hover-module', 'cargo-cell', 'observation-bay']))}`);
 console.log(`Portable UI art: ${JSON.stringify(verifyUIArt(join(folder, 'dist/assets/ui-v2/v1')))}`);
 const uiKitIds = JSON.parse(readFileSync(new URL('../art/ui-kit/assets.json', import.meta.url), 'utf8')).assets.map(asset => asset.id);
 console.log(`Portable UI kit: ${JSON.stringify(verifyUIArt(join(folder, 'dist/assets/ui-kit/v1'), uiKitIds))}`);

@@ -1,9 +1,13 @@
 import type { Point } from '../combat/Ballistics';
 import type { Waypoint } from './Missions';
+import type { Portal } from '../../shared/content/MapTypes';
+export const portalCrouch = (portals: readonly Portal[] | undefined, from: Point, waypoint: Point) => !!portals?.some(p => p.requiresCrouch && Math.abs(from.x - p.entrance.x) < 38 && Math.abs(from.y - p.entrance.y) < 42 && Math.hypot(waypoint.x - p.entrance.x, waypoint.y - p.entrance.y) < 5);
 
-export interface RouteState { waypoint?: Point; destination?: Point; age?: number }
+export interface RouteState { waypoint?: Point; destination?: Point; age?: number; portalSerial?: number }
 /** Keep an airborne traversal target until reached; nearest-node changes must not turn a jump around. */
 export function trackedWaypoint(nodes: readonly Waypoint[], from: Point, to: Point, state: RouteState): Point {
+  const serial = (from as Point & { portalSerial?: number }).portalSerial;
+  if (serial !== state.portalSerial) { state.waypoint = undefined; state.portalSerial = serial; }
   const reached = state.waypoint && Math.abs(from.x - state.waypoint.x) < 35 && Math.abs(from.y - state.waypoint.y) < 45;
   const changed = !state.destination || Math.hypot(to.x - state.destination.x, to.y - state.destination.y) > 120;
   if (!state.waypoint || reached || changed || (state.age ?? 0) > 180) {
@@ -14,7 +18,7 @@ export function trackedWaypoint(nodes: readonly Waypoint[], from: Point, to: Poi
   return state.waypoint;
 }
 
-/** Small authored graph, Dijkstra shortest route; no teleports or direct position control. */
+/** Authored graph; portal edges lead to their physical entrance before transport. */
 export function nextWaypoint(nodes: readonly Waypoint[], from: Point, to: Point): Point {
   if (!nodes.length) return to;
   const nearest = (p: Point) => nodes.reduce((best, n, i) =>
@@ -30,7 +34,7 @@ export function nextWaypoint(nodes: readonly Waypoint[], from: Point, to: Point)
     if (cur === goal) {
       let step = goal;
       while (parent[step] !== start && parent[step] !== -1) step = parent[step];
-      return nodes[step];
+      return nodes[start].portalTo === step ? nodes[start] : nodes[step];
     }
     for (const next of nodes[cur].links) {
       if (!open.has(next)) continue;

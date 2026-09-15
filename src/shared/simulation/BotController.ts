@@ -2,7 +2,7 @@ import { isConcealed } from './Stealth';
 import type { Actor, BattleInput, Difficulty } from '../../game/campaign/Battle';
 import type { Mission } from '../../game/campaign/Missions';
 import type { RandomSource } from '../../game/combat/Ballistics';
-import { clearSight, nextWaypoint, trackedWaypoint } from '../../game/campaign/Navigation';
+import { clearSight, nextWaypoint, trackedWaypoint, portalCrouch } from '../../game/campaign/Navigation';
 import type { ModeRules } from './ModeRules';
 import type { PlayerAction } from '../protocol/Commands';
 import { traversalJump } from './Traversal';
@@ -55,5 +55,5 @@ export function botInput(context: BotContext, actor: Actor): BotDecision {
     if (!special && !resupplying && !actor.arsenal.gun.ammo && !actor.arsenal.gun.reserveAmmo) actions.push('swap');
     if (!usingSpecial && !target && actor.arsenal.gun.ammo < 10) actions.push('reload');
     brain.state = resupplying ? 'resupply' : usingShield ? 'defend' : usingKnife ? 'melee' : controlling ? 'hold' : inRange ? 'engage' : jump ? 'jump' : 'advance';
-    return { actions, input: { left: !stop && dx < -8, right: !stop && dx > 8, crouch: m.shouldDescendStairs(waypoint) || m.shouldDescendStairs(destination) || !usingSpecial && !resupplying && inRange && !m.jumping && !controlling && context.frame % 120 < 35, jump, fire, aim } };
+    return { actions, input: { left: !stop && dx < -8, right: !stop && dx > 8, crouch: portalCrouch(context.mission.portals, m, waypoint) || m.shouldDescendStairs(waypoint) || m.shouldDescendStairs(destination) || !usingSpecial && !resupplying && inRange && !m.jumping && !controlling && context.frame % 120 < 35, jump, fire, aim } };
   }

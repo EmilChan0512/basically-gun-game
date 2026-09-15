@@ -169,7 +169,7 @@ export class Battle {
     const state = structuredClone(saved), rng = createRandom(0); rng.restore(state.random);
     const battle = new Battle(state.mission, state.difficulty, state.startingWeapon, rng, state.loadout, state.id);
     battle.actors = state.actors.map(({ movement, life, arsenal, offhand, ...a }) => ({ ...a, offhand: offhand ? OffhandController.restore(offhand) : undefined,
-      movement: Object.assign(new OriginalMovement(battle.wall, battle.mission.stairTreads), movement),
+      movement: Object.assign(new OriginalMovement(battle.wall, battle.mission.stairTreads, battle.mission.portals), movement),
       life: Object.assign(new OriginalLife(life.maxHealth), life), arsenal: Arsenal.restore(arsenal) }));
     battle.frame = state.frame; battle.phase = state.phase; battle.reason = state.reason;
     battle.scores = state.scores; battle.objective = state.objective; battle.mode.restore(state.modeState); battle.matchResult = state.matchResult;
@@ -233,7 +233,7 @@ export class Battle {
   }
   private addActor(id: string, name: string, team: 1 | 2, human: boolean, index: number, location?: Point) {
     const spawn = location ?? this.mission.spawns[team - 1][index % this.mission.spawns[team - 1].length];
-    const movement = new OriginalMovement(this.wall, this.mission.stairTreads); movement.reset(spawn.x, spawn.y);
+    const movement = new OriginalMovement(this.wall, this.mission.stairTreads, this.mission.portals); movement.reset(spawn.x, spawn.y);
     const kit = human && this.loadout ? structuredClone(this.loadout) : null;
     if (kit && isSpecialOffhand(kit.secondary) && !canEquipOffhand(kit.classId, kit.secondary)) throw Error('Offhand is not allowed for this class');
     const stats = kit ? loadoutStats(kit) : { health: 85, aim: 0.7, ammo: 0.9 };

@@ -1,12 +1,15 @@
 import type { Point } from '../../game/combat/Ballistics';
 import type { RasterMask } from './CollisionWorld';
 export interface Terrain { x: number; y: number; width: number; height: number }
-export interface Waypoint extends Point { links: number[] }
+export interface Waypoint extends Point { links: number[]; portalTo?: number }
+/** Directed portal. Walking into the entrance transports a living actor to the exit. */
+export interface Portal { id: string; entrance: Point; exit: Point; requiresCrouch?: boolean }
 export interface MapGeometry {
   width: number; height?: number; killY?: number;
   terrain: Terrain[];
   /** Open stair treads support movement from above without blocking the corridor below. */
   stairTreads?: Terrain[];
+  portals?: Portal[];
   /** Coarse structural rectangles for radar when collision uses row runs. */
   minimapTerrain?: Terrain[]; collisionMask?: RasterMask; navigation: Waypoint[];
   spawns: [Point[], Point[]]; objective: Point;

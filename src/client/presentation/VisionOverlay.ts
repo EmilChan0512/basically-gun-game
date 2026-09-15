@@ -1,7 +1,7 @@
 import type { VisionCircle } from '../../shared/simulation/BeaconVision';
 import Phaser from 'phaser';
 import { visionPolygon, type Point } from './VisionPolygon';
-import { VISION_RADIUS } from '../../shared/simulation/Vision';
+import { SCREEN_VISION_RADIUS as VISION_RADIUS } from '../../shared/simulation/Vision';
 
 /** A low-resolution canvas mask, cached in world space. Reproject every render
  * so camera motion never exposes a stale screen-space mask. */

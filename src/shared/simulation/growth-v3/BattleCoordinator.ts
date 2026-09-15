@@ -1,5 +1,5 @@
 import { inBeaconVision } from '../BeaconVision';
-import { VISION_RADIUS } from '../Vision';
+import { VISION_RADIUS, SCREEN_VISION_RADIUS } from '../Vision';
 import type { Actor, Battle, BattleInput, ShotEffect } from '../../../game/campaign/Battle';
 import { Arsenal } from '../../../game/campaign/Arsenal';
 import { OriginalLife } from '../../../game/combat/OriginalLife';
@@ -23,7 +23,7 @@ import { newProgression, awardGrowthV3, chooseGrowthV3, rerollGrowthV3, newContr
   supportCredit, objectiveCredit, type GrowthProgressionState, type ContributionState } from './Progression';
 import { newContinuousHealTarget, chooseContinuousHeal, commitContinuousHeal, type ContinuousHealTarget } from './HealingRules';
 import { traceGrowthBullet } from './Ballistics';
-import { nextWaypoint, trackedWaypoint } from '../../../game/campaign/Navigation';
+import { nextWaypoint, trackedWaypoint, portalCrouch } from '../../../game/campaign/Navigation';
 import { traversalJump } from '../Traversal';
 import { freshGrowthMetrics, freshWeaponMetrics, type GrowthMetrics, type GrowthWeaponMetrics } from '../../content/GrowthRecords';
 import { growthSoundRecipients, GROWTH_SOUND_RADII, type GrowthSoundCue } from './Sound';
@@ -616,7 +616,7 @@ export class GrowthBattleCoordinator {
     const stop = !delivery && !empty && !m.jumping && (holding || !!attackPoint && distance(chest(a), attackPoint) < Math.min(def.falloffStart, 450));
     const dx = waypoint.x - m.x;
     brain.stuck = !stop && Math.abs(m.x - brain.lastX) < .5 ? brain.stuck + 1 : 0; brain.lastX = m.x;
-    const input: BattleInput = { left: !stop && dx < -8, right: !stop && dx > 8, crouch: m.shouldDescendStairs(waypoint) || m.shouldDescendStairs(destination) || stop && !!target && this.tick % 120 < 35,
+    const input: BattleInput = { left: !stop && dx < -8, right: !stop && dx > 8, crouch: portalCrouch(this.battle.mission.portals, m, waypoint) || m.shouldDescendStairs(waypoint) || m.shouldDescendStairs(destination) || stop && !!target && this.tick % 120 < 35,
       jump: !stop && !m.shouldDescendStairs(destination) && !m.jumping && (traversalJump(m, waypoint, this.battle.wall) || brain.stuck > 12),
       fire: !!attackPoint && this.tick - brain.acquired >= reaction && this.tick % 54 < 32 && (def.mode === 'auto' || this.tick % Math.max(2, def.interval) === 0),
       aim: attackPoint ? { x: attackPoint.x, y: attackPoint.y + (target ? brain.offset : brain.offset * .1) } : { x: m.x + Math.sign(dx || (a.team === 1 ? 1 : -1)) * 300, y: chest(a).y } };
@@ -835,7 +835,7 @@ export class GrowthBattleCoordinator {
   visibleActors(team: 1 | 2) {
     const circles = this.gadgets.visionCircles(team, this.tick);
     const observers = this.actors().filter(a => a.team === team && a.life.alive);
-    return new Set(this.actors().filter(a => !this.participant(a.id).retired && (a.team === team || a.deliveryPreviousWeapon !== undefined || inBeaconVision(chest(a), circles) || observers.some(b => distance(chest(a), chest(b)) <= VISION_RADIUS
+    return new Set(this.actors().filter(a => !this.participant(a.id).retired && (a.team === team || a.deliveryPreviousWeapon !== undefined || inBeaconVision(chest(a), circles) || observers.some(b => distance(chest(a), chest(b)) <= SCREEN_VISION_RADIUS
       && this.gadgets.clearRay({ x: b.movement.x, y: b.movement.y - 42 }, chest(a), true)))).map(a => a.id));
   }
   retire(id: string) {

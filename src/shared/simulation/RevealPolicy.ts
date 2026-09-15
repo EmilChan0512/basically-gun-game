@@ -1,7 +1,7 @@
 import type { SimulationEvent } from './Events';
 import { isConcealed } from './Stealth';
 import { clearSight } from '../../game/campaign/Navigation';
-import { VISION_RADIUS, VISION_EYE_HEIGHT } from './Vision';
+import { SCREEN_VISION_RADIUS as VISION_RADIUS, VISION_EYE_HEIGHT } from './Vision';
 export interface RevealActor {
   id: string; team: 1 | 2; movement: { x: number; y: number };
   life: { alive: boolean }; kit: { skill: string } | null; skillFrames: number; stealthFrames?: number;

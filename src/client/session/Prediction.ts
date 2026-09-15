@@ -25,7 +25,7 @@ export class Prediction {
       const map = customMatch(state.mapId, state.mode);
       this.mapId = state.mapId; this.width = map.width;
       this.killY = map.killY ?? (map.height ?? 700) + 140;
-      this.movement = new OriginalMovement(wallFor(map), map.stairTreads); this.pending = [];
+      this.movement = new OriginalMovement(wallFor(map), map.stairTreads, map.portals); this.pending = [];
     }
     Object.assign(this.movement, state.movement);
     this.jumpHeld = state.jumpHeld ?? false;
@@ -63,7 +63,11 @@ export class Prediction {
   private step(input: BattleInput) {
     if (this.alive && this.movement) {
       if (input.jump && !this.jumpHeld) this.movement.jump();
+      const portalSerial = this.movement.portalSerial;
       this.movement.tick(input);
+      if (this.movement.portalSerial !== portalSerial) {
+        this.previous = { x: this.movement.x, y: this.movement.y }; this.correction = { x: 0, y: 0 };
+      }
       this.movement.x = Math.max(20, Math.min(this.width - 20, this.movement.x));
       // Stop movement at the same fall boundary as authority. This does not
       // predict damage/death or awards; those still arrive in the snapshot.

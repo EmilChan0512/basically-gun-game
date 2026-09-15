@@ -7,6 +7,7 @@ export function objectiveIssues(map: MapGeometry, requirement: 'combat' | 'contr
     && p.x >= 0 && p.x <= map.width && p.y >= 0 && p.y < Math.min(height, map.killY ?? height);
   if (!Number.isFinite(map.width) || map.width <= 0 || !Number.isFinite(height) || height <= 0) issues.push('地图世界边界无效');
   if (map.spawns.length !== 2 || map.spawns.some(points => !points.length || points.some(p => !valid(p)))) issues.push('双方出生点缺失或越界');
+  if (map.portals?.some(p => !valid(p.entrance) || !valid(p.exit)) || new Set(map.portals?.map(p => p.id)).size !== (map.portals?.length ?? 0)) issues.push('传送门坐标无效或标识重复');
   if (requirement === 'control' && !valid(map.objective)) issues.push('据点目标缺失或越界');
   if (requirement === 'cooperative') {
     if ((map.spawns[0]?.length ?? 0) < 8) issues.push('合作地图需要至少8个玩家出生点');

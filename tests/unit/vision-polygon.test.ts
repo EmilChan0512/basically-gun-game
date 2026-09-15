@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { visionPolygon } from '../../src/client/presentation/VisionPolygon';
-import { VISION_RADIUS } from '../../src/shared/simulation/Vision';
+import { SCREEN_VISION_RADIUS as VISION_RADIUS } from '../../src/shared/simulation/Vision';
 
 it('ends unobstructed rays on the shared authority range circle', () => {
   const feet = { x: 100, y: 200 };
