@@ -45,6 +45,9 @@ test('longshot runs in the growth laboratory with the shared online renderer', a
   await page.locator('#offline-growth-start').click();
   await expect(page.locator('#online-game canvas')).toBeVisible();
   await expect(page.locator('[data-hud=clock]')).not.toHaveText('15:00');
+  // 960 physics treads must not become 960 DOM nodes on every radar refresh.
+  await expect(page.locator('#online-radar svg > g > path')).toHaveCount(1);
+  expect(await page.locator('#online-radar svg *').count()).toBeLessThan(30);
   await page.getByRole('button', { name: '拉远视野' }).click();
   await expect(page.locator('[data-view=reset]')).toHaveText('视野 1.5× ↺');
   await page.screenshot({ path: 'artifacts/qa/longshot-lab.png' });

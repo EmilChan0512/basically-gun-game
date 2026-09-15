@@ -2,6 +2,20 @@ import type { Portal } from '../../shared/content/MapTypes';
 /** SFH1 Movement ordinary dry-terrain rules. Coordinates are feet, velocities px / 30Hz frame. */
 export interface OriginalMoveInput { left: boolean; right: boolean; crouch: boolean }
 export type WallMask = (x: number, y: number) => boolean;
+type Tread = { x: number; y: number; width: number; height: number };
+/** Authored treads are immutable; share the broad-phase index across actors and prediction. */
+const treadIndexes = new WeakMap<readonly Tread[], Map<number, Tread[]>>();
+function indexTreads(treads: readonly Tread[]) {
+  let index = treadIndexes.get(treads);
+  if (!index) {
+    index = new Map();
+    for (const tread of treads) for (let cell = Math.floor(tread.x / 64); cell <= Math.floor((tread.x + tread.width) / 64); cell++) {
+      const bucket = index.get(cell) ?? []; bucket.push(tread); index.set(cell, bucket);
+    }
+    treadIndexes.set(treads, index);
+  }
+  return index;
+}
 export class OriginalMovement {
   x = 180; y = 599.5;
   vx = 0; vy = 0;
@@ -17,7 +31,10 @@ export class OriginalMovement {
   portalCooldown = 0;
   portalSerial = 0;
   private droppingStairs = false;
-  constructor(readonly wall: WallMask, private readonly stairTreads: readonly {x:number;y:number;width:number;height:number}[] = [], private readonly portals: readonly Portal[] = []) {}
+  private readonly treadIndex: Map<number, Tread[]>;
+  constructor(readonly wall: WallMask, stairTreads: readonly Tread[] = [], private readonly portals: readonly Portal[] = []) {
+    this.treadIndex = indexTreads(stairTreads);
+  }
   checkpoint() {
     return { x: this.x, y: this.y, vx: this.vx, vy: this.vy, jumping: this.jumping, crouching: this.crouching,
       manualJump: this.manualJump, fallFrames: this.fallFrames, climb: this.climb, climbFrames: this.climbFrames,
@@ -32,9 +49,13 @@ export class OriginalMovement {
     this.droppingStairs = false;
   }
   private hit(x: number, y: number) { const px=Math.trunc(this.x+x),py=Math.trunc(this.y+y);
-    return this.wall(px,py)||!this.droppingStairs&&!this.crouching&&this.stairTreads.some(t=>this.y<=t.y+28&&px>=t.x&&px<t.x+t.width&&py>=t.y&&py<t.y+t.height); }
+    return this.wall(px,py)||!this.droppingStairs&&!this.crouching&&(this.treadIndex.get(Math.floor(px/64)) ?? []).some(t=>this.y<=t.y+28&&px>=t.x&&px<t.x+t.width&&py>=t.y&&py<t.y+t.height); }
   shouldDescendStairs(target:{x:number;y:number}) {
-    return target.y>=this.y-1&&this.stairTreads.some(t=>Math.abs(this.y-t.y)<32&&this.x>=t.x-64&&this.x<=t.x+t.width+64);
+    if (target.y < this.y - 1) return false;
+    for (let cell = Math.floor((this.x - 64) / 64); cell <= Math.floor((this.x + 64) / 64); cell++) {
+      if (this.treadIndex.get(cell)?.some(t => Math.abs(this.y-t.y)<32 && this.x>=t.x-64 && this.x<=t.x+t.width+64)) return true;
+    }
+    return false;
   }
   jump() {
     if (this.crouching || this.climb || this.hardLandingFrames || this.jumping) return false;

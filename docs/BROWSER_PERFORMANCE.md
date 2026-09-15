@@ -1,5 +1,28 @@
 # 生产客户端浏览器性能采样
 
+## 2026-09-16 太空站卡顿排查
+
+在 b09d64f 基础上修复两处地图规模相关的重复工作：
+
+- 太空站的小地图含 22 块实心地形和 960 个坡道采样。原先每次雷达刷新都重新创建 982 个 SVG 地形节点。现在缓存等效的单个复合路径；每条子路径仍对应原矩形，人物和目标标记仍按当前快照更新。
+- 移动碰撞和机器人下坡判断原先扫描全部 960 个坡道采样。现在按 64 像素横向分桶，角色与预测共享只读索引，只对附近候选执行原来的精确判断。仍保留半开碰撞边界、下坡探测的两侧 64 像素范围和传送门规则。
+
+开发客户端的 10 秒 Chromium CPU 采样（1920×1080 视口，默认视野，离线 4v4）中，`session.onChange` 自耗时由 405.763ms 降至 66.405ms，约减少 84%。修改前后 RAF 间隔 p95 均为 16.7ms。原始记录为 `artifacts/qa/station-before.json` 与 `station-after.json`。这是不同自然机器人对局的局部热点采样，不能视为所有设备的整体帧率提升比例。
+
+正式包回归命令（PowerShell）：
+
+```powershell
+npm run release
+$env:GROWTH_GPU='d3d11'
+npx playwright test --config playwright.performance.config.ts tests/performance/station.spec.ts
+```
+
+新增测试检查小地图地形保持一个路径，总节点数少于 30；分别采样默认视野与 3.5 倍视野下持续移动，每段 10 秒。正式包本机结果：RTX 5070 Ti / ANGLE D3D11，实际画布 1904×1064；两段 RAF 间隔 p95/p99 均约 7.1ms，无浏览器错误。报告在 `artifacts/qa/station-performance.json`，截图在 `station-performance-wide.png`。RAF 仅衡量浏览器回调调度，不代表 GPU 实际呈现帧率；本机未复现用户所述的严重卡顿。
+
+视野遮罩的像素回读在最大视野时仍是通用热点，本次没有改变遮罩、遮挡规则或可见范围。验证通过：1830 项单元测试、2 项太空站交互测试、5 项正式包离线测试、1 项太空站性能采样测试。Windows ZIP 内置运行时在空 PATH 下启动验证通过，发行脚本逐文件校验 ZIP 与本地文件哈希。
+
+## 2026-09-11 联机负载采样
+
 2026-09-11，规则17，内容922aea50201094a1。命令：`npm run test:performance`。原始报告：artifacts/qa/browser-performance.json；画面：artifacts/qa/browser-performance.png。
 
 生产客户端通过实际联机菜单加入飞机合作房间。1个浏览器玩家加7个WebSocket玩家、16个AI；测试端以生命/弹药补充和坠落复位维持24角色负载，正常运行模拟、AI、快照过滤、Phaser表现和雷达。此夹具不是自然胜局、死亡周转或平衡验证，也不是8个同时渲染的客户端。

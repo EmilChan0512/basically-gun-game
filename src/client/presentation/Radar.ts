@@ -6,10 +6,17 @@ export function radarProjection(map: MapGeometry, width = 260, height = 150) {
   const x = (width - map.width * scale) / 2, y = (height - (map.height ?? 700) * scale) / 2;
   return { scale, x, y, point: (p: { x: number; y: number }) => ({ x: x + p.x * scale, y: y + p.y * scale }) };
 }
+const terrainPaths = new WeakMap<MapGeometry, string>();
 /** Uses only the received state; no retained enemy marker after visibility loss. */
 export function radarSvg(map: MapGeometry, message: Pick<StateMessage, 'state' | 'actorId' | 'mode'>, team: 1 | 2) {
   const projection = radarProjection(map), art = map.artwork;
-  const terrain = (map.minimapTerrain ?? map.terrain).map(t => `<rect x="${t.x}" y="${t.y}" width="${t.width}" height="${t.height}" fill="#71818d"/>`).join('');
+  // One compound path preserves every tread without rebuilding hundreds of SVG nodes per tick.
+  let terrain = terrainPaths.get(map);
+  if (terrain === undefined) {
+    terrain = `<path fill="#71818d" d="${(map.minimapTerrain ?? map.terrain).map(t =>
+    `M${t.x},${t.y}h${t.width}v${t.height}h${-t.width}z`).join('')}"/>`;
+    terrainPaths.set(map, terrain);
+  }
   const backdrop = art ? `<image href="/assets/reference/${escape(art.id)}.png" x="${art.x}" y="${art.y}" width="${art.width}" height="${art.height}" opacity="0.6"/>` : terrain;
   const markers = message.state.actors.filter(a => a.life.alive && (a.growthV3 || a.team === team || !a.growth?.ghost)).map(actor => {
     const p = projection.point(actor), self = actor.id === message.actorId;
