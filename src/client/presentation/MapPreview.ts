@@ -6,7 +6,7 @@ const color = (value: number) => `#${value.toString(16).padStart(6, '0')}`;
 export function mapPreviewSvg(map: MapDefinition, debug = false) {
   const g = map.geometry, height = g.height ?? 700;
   const art = g.artwork;
-  const terrain = (map.id === 'atrium' ? ATRIUM_TERRAIN : g.terrain).map(t => `<rect x="${t.x}" y="${t.y}" width="${t.width}" height="${t.height}" fill="${color(g.palette.wall)}"/>`).join('');
+  const terrain = (map.id === 'atrium' ? ATRIUM_TERRAIN : [...g.terrain, ...(g.stairTreads ?? [])]).map(t => `<rect x="${t.x}" y="${t.y}" width="${t.width}" height="${t.height}" fill="${color(g.palette.wall)}"/>`).join('');
   const backdrop = map.id === 'atrium' ? [432,768,1104,1440].map(y=>`<rect x="48" y="${y-312}" width="3504" height="312" fill="#192e3b"/><text x="80" y="${y-250}" fill="#7ab9c6" font-size="38">${5-[432,768,1104,1440].indexOf(y)-1}F</text>`).join('') : '';
   const artwork = art ? `<image href="/assets/reference/${art.id}.png" x="${art.x}" y="${art.y}" width="${art.width}" height="${art.height}"/>` : '';
   const mask = debug && g.collisionMask ? g.collisionMask.rows.map((row, y) => {

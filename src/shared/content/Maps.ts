@@ -1,4 +1,5 @@
 import { ATRIUM_GEOMETRY } from './maps/Atrium';
+import { LONGSHOT_GEOMETRY } from './maps/Longshot';
 import plane from './maps/hijack.json' with { type: 'json' };
 import type { Mission } from '../../game/campaign/Missions';
 import arenas from './maps/original-arenas.json' with { type: 'json' };
@@ -17,6 +18,7 @@ export interface MapDefinition {
 }
 export const MAPS: MapDefinition[] = [
   { id:'atrium', name:'大楼 · 四层攻坚', version:3, modes:['tdm','dom','ctf'], geometry:ATRIUM_GEOMETRY },
+  { id:'longshot', name:'荒原 · 长线狙击', version:1, modes:['tdm','dom'], geometry:LONGSHOT_GEOMETRY },
   ...arenas.map(m => ({ id: m.id, name: m.name, version: 1, modes: ['tdm', 'dom'] as Mission['mode'][], geometry: m.geometry as MapGeometry })),
   { id: 'hijack', name: '失控飞机', version: 2, modes: ['tdm', 'dom', 'coop', 'ctf'], geometry: {
     width: plane.width, height: plane.height, killY: 1260, terrain: [], collisionMask: plane.collisionMask,

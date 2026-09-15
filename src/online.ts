@@ -1,5 +1,6 @@
 import { beaconCircles } from './shared/simulation/BeaconVision';
 import { preloadAtrium, drawAtrium } from './client/presentation/AtriumView';
+import { drawLongshotBackdrop } from './client/presentation/LongshotView';
 import { defaultGrowthLoadoutV3 as defaultGrowthLoadout } from './shared/content/growth-v3/Loadout';
 import { GROWTH_V3_ABILITIES, type GrowthAbilityId } from './shared/content/growth-v3/Operators';
 import { GROWTH_V3_GADGETS, type GrowthGadgetId } from './shared/content/growth-v3/Gadgets';
@@ -351,7 +352,8 @@ export class OnlineScene extends Phaser.Scene {
     if (this.network.state!.mapId === 'atrium') drawAtrium(this,map);
     else {
       const background=this.add.graphics();
-      for(const t of map.terrain)background.fillStyle(map.palette.wall).fillRect(t.x,t.y,t.width,t.height);
+      if (this.network.state!.mapId === 'longshot') drawLongshotBackdrop(background);
+      for(const t of [...map.terrain, ...(map.stairTreads ?? [])])background.fillStyle(map.palette.wall).fillRect(t.x,t.y,t.width,t.height);
       if(map.artwork){const a=map.artwork;this.add.image(a.x,a.y,`ref-${a.id}`).setOrigin(0).setDisplaySize(a.width,a.height);}
     }
     this.vision = new VisionOverlay(this, new CollisionWorld(map.terrain, map.collisionMask).solid);

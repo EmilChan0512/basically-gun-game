@@ -9,6 +9,7 @@ import { AudioPresentation } from '../../client/audio/AudioPresentation';
 import { CLASSES } from '../campaign/Catalog';
 import { CombatFeedback } from '../../client/presentation/CombatFeedback';
 import { CombatFeedbackView } from '../../client/presentation/CombatFeedbackView';
+import { drawLongshotBackdrop } from '../../client/presentation/LongshotView';
 
 import { ReferenceArt, preloadReferenceArt } from '../campaign/ReferenceArt';
 
@@ -96,7 +97,8 @@ export class CampaignScene extends Phaser.Scene {
       g.lineStyle(1, mission.palette.trim, 0.12).strokeRect(x, top, 130, 400);
       for (let row = 0; row < 3; row++) g.fillStyle(mission.palette.trim, 0.12).fillRect(x + 15, top + 22 + row * 32, 70, 7);
     }
-    for (const t of mission.terrain) {
+    if (mission.id === 'custom-longshot') drawLongshotBackdrop(g);
+    for (const t of [...mission.terrain, ...(mission.stairTreads ?? [])]) {
       g.fillStyle(mission.palette.wall).fillRect(t.x, t.y, t.width, t.height);
       g.fillStyle(mission.palette.trim).fillRect(t.x, t.y, t.width, 3);
       for (let x = t.x + 12; x < t.x + t.width - 10; x += 45) g.fillStyle(0x111a21, 0.25).fillRect(x, t.y + 12, 27, 4);
