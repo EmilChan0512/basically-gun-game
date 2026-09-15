@@ -34,7 +34,7 @@ export function startCampaign() {
       <div id="battle-bottom" hidden><div class="hud-vitals"><small>OPERATOR / VITALS</small><strong id="player-health"></strong><div class="hud-health-track"><i id="campaign-health-fill"></i></div></div><div class="hud-ability"><img src="/assets/ui-v2/v1/category-ability.png" alt=""><div><small>E / G · 战术系统</small><p id="abilities"></p></div></div><div class="hud-equipment"><small>Q 切换 · R 换弹</small><strong id="player-ammo"></strong></div><div class="hud-notices"><p id="battle-message"></p><p id="kill-feed"></p></div></div>
       <div id="campaign-overlay" aria-live="polite"></div>
     </section>
-    <section class="campaign-help"><p><kbd>A D / ← →</kbd> 移动 <kbd>W / 空格</kbd> 跳跃 <kbd>S / ↓</kbd> 蹲伏 <kbd>鼠标 / F</kbd> 射击 <kbd>Q</kbd> 切枪 <kbd>R / L</kbd> 换弹 <kbd>E</kbd> 职业技能 <kbd>G</kbd> 道具 <kbd>Esc / P</kbd> 暂停</p><p>青色是队友，橙色是敌人。阵亡会复活；出生区补给箱可补充备用弹药。单机免登录，进度只保存在这台设备；联网账号资产由服务器独立管理。</p></section>`;
+    <section class="campaign-help"><p><kbd>A D / ← →</kbd> 移动 <kbd>W / 空格</kbd> 跳跃 <kbd>S / ↓</kbd> 蹲伏 <kbd>鼠标 / F</kbd> 射击 <kbd>Q</kbd> 切枪 <kbd>R / L</kbd> 换弹 <kbd>E</kbd> 职业技能 <kbd>G</kbd> 道具 <kbd>Esc / P</kbd> 暂停</p><p>青色【友】是队友，红色【敌】是敌人，【我】是自己。阵亡会复活；出生区补给箱可补充备用弹药。单机免登录，进度只保存在这台设备；联网账号资产由服务器独立管理。</p></section>`;
 
   function saveStatus() {
     $('save-status').textContent = progress.storageAvailable ? `本地进度 ${progress.data.completed.length} / ${MISSIONS.length}` : '存储不可用 · 本次仍可完整游玩';

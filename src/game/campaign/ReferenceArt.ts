@@ -82,6 +82,8 @@ export class ReferenceArt {
     this.drawSoldier(x, y, crouch, vx, jumping, frame, aim, weapon, tint, alive, reload, flash, offhand, role, actorId, flashScale, recoilDegrees);
     for (let i = start; i < this.cursor; i++) {
       const part = this.pool[i]; part.setAlpha(part.alpha * alpha);
+      // Tint the character rig, including offhand arms, while preserving equipment art.
+      if (part.texture.key.startsWith(`actor-${role}-`)) part.setTint(tint);
       // RGB-only contrast preserves texture alpha; no box, outline or extra silhouette.
       let effect = this.contrastEffects.get(part);
       if (contrast && !effect && part.preFX) {

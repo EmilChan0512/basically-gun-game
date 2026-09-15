@@ -321,6 +321,7 @@ export function startOnline() {
 export class OnlineScene extends Phaser.Scene {
   private audioPresentation = new AudioPresentation();
   private rig!: ReferenceArt;
+  private actorLabels: Phaser.GameObjects.Text[] = [];
   private graphics!: Phaser.GameObjects.Graphics;
   private hud!: BattleHUD;
   private keys = new Set<string>();
@@ -334,6 +335,7 @@ export class OnlineScene extends Phaser.Scene {
   constructor(private network: BattlePresentationSession) { super('Online'); }
   preload() { preloadReferenceArt(this); preloadAtrium(this); }
   create() {
+    this.actorLabels = [];
     this.feedbackView = new CombatFeedbackView(document.getElementById('online-game')!, this.feedback);
     const destroyFeedback = () => this.feedbackView?.destroy();
     this.events.once('shutdown', destroyFeedback); this.events.once('destroy', destroyFeedback);
@@ -442,6 +444,9 @@ export class OnlineScene extends Phaser.Scene {
     if (mapView) this.cameras.main.centerOn(geometry.width / 2, (geometry.height ?? 700) / 2);
     else if (predicted) this.cameras.main.centerOn(predicted.x, predicted.y - 150);
     this.rig.begin(); this.graphics.clear();
+    for (const label of this.actorLabels) label.setVisible(false);
+    let labelIndex = 0;
+    const viewerTeam = this.network.room?.players.find(p => p.id === this.network.playerId)?.team ?? self?.team ?? 1;
     drawGrowthWorld(this.graphics, message.state);
     const positions = new Map<string, { x: number; y: number }>();
     for (const actor of message.state.actors) {
@@ -449,7 +454,20 @@ export class OnlineScene extends Phaser.Scene {
       const position = actor.id === message.actorId && predicted ? predicted : this.network.interpolation.position(actor, now);
       positions.set(actor.id, position);
       const motion = actor.id === message.actorId ? this.network.prediction.movement ?? actor : actor;
-      this.rig.soldier(position.x, position.y, motion.crouching, motion.vx, motion.jumping, this.animationFrame, actor.id === message.actorId ? aim : pose.aim, actor.weapon, actor.team === 1 ? 0xb7e8de : 0xf1b0a0, actor.life.alive, actor.reload, this.network.shots.visible(now).some(e => !e.reflected && e.actorId === actor.id), actor.offhand, actor.classId ?? 'medic', actor.id,
+      const friendly = actor.team === viewerTeam;
+      const concealed = isConcealed({ kit: actor.skill ? { skill: actor.skill } : null, skillFrames: actor.skillFrames, stealthFrames: actor.stealthFrames });
+      if (actor.life.alive && (friendly || !concealed)) {
+        const label = this.actorLabels[labelIndex] ??= this.add.text(0, 0, '', {
+          fontFamily: 'Segoe UI, Microsoft YaHei, sans-serif', fontSize: '14px',
+          backgroundColor: '#101c24bb', padding: { x: 4, y: 2 },
+        }).setOrigin(.5).setDepth(2);
+        labelIndex++;
+        const marker = actor.id === message.actorId ? '我' : friendly ? '友' : '敌';
+        const name = this.network.room?.players.find(p => p.id === actor.id)?.name ?? actor.id;
+        label.setVisible(true).setPosition(position.x, position.y - (motion.crouching ? 72 : 92))
+          .setText(`【${marker}】${name}`).setColor(friendly ? '#88e8df' : '#ff7777');
+      }
+      this.rig.soldier(position.x, position.y, motion.crouching, motion.vx, motion.jumping, this.animationFrame, actor.id === message.actorId ? aim : pose.aim, actor.weapon, friendly ? 0x88e8df : 0xff7777, actor.life.alive, actor.reload, this.network.shots.visible(now).some(e => !e.reflected && e.actorId === actor.id), actor.offhand, actor.classId ?? 'medic', actor.id,
         isConcealed({ kit: actor.skill ? { skill: actor.skill } : null, skillFrames: actor.skillFrames, stealthFrames: actor.stealthFrames }), actor.growthV3 ? 0 : this.feedback.flinch(actor.id), actor.growthV3?.flashScale ?? 1,
         actor.growthV3 ? actor.growthV3.recoilDegrees * combatMotion.scale : undefined,
         !!self?.growthV3?.contrast && actor.team !== self.team && actor.life.alive);
