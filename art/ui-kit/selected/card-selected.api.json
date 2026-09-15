@@ -17,7 +17,7 @@
   "3": {
     "class_type": "CLIPTextEncode",
     "inputs": {
-      "text": "Production game UI artwork for one coherent 2D military comic game. Hand inked clean outlines, restrained angular cel shading, matte midnight navy and desaturated blue grey painted steel, fine warm grey edge wear, tiny muted turquoise indicator lights. Flat front view, orthographic, crisp shapes, understated professional game art, no photorealism, no 3D render, no text, no letters, no numbers, no logos, no watermark. Quiet readable surfaces, no busy patterns, no neon glow.\nOne blank square selected military equipment card backing, edge to edge full canvas. Narrow inked blue grey steel border with a thin muted turquoise inset rim and subtle turquoise corner markers. Flat dark navy empty center occupying 86 percent. No glowing halo, no object or icon, no internal partition, no writing, no surrounding space. IMPORTANT: The exterior edge and ALL four canvas corners must be dark navy blue, NOT WHITE. No bright white outline. Frame is muted dark blue grey steel with low contrast edge highlights. No pale silver rim.",
+      "text": "One blank square military comic game UI plate filling the ENTIRE canvas edge to edge. Matte dark navy center, entirely flat and empty. Thin clearly visible muted turquoise cyan border, simple straight edges. An unbroken turquoise rim on ALL FOUR sides denotes SELECTED. All corners and exterior pixels dark navy. Absolutely NO WHITE, no silver, no white matte, no pale outline, no light corners, no surrounding background. Clean restrained 2D cel shaded ink, no text, no symbols, no internal subdivisions. Border confined to outermost 5 percent, empty center 90 percent.",
       "clip": [
         "2",
         0
@@ -43,7 +43,7 @@
   "5": {
     "class_type": "RandomNoise",
     "inputs": {
-      "noise_seed": 46722818072365
+      "noise_seed": 47969633774756
     }
   },
   "6": {
@@ -115,7 +115,7 @@
   "12": {
     "class_type": "SaveImage",
     "inputs": {
-      "filename_prefix": "project-strike/ui-kit/card-selected/softer-02",
+      "filename_prefix": "project-strike/ui-kit/card-selected/consistent-03",
       "images": [
         "11",
         0

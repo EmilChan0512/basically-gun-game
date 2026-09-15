@@ -25,6 +25,15 @@ test('painted growth loadout preserves selections and fits narrow screens', asyn
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/?offline&growth');
   await page.locator('[data-growth-class=sniper]').click();
+  const selected = page.locator('[data-growth-class=sniper]');
+  const unselected = page.locator('[data-growth-class=medic]');
+  await unselected.hover();
+  await expect(unselected).toHaveAttribute('aria-pressed', 'false');
+  await expect(unselected).toHaveCSS('border-image-source', /\/card.png/);
+  await expect(unselected).toHaveCSS('box-shadow', 'none');
+  await selected.hover();
+  await expect(selected).toHaveCSS('border-image-source', /\/card-selected.png/);
+  await expect(selected).not.toHaveCSS('box-shadow', 'none');
   await page.locator('#growth-tab-skills').click();
   await page.locator('[data-growth-gadget=sn_emp]').click();
   await page.locator('#growth-career-save').click();

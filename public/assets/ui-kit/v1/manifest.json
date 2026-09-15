@@ -43,14 +43,14 @@
       "file": "card.png",
       "width": 512,
       "height": 512,
-      "sha256": "f6ea411e2acde2ad405f44259f88b56249a4f8a99ab828562f8526e66461c0ab"
+      "sha256": "2dac2216f0c3edf89e2681137e520b508ca491e9301f8f97533df48379768f4a"
     },
     {
       "id": "card-selected",
       "file": "card-selected.png",
       "width": 512,
       "height": 512,
-      "sha256": "2c0c7fd0a3dca214735ee1d85a7968987941a4abc6c7c657cd40b6e93db83642"
+      "sha256": "1acb1c42cd7bc286cf0e18dd0a15e65ebb6bdd2d6dd34b2e782413fe6f584710"
     },
     {
       "id": "button",
@@ -92,14 +92,14 @@
       "file": "tab.png",
       "width": 768,
       "height": 192,
-      "sha256": "f3cd09c6682a151974085e07c6956d6cd93883d3987b61c0539f9a54289c75cb"
+      "sha256": "e9af9d31c2e5a4c8e9a639b1bc0a7720c88bf4d0aa28de9587a7e68a90ba07e5"
     },
     {
       "id": "tab-selected",
       "file": "tab-selected.png",
       "width": 768,
       "height": 192,
-      "sha256": "c518f7ff05f3cd696872a59c8cb53a3185dcd864293f4ed9fdc39dd65f90699e"
+      "sha256": "b5fb2f14d4da02dcd10dd582bc42177d5ccb81031d9e9d3a7877765a7514e5a2"
     },
     {
       "id": "input",

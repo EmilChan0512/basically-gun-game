@@ -17,7 +17,7 @@
   "3": {
     "class_type": "CLIPTextEncode",
     "inputs": {
-      "text": "Production game UI artwork for one coherent 2D military comic game. Hand inked clean outlines, restrained angular cel shading, matte midnight navy and desaturated blue grey painted steel, fine warm grey edge wear, tiny muted turquoise indicator lights. Flat front view, orthographic, crisp shapes, understated professional game art, no photorealism, no 3D render, no text, no letters, no numbers, no logos, no watermark. Quiet readable surfaces, no busy patterns, no neon glow.\nOne wide horizontal blank military folder index tab, fills entire 4 to 1 canvas edge to edge. Navy blue painted steel, thin understated blue grey top and side rim, flat dark navy center, small reinforced corners. Clean comic ink, completely empty, no symbols or text, no surrounding space. IMPORTANT: The exterior edge and ALL four canvas corners must be dark navy blue, NOT WHITE. No bright white outline. Frame is muted dark blue grey steel with low contrast edge highlights. No pale silver rim.",
+      "text": "One blank wide horizontal military comic game UI plate filling the ENTIRE canvas edge to edge. Matte dark navy center, entirely flat and empty. Thin very dark blue grey low contrast border, simple straight edges. INACTIVE neutral state, no luminous accents, no cyan lights. All corners and exterior pixels dark navy. Absolutely NO WHITE, no silver, no white matte, no pale outline, no light corners, no surrounding background. Clean restrained 2D cel shaded ink, no text, no symbols, no internal subdivisions. Border confined to outermost 5 percent, empty center 90 percent.",
       "clip": [
         "2",
         0

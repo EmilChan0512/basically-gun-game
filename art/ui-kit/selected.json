@@ -35,18 +35,18 @@
     "selectedAt": "2026-09-15T15:22:13.557Z"
   },
   "card": {
-    "candidate": "softer-02",
-    "seed": 78343132583713,
-    "sha256": "f6ea411e2acde2ad405f44259f88b56249a4f8a99ab828562f8526e66461c0ab",
-    "graphSha256": "a1c5438625279d3810524c8000a08684c628daf3dae92d8ebb6fed2aef1151c8",
-    "selectedAt": "2026-09-15T15:24:16.047Z"
+    "candidate": "consistent-03",
+    "seed": 17118900084079,
+    "sha256": "2dac2216f0c3edf89e2681137e520b508ca491e9301f8f97533df48379768f4a",
+    "graphSha256": "15bc7569d2836a828fc8f0c69ca65e1aa852066d1e42e62dc1e0667610a0bd1b",
+    "selectedAt": "2026-09-15T16:03:46.710Z"
   },
   "card-selected": {
-    "candidate": "softer-02",
-    "seed": 46722818072365,
-    "sha256": "2c0c7fd0a3dca214735ee1d85a7968987941a4abc6c7c657cd40b6e93db83642",
-    "graphSha256": "bb525da66e5ba35e87d7f20db9fc17667b5aded9c31ed442879d5d28b74bbef5",
-    "selectedAt": "2026-09-15T15:24:18.245Z"
+    "candidate": "consistent-03",
+    "seed": 47969633774756,
+    "sha256": "1acb1c42cd7bc286cf0e18dd0a15e65ebb6bdd2d6dd34b2e782413fe6f584710",
+    "graphSha256": "e9591b70e963e1c923d848298b796ef92820a2a49be949eaf4db659bfaa6ee35",
+    "selectedAt": "2026-09-15T16:03:48.939Z"
   },
   "button": {
     "candidate": "softer-02",
@@ -84,18 +84,18 @@
     "selectedAt": "2026-09-15T15:22:13.600Z"
   },
   "tab": {
-    "candidate": "softer-02",
-    "seed": 51070799787064,
-    "sha256": "f3cd09c6682a151974085e07c6956d6cd93883d3987b61c0539f9a54289c75cb",
-    "graphSha256": "077278d36535f4fca1946ec5990c6c56bba7a5c27896ac4e80ebf8301c54b7fe",
-    "selectedAt": "2026-09-15T15:24:20.603Z"
+    "candidate": "consistent-03",
+    "seed": 111938703629820,
+    "sha256": "e9af9d31c2e5a4c8e9a639b1bc0a7720c88bf4d0aa28de9587a7e68a90ba07e5",
+    "graphSha256": "b0bc82a8e75b48f351f9b5dd90abf2d22bb16a94203390ff1c35d4aa7508e04e",
+    "selectedAt": "2026-09-15T16:03:51.157Z"
   },
   "tab-selected": {
-    "candidate": "softer-02",
-    "seed": 206382496685550,
-    "sha256": "c518f7ff05f3cd696872a59c8cb53a3185dcd864293f4ed9fdc39dd65f90699e",
-    "graphSha256": "b23def04c00d0a3e61eff9d3cdbf2e7fb74bfa755ffd95c05434921c55d7883d",
-    "selectedAt": "2026-09-15T15:24:22.798Z"
+    "candidate": "consistent-03",
+    "seed": 215552033753122,
+    "sha256": "b5fb2f14d4da02dcd10dd582bc42177d5ccb81031d9e9d3a7877765a7514e5a2",
+    "graphSha256": "10ce41ccd365493f9f767c609029d9a2c47d5b2b34ae3ade2d4e7ce15e1af899",
+    "selectedAt": "2026-09-15T16:03:53.380Z"
   },
   "input": {
     "candidate": "initial-01",

@@ -53,6 +53,10 @@ npm run art:ui:generate -- --all --candidate review-04
 
 ## 图片如何进入界面
 
+### 状态语言
+
+所有职业、装备、技能卡和导航标签统一：**青色边框 = 已选中；暗蓝边框 = 未选中**。不以亮白框表示任何选择状态。悬停只提亮当前素材，不切换到选中图；键盘焦点使用独立金色外框。`card`/`tab` 是未选中素材，`card-selected`/`tab-selected` 是选中素材，抽卡时也必须遵守这套约定。
+
 [`TacticalArt.css`](../../src/client/presentation/TacticalArt.css) 统一接入控件，[`UIArt.ts`](../../src/client/presentation/UIArt.ts) 接入职业/技能插画。按钮和框体使用 `border-image` 九宫格拉伸：四角不变形，中间适配文字和布局。背景以图片铺设；CSS 保留布局、焦点、响应式和少量遮罩，**不把文字烘焙进图片**。
 
 按钮 slice=40、普通面板 slice=64、卡片 slice=48。生成时保持装饰位于切片边缘，中央空白，避免框体伸缩后出现铆钉拉长。新候选必须保持原尺寸。HUD 保持原来的可点击范围与信息位置，皮肤不会改变战斗规则。
