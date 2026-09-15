@@ -14,6 +14,7 @@ export function objectiveIssues(map: MapGeometry, requirement: 'combat' | 'contr
     if (players.some((a, i) => players.slice(i + 1).some(b => Math.abs(a.x - b.x) < 28 && Math.abs(a.y - b.y) < 65))) issues.push('合作玩家出生空间重叠');
   }
   if (requirement === 'delivery') {
+    if (map.deliveryZones && (map.deliveryZones.length !== 2 || map.deliveryZones.some(p=>!valid(p)))) issues.push('交付区缺失或越界');
     const bases = map.deliveryBases;
     if (!bases || bases.length !== 2 || bases.some(p => !valid(p))) issues.push('缺少有效的双方交付基地');
     else if (Math.abs(bases[0].x - bases[1].x) <= 80 && Math.abs(bases[0].y - bases[1].y) <= 95) issues.push('双方交付触碰区域重叠');

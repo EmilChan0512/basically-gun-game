@@ -181,7 +181,7 @@ export class GrowthBattleCoordinator {
   }
   /** Validate the entire roster before changing any actors. No partially classic growth rooms. */
   install(loadouts: Readonly<Record<string, GrowthLoadoutV3>>) {
-    if (this.tick !== 0 || this.battle.phase !== 'running' || !['tdm', 'dom'].includes(this.battle.mission.mode)
+    if (this.tick !== 0 || this.battle.phase !== 'running' || !['tdm', 'dom', 'ctf'].includes(this.battle.mission.mode)
       || this.battle.actors.length > 8 || Object.keys(loadouts).length !== this.battle.actors.length) throw Error('Invalid growth battle setup');
     const validated = this.actors().map(a => ({ actor: a, loadout: validateGrowthLoadoutV3(loadouts[a.id], this.stage) }));
     for (const { actor: a, loadout } of validated) {
@@ -249,7 +249,14 @@ export class GrowthBattleCoordinator {
     if (String(upgrade).endsWith('_G2')) this.gadgets.upgrade(id);
     this.abilities.updateBuild(id, p.progression.selected, this.tick); this.sync(this.actor(id)); return true;
   }
+  carryObjective(id: string) {
+    const gun = this.gun(id);
+    this.gadgets.cancelCast(id);
+    if (gun.selectedSlot !== 'secondary') gun.swap(this.tick);
+    this.sync(this.actor(id));
+  }
   private swap(a: Actor) {
+    if (a.deliveryPreviousWeapon !== undefined) return this.error(a.id, 'carrying_objective');
     const id = a.id, p = this.participant(id), gun = this.gun(id), toSide = gun.selectedSlot === 'primary';
     if (this.abilities.locks(id, this.tick).swap || this.gadgets.inventory(id).cast?.definition.kind === 'self') return this.error(id, 'busy');
     this.gadgets.cancelCast(id);
@@ -598,13 +605,14 @@ export class GrowthBattleCoordinator {
     const def = resolveGrowthWeapon(gun.selectedId, p.loadout.attachments[gun.selectedSlot]);
     const primary = gun.checkpoint().guns.primary, secondary = gun.checkpoint().guns.secondary;
     const empty = primary.ammo + primary.reserve + secondary.ammo + secondary.reserve === 0;
-    const destination = empty ? this.battle.mission.spawns[a.team - 1][0]
+    const delivery = this.battle.mission.mode === 'ctf';
+    const destination = delivery ? this.battle.objectiveBotGoal(a).destination : empty ? this.battle.mission.spawns[a.team - 1][0]
       : this.battle.mission.mode === 'dom' ? this.battle.mission.objective : target?.movement ?? structure?.position ?? this.battle.mission.objective;
     const waypoint = this.battle.mission.collisionMask
       ? trackedWaypoint(this.battle.mission.navigation, m, destination, brain.route ??= {})
       : nextWaypoint(this.battle.mission.navigation, m, destination);
     const holding = this.battle.mission.mode === 'dom' && distance(m, destination) < 45;
-    const stop = !empty && !m.jumping && (holding || !!attackPoint && distance(chest(a), attackPoint) < Math.min(def.falloffStart, 450));
+    const stop = !delivery && !empty && !m.jumping && (holding || !!attackPoint && distance(chest(a), attackPoint) < Math.min(def.falloffStart, 450));
     const dx = waypoint.x - m.x;
     brain.stuck = !stop && Math.abs(m.x - brain.lastX) < .5 ? brain.stuck + 1 : 0; brain.lastX = m.x;
     const input: BattleInput = { left: !stop && dx < -8, right: !stop && dx > 8, crouch: m.shouldDescendStairs(waypoint) || m.shouldDescendStairs(destination) || stop && !!target && this.tick % 120 < 35,
@@ -826,7 +834,7 @@ export class GrowthBattleCoordinator {
   visibleActors(team: 1 | 2) {
     const circles = this.gadgets.visionCircles(team, this.tick);
     const observers = this.actors().filter(a => a.team === team && a.life.alive);
-    return new Set(this.actors().filter(a => !this.participant(a.id).retired && (a.team === team || inBeaconVision(chest(a), circles) || observers.some(b => distance(chest(a), chest(b)) <= VISION_RADIUS
+    return new Set(this.actors().filter(a => !this.participant(a.id).retired && (a.team === team || a.deliveryPreviousWeapon !== undefined || inBeaconVision(chest(a), circles) || observers.some(b => distance(chest(a), chest(b)) <= VISION_RADIUS
       && this.gadgets.clearRay({ x: b.movement.x, y: b.movement.y - 42 }, chest(a), true)))).map(a => a.id));
   }
   retire(id: string) {

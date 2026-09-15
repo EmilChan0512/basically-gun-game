@@ -47,6 +47,11 @@ export class ReferenceArt {
     for (const target of targets ?? []) {
       const tint = target.team === 1 ? 0x58c6ff : 0xff9748;
       graphics.lineStyle(3, tint, 0.85).strokeEllipse(target.base.x, target.base.y, 72, 20);
+      if (target.deliveryPoint) {
+        graphics.lineStyle(3,tint,.9).strokeEllipse(target.deliveryPoint.x,target.deliveryPoint.y,110,24);
+        graphics.lineBetween(target.deliveryPoint.x-30,target.deliveryPoint.y-12,target.deliveryPoint.x,target.deliveryPoint.y-28)
+          .lineBetween(target.deliveryPoint.x,target.deliveryPoint.y-28,target.deliveryPoint.x+30,target.deliveryPoint.y-12);
+      }
       const carrier = target.carrierId ? positions.get(target.carrierId) : undefined;
       if (target.carrierId && !carrier) continue;
       const point = carrier ?? target.base;

@@ -8,7 +8,7 @@ it('validates existing combat/control maps and identifies missing delivery slots
   for (const map of MAPS) {
     expect(objectiveIssues(map.geometry, 'combat')).toEqual([]);
     expect(objectiveIssues(map.geometry, 'control')).toEqual([]);
-    expect(objectiveIssues(map.geometry, 'delivery').length).toBe(map.id === 'hijack' ? 0 : 1);
+    expect(objectiveIssues(map.geometry, 'delivery').length).toBe(map.modes.includes('ctf') ? 0 : 1);
   }
 });
 it('rejects overlapping, nonfinite and out-of-bounds delivery slots', () => {

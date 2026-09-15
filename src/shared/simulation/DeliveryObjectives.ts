@@ -1,6 +1,6 @@
 export interface ObjectivePoint { x: number; y: number }
 export interface ObjectiveActor extends ObjectivePoint { id: string; team: 1 | 2; alive: boolean }
-export interface DeliveryTarget { team: 1 | 2; base: ObjectivePoint; carrierId: string | null }
+export interface DeliveryTarget { team: 1 | 2; base: ObjectivePoint; deliveryPoint?: ObjectivePoint; carrierId: string | null }
 export type DeliveryEvent =
   | { kind: 'pickup' | 'delivery'; targetTeam: 1 | 2; actorId: string; team: 1 | 2 }
   | { kind: 'return'; targetTeam: 1 | 2; actorId: string; reason: 'carrier-unavailable' };
@@ -8,9 +8,11 @@ export type DeliveryEvent =
  * away during delivery. No storage, rendering, damage or networking ownership. */
 export class DeliveryObjectives {
   private targets: [DeliveryTarget, DeliveryTarget];
-  constructor(bases: [ObjectivePoint, ObjectivePoint]) {
+  constructor(bases: [ObjectivePoint, ObjectivePoint], zones?: [ObjectivePoint, ObjectivePoint]) {
     if (bases.some(p => !Number.isFinite(p.x) || !Number.isFinite(p.y))) throw Error('Invalid objective bases');
+    if (zones?.some(p => !Number.isFinite(p.x) || !Number.isFinite(p.y))) throw Error('Invalid delivery zones');
     this.targets = [{ team: 1, base: { ...bases[0] }, carrierId: null }, { team: 2, base: { ...bases[1] }, carrierId: null }];
+    if (zones) this.targets.forEach((t,i)=>{t.deliveryPoint={...zones[i]};});
   }
   snapshot() { return structuredClone(this.targets); }
   release(actorId: string): DeliveryEvent[] {
@@ -22,6 +24,7 @@ export class DeliveryObjectives {
   restore(targets: [DeliveryTarget, DeliveryTarget]) {
     if (!Array.isArray(targets) || targets.length !== 2 || targets.some((t, i) => !t || t.team !== i + 1
       || t.base.x !== this.targets[i].base.x || t.base.y !== this.targets[i].base.y
+      || t.deliveryPoint?.x !== this.targets[i].deliveryPoint?.x || t.deliveryPoint?.y !== this.targets[i].deliveryPoint?.y
       || (t.carrierId !== null && (typeof t.carrierId !== 'string' || !t.carrierId)))
       || (targets[0].carrierId !== null && targets[0].carrierId === targets[1].carrierId)) throw Error('Invalid delivery checkpoint');
     this.targets = structuredClone(targets);
@@ -41,7 +44,7 @@ export class DeliveryObjectives {
     for (const actor of eligible) {
       const carried = this.targets.find(t => t.carrierId === actor.id);
       if (carried) {
-        if (touching(actor, this.targets[actor.team - 1].base)) {
+        if (touching(actor, this.targets[actor.team - 1].deliveryPoint ?? this.targets[actor.team - 1].base)) {
           carried.carrierId = null;
           events.push({ kind: 'delivery', targetTeam: carried.team, actorId: actor.id, team: actor.team });
         }

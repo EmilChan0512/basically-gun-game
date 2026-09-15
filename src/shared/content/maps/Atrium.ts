@@ -25,6 +25,7 @@ for(const [level,floor] of ATRIUM_FLOORS.entries()) {
   const row:number[]=[];
   for(const x of xs) {
     if(gaps.some(g=>x>=g.x&&x<g.x+g.width))continue;
+    if(ATRIUM_COVERS.some(c=>x!==c.x+c.width/2&&(Math.abs(x-c.x)<32||Math.abs(x-c.x-c.width)<32)))continue;
     const cover=ATRIUM_COVERS.find(c=>x>=c.x&&x<c.x+c.width);
     row.push(navigation.length);navigation.push({x,y:floor-(cover?.height??0)-.5,links:[]});
   }
@@ -34,10 +35,17 @@ for(const stair of ATRIUM_STAIRS) {
   const level=ATRIUM_FLOORS.indexOf(stair.floor),direction=stair.right?1:-1;
   const near=(row:number[],x:number)=>row.reduce((a,b)=>Math.abs(navigation[a].x-x)<Math.abs(navigation[b].x-x)?a:b);
   let previous=near(rows[level],stair.x+(stair.right?-36:456));
+  // Right shaft uses a continuous 1px-sampled ramp; left retains distinct steps.
+  if(stair.x===2220)for(let pixel=0;pixel<420;pixel++) {
+    const rise=Math.min(336,(stair.right?pixel+1:420-pixel)*336/390);
+    stairTreads.push({x:stair.x+pixel,y:stair.floor-rise,width:1,height:24});
+  }
   for(let step=1;step<=14;step++) {
     const x=stair.x+(stair.right?step-1:14-step)*30,y=stair.floor-step*24;
-    stairTreads.push({x,y,width:30,height:24});
-    const node=navigation.length;navigation.push({x:x+15,y:y-.5,links:[]});connect(previous,node);previous=node;
+    if(stair.x!==2220)stairTreads.push({x,y,width:30,height:24});
+    if(stair.x===2220&&step===1)continue;
+    const node=navigation.length;navigation.push({x:x+15,y:stair.x===2220?stair.floor-Math.min(336,((step-1)*30+15)*336/390)-.5:y-.5,links:[]});connect(previous,node);
+    previous=node;
   }
   connect(previous,near(rows[level+1],stair.x+(direction===1?456:-36)));
 }
@@ -51,4 +59,6 @@ const rowsMask=Array.from({length:1536},(_,y)=>{
 });
 export const ATRIUM_GEOMETRY:MapGeometry={width:3600,height:1536,killY:1640,terrain:[],stairTreads,minimapTerrain:ATRIUM_TERRAIN,collisionMask:{x:0,y:0,width:3600,height:1536,rows:rowsMask},navigation,
   spawns:[[120,200,380,440].map(x=>({x,y:1439.5})),[3480,3400,3200,3120].map(x=>({x,y:1439.5}))],
+  deliveryBases:[{x:200,y:431.5},{x:3400,y:431.5}],
+  deliveryZones:[{x:200,y:1439.5},{x:3400,y:1439.5}],
   objective:{x:1800,y:1103.5},palette:{sky:0x101c29,wall:0x354958,trim:0x90c8cd}};

@@ -25,7 +25,7 @@ export function drawAtrium(scene:Phaser.Scene,map:MapGeometry) {
     for(const x of ATRIUM_SHAFTS) {
       const g=scene.add.graphics();g.fillStyle(0x15222b).fillRect(x,ceiling,420,312);
       for(let y=ceiling+24;y<floor;y+=48)g.lineStyle(1,0x34434c).lineBetween(x+12,y,x+408,y);
-      scene.add.text(x+140,ceiling+24,'楼梯 / STAIRS',{fontFamily:'sans-serif',fontSize:'16px',color:'#b5a97c'});
+      scene.add.text(x+140,ceiling+24,x===2220?'斜坡 / RAMP':'楼梯 / STAIRS',{fontFamily:'sans-serif',fontSize:'16px',color:'#b5a97c'});
     }
   }
   const solid=scene.add.graphics();

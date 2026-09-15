@@ -19,7 +19,7 @@ export class Room {
   round = 0;
   growthPreset: GrowthPresetId = 'standard';
   constructor(readonly id: string, public mapId = 'hijack', public mode: import('./ModeRules').ModeId = 'tdm', readonly debug = false, readonly rules: 'classic' | 'growth' = 'classic') {
-    if (!['classic', 'growth'].includes(rules) || rules === 'growth' && (debug || !['tdm', 'dom'].includes(mode))) throw Error('Invalid room rules');
+    if (!['classic', 'growth'].includes(rules) || rules === 'growth' && (debug || !['tdm', 'dom', 'ctf'].includes(mode))) throw Error('Invalid room rules');
   }
   join(id: string, name: string, equipment?: EquipmentLoadout, growthLoadout?: GrowthLoadout) {
     if (this.rules === 'growth') growthLoadout = validateGrowthLoadout(growthLoadout ?? defaultGrowthLoadout());
@@ -44,7 +44,7 @@ export class Room {
     }
   }
   configure(id: string, mapId: string, mode: import('./ModeRules').ModeId, preset: unknown = this.growthPreset) {
-    if (this.rules === 'growth' && !['tdm', 'dom'].includes(mode)) throw Error('成长模式支持团队交火和据点争夺');
+    if (this.rules === 'growth' && !['tdm', 'dom', 'ctf'].includes(mode)) throw Error('成长模式支持团队交火、据点争夺和公文包争夺');
     if (id !== this.hostId || this.session) throw Error('Only lobby host can configure');
     const selected = validateGrowthPreset(preset);
     if(this.rules!=='growth'&&selected!=='standard')throw Error('实验短局仅限成长模式');
@@ -80,7 +80,7 @@ export class Room {
     // A lone returning spectator may be assigned red. Normalize the solo seat.
     if (soloGrowth) roster[0].team = 1;
     if (!soloGrowth && (!blue || (this.mode !== 'coop' && !red))) throw Error('Both teams required');
-    const battle = new Battle({ ...map, ...(this.rules === 'growth' ? { growthPreset: this.growthPreset, seconds: GROWTH_V3_PRESETS[this.growthPreset].matchTicks / 30, goal: Number.MAX_SAFE_INTEGER } : {}), allies: soloGrowth ? 0 : blue - 1, enemies: soloGrowth ? 1 : red }, 'normal', 'm4', seededRandom(seed), null, `${this.id}:${++this.round}`);
+    const battle = new Battle({ ...map, ...(this.rules === 'growth' ? { growthPreset: this.growthPreset, seconds: GROWTH_V3_PRESETS[this.growthPreset].matchTicks / 30, goal: this.mode === 'ctf' ? 3 : Number.MAX_SAFE_INTEGER } : {}), allies: soloGrowth ? 0 : blue - 1, enemies: soloGrowth ? 1 : red }, 'normal', 'm4', seededRandom(seed), null, `${this.id}:${++this.round}`);
     this.session = new MatchSession(battle);
     const growthBuilds: Record<string, GrowthLoadout> = {};
     roster.forEach((player, i) => { player.spectator = false; battle.actors[i].name = player.name;

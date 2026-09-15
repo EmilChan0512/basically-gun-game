@@ -31,7 +31,7 @@ export class OfflineGrowthSession implements BattlePresentationSession {
   private disposed = false;
   get room() { return this.authority.lobby(); }
   get battle() { return this.authority.session!.battle; }
-  constructor(loadout: GrowthLoadoutV3, mapId = 'hijack', preset: GrowthPresetId = 'standard', mode: 'tdm' | 'dom' = 'tdm', seed = 43191) {
+  constructor(loadout: GrowthLoadoutV3, mapId = 'hijack', preset: GrowthPresetId = 'standard', mode: 'tdm' | 'dom' | 'ctf' = 'tdm', seed = 43191) {
     this.authority = new Room('offline-' + crypto.randomUUID(), mapId, mode, false, 'growth');
     this.authority.join(this.playerId, '本地玩家', undefined, structuredClone(loadout));
     for (let i = 1; i < 8; i++) {

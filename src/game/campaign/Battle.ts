@@ -81,7 +81,7 @@ export class Battle {
   notice = ''; noticeFrame = 0;
   readonly wall: (x: number, y: number) => boolean;
   constructor(readonly mission: Mission, readonly difficulty: Difficulty = 'normal', readonly startingWeapon: WeaponId = 'm4', private random: RandomSource = createRandom(Math.floor(Math.random() * 0x100000000)), readonly loadout: Loadout | null = null, id: string = randomId()) {
-    this.id = id; this.mode = createMode(mission.mode, mission.deliveryBases);
+    this.id = id; this.mode = createMode(mission.mode, mission.deliveryBases, mission.deliveryZones);
     this.wall = wallFor(mission);
     this.addActor('player', '你', 1, true, 0);
     for (let i = 0; i < mission.allies; i++) this.addActor(`ally-${i}`, ['回声', '北斗'][i] ?? `队员${i}`, 1, false, i + 1);
@@ -190,11 +190,13 @@ export class Battle {
   }
   /** Neutral result for sessions; phase remains the legacy blue-side campaign adapter. */
   get result() { return this.matchResult; }
+  objectiveBotGoal(actor: Actor) { return this.mode.botGoal(this, undefined, actor); }
   releaseObjective(actorId: string) { this.applyObjectiveEvents(this.mode.releaseActor?.(actorId) ?? []); }
   private applyObjectiveEvents(events: DeliveryEvent[]) {
     for (const event of events) {
       const carrier = this.actors.find(a => a.id === event.actorId);
       if (carrier) {
+        if (event.kind === 'pickup') this.growthV3?.carryObjective(carrier.id);
         if (event.kind === 'pickup') {
           carrier.stealthFrames = 0;
           carrier.deliveryPreviousWeapon = carrier.arsenal.selected;
@@ -483,7 +485,9 @@ export class Battle {
     this.bursts = this.bursts.filter(b => this.frame - b.frame < 18);
     if (this.growthV3) {
       this.growthV3.step(inputs, shotFrames);
-      this.mode.tick(this); this.growthV3.afterMode();
+      const events = this.mode.tick(this);
+      if (events) this.applyObjectiveEvents(events);
+      this.growthV3.afterMode();
       const result = resolveResult(this);
       if (result) this.endMatch(result.winner, result.reason);
       return;

@@ -24,7 +24,8 @@ export function radarSvg(map: MapGeometry, message: Pick<StateMessage, 'state' |
     const carrier = message.state.actors.find(a => a.id === target.carrierId);
     if (target.carrierId && !carrier) return '';
     const p = projection.point(carrier ?? target.base);
-    return `<rect data-objective="${target.team}" x="${p.x - 4}" y="${p.y - 4}" width="8" height="8" fill="${target.team === 1 ? '#58c6ff' : '#ff9748'}" stroke="#ffffff" transform="rotate(45 ${p.x} ${p.y})"/>`;
+    const zone=target.deliveryPoint?projection.point(target.deliveryPoint):undefined;
+    return `${zone?`<rect x="${zone.x-6}" y="${zone.y-3}" width="12" height="6" fill="none" stroke="${target.team===1?'#58c6ff':'#ff9748'}"/>`:""}<rect data-objective="${target.team}" x="${p.x - 4}" y="${p.y - 4}" width="8" height="8" fill="${target.team === 1 ? '#58c6ff' : '#ff9748'}" stroke="#ffffff" transform="rotate(45 ${p.x} ${p.y})"/>`;
   }).join('');
   const control = projection.point(map.objective);
   const zone = message.mode === 'dom' ? `<circle cx="${control.x}" cy="${control.y}" r="6" fill="none" stroke="#ffe595" stroke-width="2"/>` : '';

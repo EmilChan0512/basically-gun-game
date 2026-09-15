@@ -50,16 +50,16 @@ class Cooperative extends TeamDeathmatch {
 class CaptureDelivery implements ModeRules {
   readonly id = 'ctf';
   private objectives: DeliveryObjectives;
-  constructor(bases?: [Point, Point]) {
+  constructor(bases?: [Point, Point], zones?: [Point, Point]) {
     if (!bases) throw Error('Delivery bases required');
-    this.objectives = new DeliveryObjectives(bases);
+    this.objectives = new DeliveryObjectives(bases, zones);
   }
   botGoal(context: ModeContext, _enemy?: Point, actor?: ModeActor) {
     if (!actor?.id) throw Error('Delivery AI requires an actor');
     const targets = this.objectives.snapshot(), own = targets[actor.team - 1], enemy = targets[actor.team === 1 ? 1 : 0];
     const carrier = context.actors.find(a => a.id === own.carrierId);
     const escort = context.actors.find(a => a.id === enemy.carrierId);
-    const destination = enemy.carrierId === actor.id ? own.base : carrier?.movement ?? escort?.movement ?? enemy.base;
+    const destination = enemy.carrierId === actor.id ? own.deliveryPoint ?? own.base : carrier?.movement ?? escort?.movement ?? enemy.base;
     return { destination, hold: false, stopToFight: false };
   }
   onDeath(_context: ModeContext, _target: ModeActor, _source?: ModeActor) {}
@@ -78,8 +78,8 @@ class CaptureDelivery implements ModeRules {
     this.objectives.restore(state.delivery);
   }
 }
-export function createMode(id: ModeRules['id'], bases?: [Point, Point]): ModeRules {
-  return id === 'ctf' ? new CaptureDelivery(bases) : id === 'coop' ? new Cooperative() : id === 'dom' ? new Domination() : new TeamDeathmatch();
+export function createMode(id: ModeRules['id'], bases?: [Point, Point], zones?: [Point, Point]): ModeRules {
+  return id === 'ctf' ? new CaptureDelivery(bases, zones) : id === 'coop' ? new Cooperative() : id === 'dom' ? new Domination() : new TeamDeathmatch();
 }
 export function resolveResult(context: ModeContext): MatchResult | null {
   if (context.mission.debug || context.mission.mode === 'coop') return null;

@@ -12,6 +12,8 @@ export interface MapGeometry {
   spawns: [Point[], Point[]]; objective: Point;
   /** Team 1 and team 2 delivery bases, in world coordinates. */
   deliveryBases?: [Point, Point];
+  /** Separate scoring zones; defaults to the briefcase bases on legacy maps. */
+  deliveryZones?: [Point, Point];
   palette: { sky: number; wall: number; trim: number };
   artwork?: { id: string; x: number; y: number; width: number; height: number };
 }

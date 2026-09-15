@@ -28,7 +28,7 @@ export class OriginalMovement {
   private hit(x: number, y: number) { const px=Math.trunc(this.x+x),py=Math.trunc(this.y+y);
     return this.wall(px,py)||!this.droppingStairs&&!this.crouching&&this.stairTreads.some(t=>this.y<=t.y+28&&px>=t.x&&px<t.x+t.width&&py>=t.y&&py<t.y+t.height); }
   shouldDescendStairs(target:{x:number;y:number}) {
-    return target.y>this.y+12&&this.stairTreads.some(t=>Math.abs(this.y-t.y)<32&&this.x>=t.x-64&&this.x<=t.x+t.width+64);
+    return target.y>=this.y-1&&this.stairTreads.some(t=>Math.abs(this.y-t.y)<32&&this.x>=t.x-64&&this.x<=t.x+t.width+64);
   }
   jump() {
     if (this.crouching || this.climb || this.hardLandingFrames || this.jumping) return false;

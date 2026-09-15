@@ -228,7 +228,7 @@ export function startOnline() {
               for (const [id, name] of [['tdm', '团队交火'], ['dom', '据点争夺'], ['coop', '合作生存'], ['ctf', '公文包争夺']]) { const option = document.createElement('option'); option.value = id; option.textContent = name; mode.append(option); }
               mode.value = room.mode;
               for (const option of Array.from(mode.options)) {
-                option.disabled = room.rules === 'growth' && !['tdm', 'dom'].includes(option.value) || !MAPS.find(m => m.id === room.mapId)!.modes.includes(option.value as 'tdm' | 'dom' | 'coop');
+                option.disabled = room.rules === 'growth' && !['tdm', 'dom', 'ctf'].includes(option.value) || !MAPS.find(m => m.id === room.mapId)!.modes.includes(option.value as 'tdm' | 'dom' | 'coop');
                 option.title = option.disabled ? '此地图尚未配置该模式的目标点' : '';
               }
               const configure = () => {
@@ -429,7 +429,7 @@ export class OnlineScene extends Phaser.Scene {
     const wave = message.state.waves;
     const heading = wave ? `第${wave.wave}/${wave.scenario.waves.length}波 · 待增援${wave.remaining} · 团队复活${wave.revives} · ${wave.spawnBlocked ? '增援入口受阻，请离开入口' : wave.phase === 'intermission' ? '休整中' : '战斗中'}` : message.state.scores.join(' : ');
     this.hud.render({ mode: this.network.room?.debug ? '公共调试 · 无时限' : `${message.growthV3?.preset === 'short' ? '成长·10分钟实验 / ' : message.growthV3 || message.growth ? '成长 / ' : ''}${message.mode === 'coop' ? '合作生存' : message.mode === 'dom' ? '据点争夺' : message.mode === 'ctf' ? '公文包争夺' : '团队交火'}`,
-      objective: wave ? heading : message.mode === 'ctf' ? '先交付3次获胜' : '共享视野 · 敌方阴影不可见', seconds: message.state.seconds, scores: message.state.scores,
+      objective: wave ? heading : message.mode === 'ctf' ? '夺敌方公文包 → 持副武器返回己方出生点 · 交付3次获胜' : '共享视野 · 敌方阴影不可见', seconds: message.state.seconds, scores: message.state.scores,
       health: self?.life.health ?? 0, maxHealth: self?.maxHealth ?? 100, alive: self?.life.alive ?? false, armor: message.growthV3?.armor ?? message.growth?.armor ?? 0,
       operator: self?.growth ? GROWTH_CLASSES[self.growth.classId].name : self?.classId ? CLASSES[self.classId].name : 'OPERATOR',
       weapon: self ? equipmentText(self) : '正在观察战场', gadgetId: self?.growthV3?.gadgetId, ability: self ? abilityText(self, message.state.growthWorld?.entities.find(e => e.gadgetId === 'as_charge' && e.sourceId === self.id)) : `跟随 ${message.poses.find(p => p.id === followed?.id)?.name ?? '等待角色'}`,
