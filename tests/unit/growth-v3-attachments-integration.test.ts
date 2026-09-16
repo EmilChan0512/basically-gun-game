@@ -33,7 +33,7 @@ it.each([['G05','sniper',14],['O05','sniper',15],['A03','assault',8],['A04','ass
 for(const empty of [false,true])it.each(ammoCases)('%s actual ammunition and reload tradeoffs (empty='+empty+')', (part,cls,capacity,total,loadedTicks,emptyTicks,speed)=>{
   const f=fixture(part,cls);expect([f.gun.current.ammo,f.gun.current.reserve]).toEqual([capacity,total-capacity]);
   for(let i=0;i<(empty?capacity*4:1);i++)f.r.step({fire:true,aim:{x:20,y:100}});
-  expect(f.gun.current.ammo).toBe(empty?0:capacity-1);expect(f.b.player.movement.speedScale).toBe(speed);
+  expect(f.gun.current.ammo).toBe(empty?0:capacity-1);expect(f.b.player.movement.speedScale).toBeCloseTo(speed*(cls==='assault'?1.1:1));
   for(let i=0;i<4;i++)f.r.step();const remainingTotal=f.gun.current.ammo+f.gun.current.reserve;
   f.b.reload();f.r.step();const ticks=empty?emptyTicks:loadedTicks;
   expect(f.gun.current.reloadDuration).toBe(ticks);
@@ -149,7 +149,7 @@ it.each([['M01',false,1.1],['B01',false,.8],['B02',false,1.12],['G01',true,1.1],
 });
 
 it.each([['G02',7,34,1],['G03',8,34,.98],['G06',8,37,1],['O01',8,34,1],['O02',9,34,1],['O03',9,34,1],['O04',9,34,1],['O06',9,34,1]] as const)('%s handling costs remain present alongside conditional accuracy',(part,prepare,reload,speed)=>{
-  const f=fixture(part);f.r.step({fire:true});expect(f.b.player.movement.speedScale).toBe(speed);
+  const f=fixture(part);f.r.step({fire:true});expect(f.b.player.movement.speedScale).toBeCloseTo(speed*1.1);
   for(let i=0;i<4;i++)f.r.step();f.b.reload();f.r.step();expect(f.gun.current.reloadDuration).toBe(reload);
   for(let i=0;i<reload;i++)f.r.step();f.b.swap();f.r.step();for(let i=0;i<6;i++)f.r.step();
   f.b.swap();f.r.step();expect(f.gun.readyTick-f.b.frame).toBe(prepare);
@@ -204,7 +204,7 @@ it.each([
   f.r.step({fire:true});baseline.step({fire:true});
   const recoil=f.b.growthV3!.participant('player').recoil;
   expect(recoil.shot).toBe(shot);expect(f.b.effects[0].trace).toEqual(baseline.battle.effects[0].trace);
-  expect(f.b.player.movement.speedScale).toBe(speed);
+  expect(f.b.player.movement.speedScale).toBeCloseTo(speed*1.1);
   f.b.damage(f.b.player,10,f.b.actors[1]);expect(recoil.hit).toBe(hit);expect(f.b.player.life.health).toBe(90);
   for(let i=0;i<4;i++)f.r.step();f.b.reload();f.r.step();expect(f.gun.current.reloadDuration).toBe(reload);
   for(let i=0;i<reload;i++)f.r.step();f.b.swap();f.r.step();for(let i=0;i<6;i++)f.r.step();
@@ -217,7 +217,7 @@ it.each([
 ] as const)('%s actual range, movement and handling apply both benefits and costs', (part,range,speed,prepare,reload)=>{
   const f=fixture(part);f.r.step({fire:true});const trace=f.b.effects[0].trace;
   expect(trace.hit).toBeNull();expect(Math.hypot(trace.end.x-trace.origin.x,trace.end.y-trace.origin.y)).toBeCloseTo(range);
-  expect(f.b.player.movement.speedScale).toBe(speed);
+  expect(f.b.player.movement.speedScale).toBeCloseTo(speed*1.1);
   for(let i=0;i<4;i++)f.r.step();f.b.reload();f.r.step();expect(f.gun.current.reloadDuration).toBe(reload);
   for(let i=0;i<reload;i++)f.r.step();f.b.swap();f.r.step();for(let i=0;i<6;i++)f.r.step();
   f.b.swap();f.r.step();expect(f.gun.readyTick-f.b.frame).toBe(prepare);

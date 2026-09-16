@@ -31,7 +31,7 @@ it('as_EV_A real charges regenerate sequentially and reject the second use befor
   const f=fixture('as_EV_A');expect(f.state().charges).toBe(1);expect(f.state().queue).toEqual([360]);
   for(let i=0;i<360;i++)f.r.step();expect(f.state().charges).toBe(2);
   f.b.useSkill();f.r.step();expect(f.state().charges).toBe(1);expect(f.state().queue).toEqual([721]);
-  expect(f.b.player.movement.speedScale).toBe(1.35);
+  expect(f.b.player.movement.speedScale).toBeCloseTo(1.485);
   for(let i=0;i<58;i++)f.r.step();f.b.useSkill();f.r.step();expect(f.b.frame).toBe(420);
   expect(f.state().charges).toBe(1);expect(f.state().active).toBeNull();
   f.b.useSkill();f.r.step();expect(f.state().charges).toBe(0);expect(f.state().queue).toEqual([721,1081]);

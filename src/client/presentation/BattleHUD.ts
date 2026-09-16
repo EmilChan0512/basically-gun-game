@@ -9,6 +9,7 @@ export interface BattleHUDState {
   operator: string; weapon: string; ability: string; reload: number; cooldown: number;
   spectator: boolean; networkStalled: boolean;
   gadgetId?: GrowthGadgetId;
+  growth?: boolean;
 }
 export class BattleHUD {
   readonly root = document.createElement('div');
@@ -22,6 +23,10 @@ export class BattleHUD {
     this.root.querySelector('.hud-ability')!.prepend(icon);this.nodes['gadget-icon']=icon;
   }
   render(state: BattleHUDState) {
+    if (state.growth) {
+      this.root.querySelector('.hud-mission small')!.textContent = '当前目标';
+      this.root.querySelector('.hud-score small')!.textContent = '剩余时间';
+    }
     const text = (id: string, value: string) => { if (this.nodes[id].textContent !== value) this.nodes[id].textContent = value; };
     text('mode', state.mode); text('objective', state.objective); text('blue', String(state.scores[0])); text('red', String(state.scores[1]));
     text('clock', `${Math.floor(state.seconds / 60)}:${String(state.seconds % 60).padStart(2, '0')}`);
@@ -30,7 +35,7 @@ export class BattleHUD {
     const health = Math.max(0, Math.min(100, state.health / Math.max(1, state.maxHealth) * 100));
     this.nodes['health-fill'].style.width = `${health}%`; this.root.dataset.health = health <= 30 ? 'critical' : 'normal';
     text('armor', state.armor > 0 ? `临时护甲 +${Math.ceil(state.armor)}` : '');
-    text('weapon', state.weapon); text('ability', state.ability);
+    text('weapon', state.weapon); text('ability', state.growth ? state.ability.replace(' | ', '\n') : state.ability);
     if(this.gadgetId!==state.gadgetId){
       this.gadgetId=state.gadgetId;
       this.nodes['gadget-icon'].innerHTML=state.gadgetId?growthIcon(state.gadgetId):'';

@@ -283,6 +283,7 @@ test('one browser can start growth practice against a bot without a second accou
       bot.life.alive = true; bot.life.health = 100; bot.life.spawnProtectionFrames = 0;
       room.session!.battle.damage(bot, 1000, actor);
     }
+    await page.locator('[data-growth-toggle]').click();
     await expect(page.locator('[data-upgrade]')).toHaveCount(3);
     await page.locator('[data-upgrade]').first().click();
     await expect.poll(() => room.session!.battle.growthV3!.participant(actor.id).progression.selected.length).toBe(1);
@@ -324,6 +325,7 @@ test('growth room: private cards, refresh, dead selection, reconnect and new rou
     const battle = room.session!.battle, actor = battle.player;
     // Authority fixture advances XP, not a client cheat endpoint; natural kills are unit-tested.
     awardGrowthV3(battle.growthV3!.participant(actor.id).progression, battle.growthV3!.participant(actor.id).loadout, 1200, battle.frame, seededRandom(1));
+    await pages[0].locator('[data-growth-toggle]').click();
     await expect(pages[0].locator('[data-upgrade]')).toHaveCount(3);
     await expect(pages[1].locator('[data-upgrade]')).toHaveCount(0);
     await pages[0].locator('[data-growth-toggle]').click();
@@ -342,12 +344,17 @@ test('growth room: private cards, refresh, dead selection, reconnect and new rou
     for (const page of pages) await expect(page.locator('#status')).toContainText('连接已断开');
     for (const page of pages) await page.locator('#growth-reconnect').click();
     for (const page of pages) await expect(page.locator('#status')).toContainText('房间码');
+    await pages[0].locator('[data-growth-toggle]').click();
     await expect(pages[0].locator('[data-upgrade]')).toHaveCount(3);
     expect(room.session!.battle.growthV3!.participant(actor.id).progression.selected).toEqual(selected); expect(room.session!.battle.growthV3!.participant(actor.id).progression.offer).toEqual(pending);
     while (room.session!.battle.growthV3!.participant(actor.id).progression.offer) {
       const before = room.session!.battle.growthV3!.participant(actor.id).progression.selected.length;
       await pages[0].locator('[data-upgrade]').first().click();
       await expect.poll(() => room.session!.battle.growthV3!.participant(actor.id).progression.selected.length).toBe(before + 1);
+      if (room.session!.battle.growthV3!.participant(actor.id).progression.offer) {
+        await expect(pages[0].locator('[data-growth-toggle]')).toHaveAttribute('aria-expanded','false');
+        await pages[0].locator('[data-growth-toggle]').click();
+      }
     }
     battle.endMatch(1, 'growth lifecycle fixture');
     await expect(pages[0].locator('#growth-panel')).toContainText('服务器自动发放账号与职业经验');

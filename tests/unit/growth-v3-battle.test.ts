@@ -574,7 +574,7 @@ it.each([['item', 'skill'], ['skill', 'item']] as const)('enforces E before G in
   session.tick();
   const runtime = battle.growthV3!;
   expect(runtime.abilities.actorState('player').active?.definition.id).toBe('as_roll');
-  expect(battle.player.movement.speedScale).toBe(1.5);
+  expect(battle.player.movement.speedScale).toBeCloseTo(1.65);
   expect(runtime.gadgets.inventory('player').cast).toBeNull(); expect(battle.player.itemCharges).toBe(2);
   expect(battle.journal.since(0).some(e => e.kind === 'error' && e.cause === 'busy')).toBe(true);
   expect(session.submit('client', { sequence: 0, input: idleInput(), actions: ['item'] })).toBe(false);

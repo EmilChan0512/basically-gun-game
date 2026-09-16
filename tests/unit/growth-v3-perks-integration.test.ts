@@ -14,7 +14,7 @@ function fixture(mobility:GrowthPerkId='pk_landing',handling:GrowthPerkId='pk_si
 it('pk_crouch boosts grounded crouch walking but never the takeoff tick or airborne movement',()=>{
   const boosted=fixture('pk_crouch'),baseline=fixture();
   for(let i=0;i<6;i++){boosted.r.step({right:true,crouch:true});baseline.r.step({right:true,crouch:true});}
-  expect(boosted.b.player.movement.vx).toBeCloseTo(4.32);expect(baseline.b.player.movement.vx).toBe(4);
+  expect(boosted.b.player.movement.vx).toBeCloseTo(4.752);expect(baseline.b.player.movement.vx).toBeCloseTo(4.4);
   // Release crouch before requesting jump and crouch simultaneously from standing.
   boosted.r.step();baseline.r.step();
   boosted.b.player.movement.reset(120,499.5);baseline.b.player.movement.reset(120,499.5);
@@ -58,12 +58,12 @@ it('pk_supplyrun requires actual map ammunition and respects expiry and the long
   for(let i=0;i<298;i++)r.step();expect(b.frame).toBe(300);
   b.player.movement.reset(20,499.5);r.step();expect(gun.current.ammo+gun.current.reserve).toBe(120);
   expect(p.buffs.supplyrun).toBe(361);expect(p.cooldowns.supplyrun).toBe(661);
-  r.step();expect(b.player.movement.speedScale).toBe(1.1);
-  for(let i=0;i<59;i++)r.step();expect(b.frame).toBe(361);expect(b.player.movement.speedScale).toBe(1);
+  r.step();expect(b.player.movement.speedScale).toBeCloseTo(1.21);
+  for(let i=0;i<59;i++)r.step();expect(b.frame).toBe(361);expect(b.player.movement.speedScale).toBe(1.1);
   b.player.movement.reset(120,499.5);r.step({fire:true,aim:{x:1200,y:100}});
   for(let i=0;i<238;i++)r.step();expect(b.frame).toBe(600);
   b.player.movement.reset(20,499.5);r.step();expect(gun.current.ammo+gun.current.reserve).toBe(120);
-  expect(p.cooldowns.supplyrun).toBe(661);r.step();expect(b.player.movement.speedScale).toBe(1);
+  expect(p.cooldowns.supplyrun).toBe(661);r.step();expect(b.player.movement.speedScale).toBe(1.1);
 });
 
 function shotOffset(r:GrowthRangeSession){
@@ -153,10 +153,10 @@ it.each([[49,54,true],[50,50,false],[75,75,false]] as const)('pk_dressing at %s 
 });
 
 it('pk_sidewalk applies exactly three percent only while the secondary is held',()=>{
-  const {r,b}=fixture('pk_sidewalk');r.step({right:true});expect(b.player.movement.speedScale).toBe(1);
-  b.swap();r.step({right:true});expect(b.player.movement.speedScale).toBe(1.03);
-  for(let i=0;i<8;i++)r.step({right:true});expect(b.player.movement.vx).toBeCloseTo(9.785);
-  b.swap();r.step({right:true});expect(b.player.movement.speedScale).toBe(1);expect(b.player.movement.vx).toBe(9.5);
+  const {r,b}=fixture('pk_sidewalk');r.step({right:true});expect(b.player.movement.speedScale).toBe(1.1);
+  b.swap();r.step({right:true});expect(b.player.movement.speedScale).toBeCloseTo(1.133);
+  for(let i=0;i<8;i++)r.step({right:true});expect(b.player.movement.vx).toBeCloseTo(10.7635);
+  b.swap();r.step({right:true});expect(b.player.movement.speedScale).toBe(1.1);expect(b.player.movement.vx).toBeCloseTo(10.45);
 });
 
 it.each([[false,34],[true,39]] as const)('pk_emptyreload real manual reload (empty=%s) takes %s ticks', (empty,duration)=>{

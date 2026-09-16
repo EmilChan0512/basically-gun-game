@@ -9,10 +9,10 @@ import { grantArmor } from '../../src/shared/simulation/growth-v3/DamageRules';
 it.each([
   ['tank','tk_shield','shotgun',24,false],
   ['tank','tk_shield','shotgun',24,true],
-  ['sniper','sn_relocate','heavy_sniper',45,false],
-  ['sniper','sn_relocate','heavy_sniper',45,true],
-  ['sniper','sn_focus','heavy_sniper',45,false],
-  ['sniper','sn_focus','heavy_sniper',45,true],
+  ['sniper','sn_relocate','heavy_sniper',54,false],
+  ['sniper','sn_relocate','heavy_sniper',54,true],
+  ['sniper','sn_focus','heavy_sniper',54,false],
+  ['sniper','sn_focus','heavy_sniper',54,true],
 ] as const)('%s %s cancellation preserves real %s interval %i (swap=%s)', (classId,abilityId,weaponId,interval,swap)=>{
   const build=changeGrowthAbility(defaultGrowthLoadoutV3(classId),abilityId);build.primary=weaponId;
   const range=new GrowthRangeSession(build,{distance:1800,health:100,armor:0}),b=range.battle;
@@ -353,7 +353,7 @@ it('N19 a full magazine after real shooting and reload stays full with 88 reserv
   b.useSkill();for(let i=0;i<4;i++)range.step();
   expect([gun.current.ammo,gun.current.reserve]).toEqual([30,88]);
   expect(b.growthV3!.abilities.actorState('player')).toMatchObject({charges:0,queue:[377]});
-  expect(b.player.movement.speedScale).toBe(1.25);
+  expect(b.player.movement.speedScale).toBeCloseTo(1.375);
 });
 
 it('N21 full ammo does not claim the box; a partial refill claims once and death cannot reset that ledger',()=>{

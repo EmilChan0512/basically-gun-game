@@ -10,6 +10,8 @@ export type SimulationEvent = { id: number; tick: number;
   soundRecipients?: import('./growth-v3/Sound').GrowthSoundRecipient[];
   sound?: import('./growth-v3/Sound').GrowthSoundSample;
   authoritativeSound?: boolean;
+  /** Growth hit receipt: actual post-defense values, in health points. */
+  impact?: { life: number; armor: number; shield: number; structure: number; headshot: boolean };
   actorId?: string; targetId?: string; amount?: number; weapon?: WeaponId; ability?: string; duration?: number; position?: { x: number; y: number };
   direction?: number; sourceName?: string; cause?: string; emptyMagazine?: boolean };
 /** Bounded presentation journal; simulation state never depends on whether events were read. */

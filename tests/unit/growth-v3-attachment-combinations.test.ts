@@ -31,7 +31,7 @@ it('enumerates every compatible attachment subset and conserves ammunition throu
         const d=resolveGrowthWeapon(id,chosen);
         const fail=(condition:boolean,label:string)=>{if(!condition)throw Error(`${id} ${chosen.join(',')}: ${label}`);};
         fail(d.magazine>=1&&d.magazine<=d.totalAmmo,'magazine bounds');
-        fail(d.speedScale>=.9&&d.speedScale<=1.06,'speed cap');
+        fail(d.speedScale>=.9*(id==='heavy_sniper'?.85:1)&&d.speedScale<=1.06*(id==='heavy_sniper'?.85:1),'speed cap');
         fail(d.maxRange>=base.maxRange*.7&&d.maxRange<=base.maxRange*1.25,'range cap');
         fail(d.spread>=base.spread*.7&&d.visualKick>=base.visualKick*.5&&d.prepare>=base.prepare*.65,'handling floors');
         fail(d.damage===base.damage&&d.interval===base.interval&&d.headMultiplier===base.headMultiplier,'forbidden damage/rate modifiers');
@@ -41,7 +41,7 @@ it('enumerates every compatible attachment subset and conserves ammunition throu
           check(resolved.spread>=base.spread*.7&&resolved.bloomPerShot>=base.bloomPerShot*.7&&resolved.bloomCap>=base.bloomCap*.7,'conditional accuracy floors');
           check(resolved.reload>=base.reload*.7&&resolved.emptyReload>=base.emptyReload*.7&&resolved.prepare>=base.prepare*.65,'conditional timer floors');
           check(resolved.visualKick>=base.visualKick*.5&&resolved.hitKickScale>=.5,'conditional visual floors');
-          check(resolved.speedScale>=.9&&resolved.speedScale<=1.06,'conditional speed limits');
+          check(resolved.speedScale>=.9*(id==='heavy_sniper'?.85:1)&&resolved.speedScale<=1.06*(id==='heavy_sniper'?.85:1),'conditional speed limits');
           const rangeScale=resolved.maxRange/base.maxRange;
           check(rangeScale>=.7-1e-12&&rangeScale<=1.25+1e-12,'conditional range limits');
           check(Math.abs(resolved.falloffStart/base.falloffStart-rangeScale)<1e-12&&Math.abs(resolved.falloffEnd/base.falloffEnd-rangeScale)<1e-12,'all range endpoints scale together');

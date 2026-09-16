@@ -311,10 +311,10 @@ it.each([
   f.b.useSkill();for(let i=0;i<=cast;i++)f.r.step();
   const state=()=>f.b.growthV3!.abilities.actorState('player');
   expect(state().active).toMatchObject({startTick:start,endTick:start+duration});
-  expect(state().queue).toEqual([start+cd]);expect(f.b.player.movement.speedScale).toBeCloseTo(speed);
+  expect(state().queue).toEqual([start+cd]);expect(f.b.player.movement.speedScale).toBeCloseTo(speed*(cls==='assault'?1.1:1));
   if(card==='tk_B1')expect(state().active?.shieldBudget).toBe(150000);
   for(let i=0;i<duration-1;i++)f.r.step();expect(state().active).not.toBeNull();
-  f.r.step();expect(state().active).toBeNull();expect(f.b.player.movement.speedScale).toBe(cls==='tank'?.9:1);
+  f.r.step();expect(state().active).toBeNull();expect(f.b.player.movement.speedScale).toBe(cls==='tank'?.9:cls==='assault'?1.1:1);
   const until=state().queue[0]-f.b.frame;
   for(let i=0;i<until-1;i++)f.r.step();expect(state().charges).toBe(0);
   f.r.step();expect(state().charges).toBe(1);expect(state().queue).toEqual([]);

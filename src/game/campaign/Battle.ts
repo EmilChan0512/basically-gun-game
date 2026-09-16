@@ -49,7 +49,7 @@ export interface Actor {
   brain: { target: string | null; acquired: number; offset: number; lastX: number; stuck: number; state: string; route?: RouteState };
 }
 export interface BattleEvent { frame: number; text: string; team: number }
-export interface ShotEffect { reflected?: boolean; frame: number; actorId?: string; trace: BulletTrace; team: number; damage: number; killed: boolean }
+export interface ShotEffect { presentationId?: string; reflected?: boolean; frame: number; actorId?: string; trace: BulletTrace; team: number; damage: number; killed: boolean }
 export interface Grenade { source: Actor; x: number; y: number; vx: number; vy: number; fuse: number }
 
 export function seededRandom(seed: number): RandomSource {

@@ -103,8 +103,8 @@ it('assault awakening heals 15 on a live kill, speeds movement for 90 ticks and 
   a.life.health=50;
   b.damage(enemies[0],9999,a);expect(a.life.health).toBe(65);expect(p.cooldowns.berserker).toBe(21750);
   b.damage(enemies[1],9999,a);expect(a.life.health).toBe(65);
-  step(b,89);expect(a.movement.speedScale).toBe(1.2);
-  step(b);expect(a.movement.speedScale).toBe(1);
+  step(b,89);expect(a.movement.speedScale).toBeCloseTo(1.32);
+  step(b);expect(a.movement.speedScale).toBe(1.1);
   step(b,59);b.damage(enemies[2],9999,a);expect(a.life.health).toBe(65);
   step(b);b.damage(enemies[3],9999,a);expect(a.life.health).toBe(80);expect(p.cooldowns.berserker).toBe(21900);
 });

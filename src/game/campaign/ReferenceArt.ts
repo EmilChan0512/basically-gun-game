@@ -33,7 +33,7 @@ export class ReferenceArt {
   private contrastEffects = new WeakMap<Phaser.GameObjects.Image, Phaser.FX.ColorMatrix>();
   constructor(private scene: Phaser.Scene) {}
   begin() { this.cursor = 0; this.concealment.begin(); this.muzzles.clear(); for (const image of this.pool) { image.setVisible(false); const effect=this.contrastEffects.get(image); if(effect){effect.active=false;image.preFX?.disable();} } }
-  tracer(graphics: Phaser.GameObjects.Graphics, trace: BulletTrace, actorId: string | undefined, age = 0, weapon = 'm4') {
+  tracer(graphics: Phaser.GameObjects.Graphics, trace: BulletTrace, actorId: string | undefined, age = 0, weapon = 'm4', growth = false) {
     if (age < 0 || age >= 3) return;
     const start = (actorId ? this.muzzles.get(actorId) : undefined) ?? trace.origin;
     // Never draw backwards through a barrel when a wall is inside muzzle pre-travel.
@@ -41,7 +41,7 @@ export class ReferenceArt {
     const fade = 1 - age / 3;
     // Stats_Guns.params: broad translucent line + thin bright core.
     graphics.lineStyle(3.5, weapon === 'dragunov' ? 0xcccccc : 0xffffc4, 0.3 * fade).lineBetween(start.x, start.y, trace.end.x, trace.end.y);
-    graphics.lineStyle(1.5, weapon === 'dragunov' ? 0xeeeeee : 0xffffc4, 0.6 * fade).lineBetween(start.x, start.y, trace.end.x, trace.end.y);
+    graphics.lineStyle(growth ? 1.8 : 1.5, weapon === 'dragunov' ? 0xeeeeee : 0xffffc4, (growth ? .9 : .6) * fade).lineBetween(start.x, start.y, trace.end.x, trace.end.y);
   }
   delivery(targets: DeliveryTarget[] | undefined, positions: ReadonlyMap<string, { x: number; y: number }>, graphics: Phaser.GameObjects.Graphics) {
     for (const target of targets ?? []) {

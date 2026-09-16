@@ -109,7 +109,8 @@ test('eight growth combatants keep private choices and progress through delayed 
       }); sequence++;
     }, 1000 / 30);
     for (let n = 1; n <= 4; n++) {
-      await expect(page.locator('[data-upgrade]')).toHaveCount(3);
+      await page.locator('[data-growth-toggle]').click();
+    await expect(page.locator('[data-upgrade]')).toHaveCount(3);
       const previousBatch = await page.locator('#growth-panel').getAttribute('data-growth-batch');
       await page.locator('[data-upgrade]').first().click();
       await expect.poll(() => battle.growthV3!.participant(battle.player.id).progression.selected.length).toBe(n);

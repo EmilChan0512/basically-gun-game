@@ -43,3 +43,18 @@ body.growth-playing #status{display:none}
 @media(max-width:600px){body.growth-playing #online-game{inset:0;width:100vw!important;height:100dvh!important}#online-game #growth-panel{bottom:90px;max-height:calc(100% - 205px);width:calc(100% - 16px)}body.growth-playing #growth-session-controls{top:65px;left:8px}body.growth-playing #audio-settings{bottom:auto;top:100px;right:8px}#online-game .growth-command-strip{gap:6px}#online-game .growth-build-line{font-size:10px}}
 
 body.growth-playing #online-game #audio-subtitle{bottom:auto;top:78px;z-index:24}
+
+/* Compact progression: detail belongs behind an explicit disclosure. */
+#online-game #growth-panel:not(:has(.growth-cards)) .growth-choice-heading>div{display:none}
+#online-game #growth-panel:not(:has(.growth-cards)) .growth-choice-heading{margin-top:4px;padding-top:4px;border:0;justify-content:flex-start}
+#online-game #growth-panel:not(:has(.growth-cards)) [data-growth-toggle]{border-color:#b2d68b;color:#e4f6bd;background:#283f32;font-weight:700;font-size:13px}
+#online-game .growth-build-line details{margin-left:0;width:100%}
+#online-game .growth-build-line summary{padding:2px 0;font-size:11px}
+#online-game .growth-build-details{margin-top:6px}
+#online-game #growth-panel:not(:has(.growth-cards)) .growth-picks{display:none}
+#online-game #growth-panel:not(:has(.growth-cards)) .growth-awakening{padding-left:8px;font-size:11px}
+#online-game #growth-panel:not(:has(.growth-cards)) .growth-awakening strong{display:none}
+#online-game #growth-panel:not(:has(.growth-cards)) .growth-command-strip{gap:10px}
+body.growth-playing .combat-status{max-width:35%}
+body.growth-playing .hud-ability strong{white-space:pre-line;font-size:14px!important;line-height:1.6}
+@media(max-width:800px){body.growth-playing .hud-ability strong{font-size:10px!important}}

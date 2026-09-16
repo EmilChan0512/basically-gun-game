@@ -13,7 +13,7 @@ export const GROWTH_V3_ABILITIES = {
 } as const;
 export type GrowthAbilityId = keyof typeof GROWTH_V3_ABILITIES;
 export const GROWTH_V3_OPERATORS = {
-  assault: { name: '突击兵', art: 'commando', health: 100, speed: 1, primary: 'm4', abilities: ['as_roll','as_reloadrush'], gadgets: ['as_frag','as_concussion','as_charge'], passive: 'as_sidearm', ultimate: 'as_berserker' },
+  assault: { name: '突击兵', art: 'commando', health: 100, speed: 1.1, primary: 'm4', abilities: ['as_roll','as_reloadrush'], gadgets: ['as_frag','as_concussion','as_charge'], passive: 'as_sidearm', ultimate: 'as_berserker' },
   tank: { name: '重装兵', art: 'tank', health: 115, speed: .9, primary: 'saw', abilities: ['tk_barrier','tk_shield'], gadgets: ['tk_cover','tk_interceptor','tk_plate'], passive: 'tk_brace', ultimate: 'tk_juggernaut' },
   sniper: { name: '狙击手', art: 'assassin', health: 90, speed: 1, primary: 'scout', abilities: ['sn_focus','sn_relocate'], gadgets: ['sn_beacon','sn_emp','sn_decoy'], passive: 'sn_control', ultimate: 'sn_ghost' },
   medic: { name: '医疗兵', art: 'medic', health: 95, speed: 1, primary: 'famas', abilities: ['md_pulse','md_link'], gadgets: ['md_smoke','md_station','md_ammo'], passive: 'md_selfcare', ultimate: 'md_lifeline' },

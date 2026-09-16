@@ -25,6 +25,7 @@ test('illustrated upgrade cards retain keyboard focus during HUD updates and sho
     const room = [...server.rooms.values()][0], battle = room.session!.battle;
     const participant = battle.growthV3!.participant(battle.player.id), growth = participant.progression;
     awardGrowthV3(growth, participant.loadout, 210, battle.frame, seededRandom(7));
+    await page.locator('[data-growth-toggle]').click();
     const choices = page.locator('.growth-cards [data-upgrade]'); await expect(choices).toHaveCount(3);
     const first = await choices.first().elementHandle(); await choices.first().focus();
     grantArmor(participant.armor, 15, 120, battle.frame, battle.player.id);

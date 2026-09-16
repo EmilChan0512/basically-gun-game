@@ -1,0 +1,5 @@
+.growth-feedback{position:absolute;inset:0;pointer-events:none;z-index:26;font-family:'Segoe UI','Microsoft YaHei',sans-serif;text-align:center;color:#fff2d5;text-shadow:0 2px 4px #000}
+.growth-feedback[hidden],.growth-feedback [hidden]{display:none}
+.growth-kill{position:absolute;top:62%;left:25%;width:50%;font-size:19px;font-weight:700;color:#ffc58f}
+.growth-notice{position:absolute;top:18%;left:27%;width:46%;padding:10px 16px;box-sizing:border-box;background:linear-gradient(90deg,transparent,#102735ed 15%,#102735ed 85%,transparent);border-block:1px solid #9edec46b;font-size:16px;line-height:1.5}
+@media(max-width:800px){.growth-notice{left:24%;width:52%;font-size:13px}.growth-kill{font-size:15px}}

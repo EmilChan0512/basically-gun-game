@@ -27,7 +27,7 @@ it.each(legalWeaponBuilds)('exhaustively preserves damage/fire rate/ammo bounds 
     const resolved=resolveGrowthWeapon(id,chosen);
     expect(resolved.damage).toBe(base.damage); expect(resolved.interval).toBe(base.interval); expect(resolved.headMultiplier).toBe(base.headMultiplier);
     expect(resolved.totalAmmo).toBeLessThanOrEqual(base.totalAmmo); expect(resolved.magazine).toBeLessThanOrEqual(resolved.totalAmmo);
-    expect(resolved.speedScale).toBeGreaterThanOrEqual(.9); expect(resolved.speedScale).toBeLessThanOrEqual(1.06);
+    expect(resolved.speedScale).toBeGreaterThanOrEqual(.9*(id==='heavy_sniper'?.85:1)); expect(resolved.speedScale).toBeLessThanOrEqual(1.06*(id==='heavy_sniper'?.85:1));
     expect(resolved.falloffStart).toBeLessThan(resolved.falloffEnd); expect(resolved.falloffEnd).toBeLessThan(resolved.maxRange);
   }
 });

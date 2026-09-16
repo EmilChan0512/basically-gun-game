@@ -150,7 +150,7 @@ it('tk_C1 and tk_C3 provide 30 percent personal and 50 percent explosive defense
 it('md_C1 rescues a critical teammate for eighty and md_C2 boosts both players', () => {
   const f = fixture('medic','md_pulse','md_C1'); f.cast(); expect(f.ally.life.health).toBe(90);
   const g = fixture('medic','md_pulse','md_C2'); g.cast(); g.step();
-  expect(g.b.player.movement.speedScale).toBeCloseTo(1.17); expect(g.ally.movement.speedScale).toBe(1.3);
+  expect(g.b.player.movement.speedScale).toBeCloseTo(1.17); expect(g.ally.movement.speedScale).toBeCloseTo(1.43);
 });
 
 it('md_B2 keeps healing after incoming damage and md_B3 schedules fifteen real pulses', () => {

@@ -435,9 +435,10 @@ export class GrowthBattleCoordinator {
         position: { ...origin }, expiresTick: this.tick + shot.definition.radarTicks, kind: 'shot' });
     const units = this.ports.hitboxes(a.human ? shotFrame : undefined), entities = this.gadgets.entities();
     const groups = new Map<string, PendingDamage>();
-    for (const offset of shot.offsetsDegrees) {
+    const presentationId = `${this.tick}:${this.battle.journal.cursor}`;
+    for (const [pellet, offset] of shot.offsetsDegrees.entries()) {
       const hit = traceGrowthBullet(id, a.team, origin, angle + offset * Math.PI / 180, shot.definition.maxRange, units, entities, this.battle.wall);
-      const effect: ShotEffect = { frame: this.tick, actorId: id, team: a.team, trace: hit.trace, damage: 0, killed: false };
+      const effect: ShotEffect = { presentationId: `${presentationId}:${pellet}`, frame: this.tick, actorId: id, team: a.team, trace: hit.trace, damage: 0, killed: false };
       this.battle.effects.push(effect);
       const targetId = hit.structureId ?? (hit.trace.hit?.type === 'unit' ? hit.trace.hit.target : undefined);
       if (!targetId) continue;
@@ -478,7 +479,11 @@ export class GrowthBattleCoordinator {
       const entity = this.gadgets.entities().find(e => e.id === event.targetId);
       if (source && entity) {
         const amount = this.gadgets.damageEntity(event.targetId, event.hp, source.team, this.tick), ledger = this.coverSupport[event.targetId];
-        if (amount > 0) this.sound('structure-hit', entity.position);
+        if (amount > 0) {
+          this.sound('structure-hit', entity.position);
+          this.battle.journal.emit({ tick: this.tick, kind: 'block', actorId: source.id, targetId: entity.id,
+            position: { ...entity.position }, impact: { life: 0, armor: 0, shield: 0, structure: amount / 1000, headshot: false } });
+        }
         if (amount > 0 && ledger && event.protectedHp && event.hp > 0) {
           ledger.blocked += Math.round(amount * event.protectedHp / event.hp);
           const xp = Math.floor(ledger.blocked / 30000) * 5; ledger.blocked %= 30000;
@@ -541,9 +546,11 @@ export class GrowthBattleCoordinator {
       if (enemy) this.gadgets.onLifeDamage(id);
       addHitRecoil(p.recoil, this.tick, this.actorView(id).hitKickScale);
       const direction = event.origin ? Math.round(Math.atan2(event.origin.y - center.y, event.origin.x - center.x) / (Math.PI / 4)) * 45 : undefined;
-      this.battle.journal.emit({ tick: this.tick, kind: 'damage', actorId: source?.id, targetId: id, amount: amount / 1000, direction });
+      this.battle.journal.emit({ tick: this.tick, kind: 'damage', actorId: source?.id, targetId: id, amount: amount / 1000, direction,
+        impact: { life: amount / 1000, armor: defense.armor / 1000, shield: defense.shield / 1000, structure: 0, headshot: !!event.headshot } });
     }
-    if (defense.armor + defense.personal + defense.shield > 0) this.battle.journal.emit({ tick: this.tick, kind: 'block', actorId: source?.id, targetId: id });
+    if (defense.armor + defense.personal + defense.shield > 0) this.battle.journal.emit({ tick: this.tick, kind: 'block', actorId: source?.id, targetId: id,
+      ...(amount === 0 ? { impact: { life: 0, armor: defense.armor / 1000, shield: defense.shield / 1000, structure: 0, headshot: !!event.headshot } } : {}) });
     if (defense.shield > 0) this.sound('shield-hit', chest(target));
     const killed = target.life.health === 0;
     if (event.effects?.length) { event.effects[0].damage = amount / 1000; event.effects[0].killed = killed; }

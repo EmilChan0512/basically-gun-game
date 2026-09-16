@@ -3,7 +3,7 @@ import { preloadAtrium, drawAtrium } from './client/presentation/AtriumView';
 import { drawSpaceStation, preloadSpaceStation } from './client/presentation/LongshotView';
 import { ViewControls } from './client/presentation/ViewControls';
 import { defaultGrowthLoadoutV3 as defaultGrowthLoadout } from './shared/content/growth-v3/Loadout';
-import { GROWTH_V3_ABILITIES, type GrowthAbilityId } from './shared/content/growth-v3/Operators';
+import { GROWTH_V3_ABILITIES, GROWTH_V3_OPERATORS, type GrowthAbilityId } from './shared/content/growth-v3/Operators';
 import { GROWTH_V3_GADGETS, type GrowthGadgetId } from './shared/content/growth-v3/Gadgets';
 import { GrowthCareerPanel } from './client/presentation/GrowthCareerPanel';
 import { GROWTH_CLASSES, type GrowthClassId } from './shared/content/GrowthCatalog';
@@ -36,6 +36,8 @@ import { skillStatus } from './client/presentation/SkillStatus';
 import { isConcealed } from './shared/simulation/Stealth';
 import { CombatFeedback } from './client/presentation/CombatFeedback';
 import { CombatFeedbackView } from './client/presentation/CombatFeedbackView';
+import { GrowthFeedback } from './client/presentation/GrowthFeedback';
+import { GrowthFeedbackView } from './client/presentation/GrowthFeedbackView';
 import { BattleHUD } from './client/presentation/BattleHUD';
 import { combatMotion, installCombatMotionControl } from './client/presentation/CombatMotion';
 import { GROWTH_V3_PRESETS } from './shared/content/growth-v3/Presets';
@@ -339,14 +341,20 @@ export class OnlineScene extends Phaser.Scene {
   private animationFrame = 0;
   private vision!: VisionOverlay;
   private fire = new FireInput();
+  private uiPointerDown = false;
   private spectateIndex = 0;
   private feedback = new CombatFeedback();
+  private growthFeedback = new GrowthFeedback();
+  private growthFeedbackView?: GrowthFeedbackView;
   private feedbackView?: CombatFeedbackView;
   constructor(private network: BattlePresentationSession) { super('Online'); }
   preload() { preloadReferenceArt(this); preloadAtrium(this); preloadSpaceStation(this); }
   create() {
     this.actorLabels = [];
     this.feedbackView = new CombatFeedbackView(document.getElementById('online-game')!, this.feedback);
+    this.growthFeedbackView = new GrowthFeedbackView(this, document.getElementById('online-game')!, this.growthFeedback);
+    this.events.once('shutdown', () => this.growthFeedbackView?.destroy());
+    this.events.once('destroy', () => this.growthFeedbackView?.destroy());
     const destroyFeedback = () => this.feedbackView?.destroy();
     this.events.once('shutdown', destroyFeedback); this.events.once('destroy', destroyFeedback);
     if (document.getElementById('lobby')?.contains(document.activeElement)) (document.activeElement as HTMLElement)?.blur();
@@ -373,6 +381,10 @@ export class OnlineScene extends Phaser.Scene {
     const destroyHud = () => this.hud.destroy();
     this.events.once('shutdown', destroyHud); this.events.once('destroy', destroyHud);
     const down = (e: KeyboardEvent) => {
+      if (e.code === 'KeyU' && this.network.state?.growthV3 && !(e.target as HTMLElement)?.closest('input,textarea,select')) {
+        e.preventDefault(); if (!e.repeat) document.querySelector<HTMLButtonElement>('[data-growth-toggle]')?.click();
+        this.keys.clear(); this.fire.clear(); this.network.clearActions(); return;
+      }
       if (!document.getElementById('online-preflight')?.hidden || (e.target as HTMLElement)?.closest('input,button,select,a')) return;
       if (e.code === 'Tab' && this.feedback.dead) { e.preventDefault(); if (!e.repeat) this.feedback.cycle(); return; }
       if (e.code === 'Tab' && !this.network.state?.actorId) { e.preventDefault(); if (!e.repeat) this.spectateIndex++; return; }
@@ -392,6 +404,12 @@ export class OnlineScene extends Phaser.Scene {
     };
     const focus = (event: FocusEvent) => { if ((event.target as HTMLElement)?.closest('#lobby, #online-account, #online-preflight, #growth-panel')) blur(); };
     window.addEventListener('focusin', focus);
+    const uiDown = (event: PointerEvent) => {
+      if ((event.target as HTMLElement)?.closest('#growth-panel')) { this.uiPointerDown = true; this.fire.clear(); this.network.clearActions(); }
+    };
+    const uiUp = () => { if (this.uiPointerDown) this.fire.clear(); this.uiPointerDown = false; };
+    window.addEventListener('pointerdown', uiDown, true); window.addEventListener('pointerup', uiUp, true);
+    this.events.once('shutdown', () => { window.removeEventListener('pointerdown', uiDown, true); window.removeEventListener('pointerup', uiUp, true); });
     const surface = document.getElementById('online-game')!;
     let surfaceSize = '';
     const resize = new ResizeObserver(() => {
@@ -423,6 +441,9 @@ export class OnlineScene extends Phaser.Scene {
     this.feedbackView?.render(!editing && !message.result, mapView ? '地图总览' : followed?.id === self?.id ? undefined : message.poses.find(p => p.id === followed?.id)?.name);
     this.audioPresentation.accept(`${message.roomId}:${message.round}:${this.network.audioGeneration}`, message.state.frame, message.events, message.state.actors,
       message.actorId ?? followed?.id, message.result?.winner, !editing && this.network.socket.readyState === WebSocket.OPEN && now - this.network.lastStateAt < 500);
+    const feedbackActive = !editing && !message.result && !document.hidden && this.network.socket.readyState === WebSocket.OPEN && now - this.network.lastStateAt < 500;
+    this.growthFeedback.accept(message, now, `${this.network.audioGeneration}:${gameAudio.resumeGeneration}`, feedbackActive);
+    for (const cue of this.growthFeedback.cues) gameAudio.cue(cue.clip, cue);
     // A hidden canvas has no usable pointer transform. Keep the authoritative
     // aim while browsing equipment and send neutral input to stop movement.
     const pointerAim = editing ? undefined
@@ -434,7 +455,9 @@ export class OnlineScene extends Phaser.Scene {
     while (this.elapsed >= NETWORK_TICK_MS) {
       this.elapsed -= NETWORK_TICK_MS;
       if (editing) { this.keys.clear(); this.fire.clear(); this.network.clearActions(); }
-      if (self) this.network.input({ left: this.keys.has('KeyA'), right: this.keys.has('KeyD'), crouch: this.keys.has('KeyS'), jump: this.keys.has('Space') || this.keys.has('KeyW'), fire: !editing && document.hasFocus() && this.fire.sample(this.input.activePointer.leftButtonDown(), now), aim: { x: aim.x, y: aim.y } });
+      const selecting = this.uiPointerDown || !!document.querySelector('#growth-panel .growth-cards');
+      if (selecting) this.fire.clear();
+      if (self) this.network.input({ left: this.keys.has('KeyA'), right: this.keys.has('KeyD'), crouch: this.keys.has('KeyS'), jump: this.keys.has('Space') || this.keys.has('KeyW'), fire: !editing && !selecting && document.hasFocus() && this.fire.sample(this.input.activePointer.leftButtonDown(), now), aim: { x: aim.x, y: aim.y } });
     }
     // Take an immutable render position AFTER input. Camera, sprite and vision
     // must all consume the same position within this render frame.
@@ -444,9 +467,10 @@ export class OnlineScene extends Phaser.Scene {
     const wave = message.state.waves;
     const heading = wave ? `第${wave.wave}/${wave.scenario.waves.length}波 · 待增援${wave.remaining} · 团队复活${wave.revives} · ${wave.spawnBlocked ? '增援入口受阻，请离开入口' : wave.phase === 'intermission' ? '休整中' : '战斗中'}` : message.state.scores.join(' : ');
     this.hud.render({ mode: this.network.room?.debug ? '公共调试 · 无时限' : `${message.growthV3?.preset === 'short' ? '成长·10分钟实验 / ' : message.growthV3 || message.growth ? '成长 / ' : ''}${message.mode === 'coop' ? '合作生存' : message.mode === 'dom' ? '据点争夺' : message.mode === 'ctf' ? '公文包争夺' : '团队交火'}`,
-      objective: wave ? heading : message.mode === 'ctf' ? '夺敌方公文包 → 持副武器返回己方出生点 · 交付3次获胜' : '共享视野 · 敌方阴影不可见', seconds: message.state.seconds, scores: message.state.scores,
+      objective: wave ? heading : message.mode === 'ctf' ? '夺敌方公文包 → 持副武器返回己方出生点 · 交付3次获胜' : message.growthV3 ? message.mode === 'dom' ? '占领据点，持续获得团队分数' : '击杀敌人得分 · 比赛结束时高分方获胜' : '共享视野 · 敌方阴影不可见', seconds: message.state.seconds, scores: message.state.scores,
+      growth: !!message.growthV3,
       health: self?.life.health ?? 0, maxHealth: self?.maxHealth ?? 100, alive: self?.life.alive ?? false, armor: message.growthV3?.armor ?? message.growth?.armor ?? 0,
-      operator: self?.growth ? GROWTH_CLASSES[self.growth.classId].name : self?.classId ? CLASSES[self.classId].name : 'OPERATOR',
+      operator: self?.growthV3 ? GROWTH_V3_OPERATORS[self.growthV3.classId].name : self?.growth ? GROWTH_CLASSES[self.growth.classId].name : self?.classId ? CLASSES[self.classId].name : 'OPERATOR',
       weapon: self ? equipmentText(self) : '正在观察战场', gadgetId: self?.growthV3?.gadgetId, ability: self ? abilityText(self, message.state.growthWorld?.entities.find(e => e.gadgetId === 'as_charge' && e.sourceId === self.id)) : `跟随 ${message.poses.find(p => p.id === followed?.id)?.name ?? '等待角色'}`,
       reload: self?.reload ?? 0, cooldown: self?.skillCooldown ?? 0, spectator: !self, networkStalled: now - this.network.lastStateAt > 500 });
     if (this.feedback.frozen && !message.result) return;
@@ -476,12 +500,12 @@ export class OnlineScene extends Phaser.Scene {
         }).setOrigin(.5).setDepth(2);
         labelIndex++;
         const marker = actor.id === message.actorId ? '我' : friendly ? '友' : '敌';
-        const name = this.network.room?.players.find(p => p.id === actor.id)?.name ?? actor.id;
+        const name = pose.name || actor.id;
         label.setVisible(true).setPosition(position.x, position.y - (motion.crouching ? 72 : 92))
           .setText(`【${marker}】${name}`).setColor(friendly ? '#88e8df' : '#ff7777');
       }
       this.rig.soldier(position.x, position.y, motion.crouching, motion.vx, motion.jumping, this.animationFrame, actor.id === message.actorId ? aim : pose.aim, actor.weapon, friendly ? 0xd5f7f4 : 0xffcfcf, actor.life.alive, actor.reload, this.network.shots.visible(now).some(e => !e.reflected && e.actorId === actor.id), actor.offhand, actor.classId ?? 'medic', actor.id,
-        isConcealed({ kit: actor.skill ? { skill: actor.skill } : null, skillFrames: actor.skillFrames, stealthFrames: actor.stealthFrames }), actor.growthV3 ? 0 : this.feedback.flinch(actor.id), actor.growthV3?.flashScale ?? 1,
+        isConcealed({ kit: actor.skill ? { skill: actor.skill } : null, skillFrames: actor.skillFrames, stealthFrames: actor.stealthFrames }), actor.growthV3 ? 0 : this.feedback.flinch(actor.id), actor.growthV3 ? actor.growthV3.flashScale * 1.15 : 1,
         actor.growthV3 ? actor.growthV3.recoilDegrees * combatMotion.scale : undefined,
         !!self?.growthV3?.contrast && actor.team !== self.team && actor.life.alive);
     }
@@ -494,7 +518,13 @@ export class OnlineScene extends Phaser.Scene {
       const fraction = (message.state.frame - burst.frame) / 18;
       this.graphics.lineStyle(3, burst.color, 1 - fraction).strokeCircle(burst.x, burst.y, burst.radius * (.3 + fraction * .7));
     }
-    for (const effect of this.network.shots.visible(now)) this.rig.tracer(this.graphics, effect.trace, effect.reflected ? undefined : effect.actorId, Math.max(0, message.state.frame - effect.frame), message.state.actors.find(a => a.id === effect.actorId)?.weapon);
+    for (const effect of this.network.shots.visible(now)) {
+      const growth = !!message.state.growthWorld;
+      const age = growth ? this.network.shots.visualAge(effect, now) : Math.max(0, message.state.frame - effect.frame);
+      this.rig.tracer(this.graphics, effect.trace, effect.reflected ? undefined : effect.actorId, age, message.state.actors.find(a => a.id === effect.actorId)?.weapon, growth);
+      if (growth && effect.trace.hit) this.graphics.lineStyle(2, 0xffda94, Math.max(0,1-age/3)).strokeCircle(effect.trace.end.x,effect.trace.end.y,3+age);
+    }
+    this.growthFeedbackView?.render(message, now, this.graphics, positions, aim, feedbackActive);
     const team = this.network.room?.players.find(p => p.id === this.network.playerId)?.team ?? self?.team ?? 1;
     this.vision.draw(message.state.actors.filter(a => a.team === team && a.life.alive)
       .map(a => ({ id: a.id, ...(positions.get(a.id) ?? a) })), now,

@@ -27,6 +27,30 @@ export function visibleState(message: StateMessage, visible: ReadonlySet<string>
       } } : {}) },
     poses: message.poses.filter(p => visible.has(p.id)),
     effects: message.effects.flatMap(e => {
+      if (world) {
+        // A hidden muzzle does not hide a bullet crossing shared vision. Each
+        // disconnected visible interval is sent without the hidden geometry.
+        const { origin, end } = e.trace, length = Math.hypot(end.x-origin.x,end.y-origin.y);
+        const count = Math.max(1,Math.ceil(length/16));
+        const spans: { start: {x:number;y:number}; end: {x:number;y:number} }[] = [];
+        let span: typeof spans[number] | undefined;
+        for(let i=0;i<=count;i++) {
+          const t=i/count, p={x:origin.x+(end.x-origin.x)*t,y:origin.y+(end.y-origin.y)*t};
+          if(pointVisible(p)) { if(!span) { span={start:p,end:p}; spans.push(span); } else span.end=p; }
+          else span=undefined;
+        }
+        return spans.filter(s=>Math.hypot(s.end.x-s.start.x,s.end.y-s.start.y)>0).slice(0,8).map((s,index)=>{
+          const originalStart=s.start.x===origin.x&&s.start.y===origin.y;
+          const originalEnd=s.end.x===end.x&&s.end.y===end.y;
+          const sourceVisible=originalStart&&!!e.actorId&&visible.has(e.actorId);
+          const revealHit=originalEnd&&hitVisible(e.trace.hit)&&hitVisible(e.trace.initialHit);
+          const distance=Math.hypot(s.end.x-s.start.x,s.end.y-s.start.y);
+          return { ...e, presentationId:e.presentationId?`${e.presentationId}:${index}`:undefined, actorId:sourceVisible?e.actorId:undefined, team:sourceVisible?e.team:0,
+            damage:revealHit?e.damage:0,killed:revealHit?e.killed:false,
+            trace:{...e.trace,origin:s.start,end:s.end,maxDistance:distance,steps:Math.ceil(distance/10),preSteps:0,
+              hit:revealHit?e.trace.hit:null,initialHit:revealHit?e.trace.initialHit:null,headMarked:revealHit?e.trace.headMarked:false} };
+        });
+      }
       if (!e.actorId || !visible.has(e.actorId) || !pointVisible(e.trace.origin)) return [];
       // Keep the visible prefix of a shot even when its target is concealed.
       const { origin, end } = e.trace;
@@ -44,9 +68,11 @@ export function visibleState(message: StateMessage, visible: ReadonlySet<string>
         ...(redact ? { hit: null, initialHit: null, headMarked: false, steps: Math.ceil(Math.hypot(endpoint.x-origin.x,endpoint.y-origin.y)/10) } : {}) } }];
     }),
     bursts: message.bursts.filter(p => pointVisible(p)), grenades: message.grenades.filter(p => pointVisible(p)), projectiles: message.projectiles?.filter(p => pointVisible(p)),
-    events: message.events.filter(e => e.kind !== 'tactical-sound' && e.kind !== 'intelPing' && !worldEvents.has(e.kind)).filter(e => (e.targetId === message.actorId && ['damage', 'death'].includes(e.kind)) || (!e.position || pointVisible(e.position)) && (e.kind.startsWith('objective-') || e.kind === 'result'
-      || (!e.actorId || visible.has(e.actorId)) && (!e.targetId || visible.has(e.targetId))))
-      .map(e => e.actorId && !visible.has(e.actorId) ? { ...e, actorId: undefined, position: undefined } : e)
+    events: message.events.filter(e => e.kind !== 'tactical-sound' && e.kind !== 'intelPing' && !worldEvents.has(e.kind)).filter(e => (world && e.kind === 'death' && e.actorId === message.actorId) || (e.targetId === message.actorId && ['damage', 'death'].includes(e.kind)) || (!e.position || pointVisible(e.position)) && (e.kind.startsWith('objective-') || e.kind === 'result'
+      || (!e.actorId || visible.has(e.actorId)) && (!e.targetId || visible.has(e.targetId) || !!e.impact?.structure && !!e.position && pointVisible(e.position))))
+      .map(e => world && e.kind === 'death' && e.actorId === message.actorId && e.targetId && !visible.has(e.targetId)
+        ? { id:e.id,tick:e.tick,kind:e.kind,actorId:e.actorId }
+        : e.actorId && !visible.has(e.actorId) ? { ...e, actorId: undefined, position: undefined } : e)
       .concat(message.events.filter(e=>worldEvents.has(e.kind)&&!!e.position&&pointVisible(e.position,e.kind==='smokeStarted'||e.kind==='smokeEnded')).map(redactIds))
       .concat(message.events.filter(e=>e.kind==='intelPing'&&e.team===team).map(e=>({id:e.id,tick:e.tick,kind:e.kind,
         position:e.position?{...e.position}:undefined,team:e.team,expiresTick:e.expiresTick})))

@@ -27,7 +27,7 @@ function fixture(cls:GrowthClassId,id:GrowthAbilityId,wall=false){
 
 it.each(cases)('%s %s applies active acceleration and terminal speed to actual movement',(cls,id,cast,speed)=>{
   const f=fixture(cls,id);f.b.useSkill();f.step(1+cast);
-  const scale=(cls==='tank'?.9:1)*speed,start=f.m.x;
+  const scale=(cls==='tank'?.9:cls==='assault'?1.1:1)*speed,start=f.m.x;
   f.step(1,true);expect(f.m.vx).toBeCloseTo(1.8*scale,8);expect(f.m.x-start).toBeCloseTo(1.8*scale,8);
   f.step(5,true);expect(f.m.vx).toBeCloseTo(9.5*scale,8);
   expect(f.b.growthV3!.abilities.actorState(f.b.player.id).active).not.toBeNull();
@@ -36,7 +36,7 @@ it.each(cases)('%s %s applies active acceleration and terminal speed to actual m
 it.each(cases.filter(row=>row[2]>0))('%s %s applies 0.75 windup movement before the active modifier',(cls,id)=>{
   const f=fixture(cls,id);f.b.useSkill();f.step(1,true);
   expect(f.b.growthV3!.abilities.actorState(f.b.player.id).pending).not.toBeNull();
-  expect(f.m.vx).toBeCloseTo(1.8*(cls==='tank'?.9:1)*.75,8);
+  expect(f.m.vx).toBeCloseTo(1.8*(cls==='tank'?.9:cls==='assault'?1.1:1)*.75,8);
 });
 
 it.each(['as_roll','as_reloadrush'] as const)('%s cannot cross an actual tall solid wall',id=>{

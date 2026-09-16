@@ -55,6 +55,7 @@ test('production growth: eight clients, private offers and simulation budget', a
       const p=battle.growthV3!.participant(actor.id);
       awardGrowthV3(p.progression,p.loadout,1200,battle.frame,seededRandom(2));
     }
+    await page.locator('[data-growth-toggle]').click();
     await expect(page.locator('[data-upgrade]')).toHaveCount(3);
     let sequence = 0;
     timer = setInterval(() => {

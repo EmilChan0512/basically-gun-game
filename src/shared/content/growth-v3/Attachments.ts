@@ -105,7 +105,7 @@ export function resolveGrowthWeapon(id: GrowthWeaponId, attachments: readonly Gr
     spread: base.spread * scale('spread', .7), bloomPerShot: base.bloomPerShot * scale('bloomPerShot', .7),
     bloomCap: base.bloomCap * scale('bloomCap', .7), recoverPerTick: base.recoverPerTick * scale('recoverPerTick'),
     visualKick: base.visualKick * scale('visualKick', .5), hitKickScale: scale('hitKick', .5),
-    fanDegrees: base.fanDegrees * scale('fanDegrees'), speedScale: scale('speed', .9, 1.06),
+    fanDegrees: base.fanDegrees * scale('fanDegrees'), speedScale: (id === 'heavy_sniper' ? .85 : 1) * scale('speed', .9, 1.06),
     reload: base.reload * scale('reload', .7), emptyReload: base.emptyReload * scale('reload', .7),
     prepare: base.prepare * scale('prepare', .65),
     falloffStart: base.falloffStart * rangeScale, falloffEnd: base.falloffEnd * rangeScale, maxRange: base.maxRange * rangeScale,
