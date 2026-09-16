@@ -60,6 +60,8 @@ export function startOnline() {
   document.body.innerHTML = `<main class="online-app"><header class="online-header"><a class="online-brand" href="/"><span class="online-mark">S</span><span>PROJECT STRIKE<small>ONLINE OPERATIONS</small></span></a><nav aria-label="联机主导航"><a id="online-lobby-nav" href="#lobby">联机大厅</a><a href="/?offline">单机免登录</a><a href="/?lab">成长实验室</a><a id="online-armory-nav" href="#loadout">出战配装</a></nav><span id="online-profile-chip">游客档案</span></header><p id="status" role="status">连接服务器后可创建或加入房间。</p><div id="online-lobby-page"><div class="online-lobby-title"><p class="arsenal-eyebrow">MULTIPLAYER / BRIEFING</p><h1>联机大厅</h1><p>整备你的装备，和队友一起出发。</p></div><section id="online-account"><h2>联机账号</h2><p>账号等级、金币和装备权益由服务器保存。单机可免登录，离线进度不计入联网资产。</p><div class="loadout" id="account-login"><label>账号<input id="account-name" autocomplete="username" maxlength="24"></label><label>密码<input id="account-password" type="password" autocomplete="current-password" minlength="8" maxlength="128"></label><button id="account-register">注册联机账号</button><button id="account-signin">登录</button></div><p id="account-status" role="status">普通联机需登录；公共调试房间可直接试玩。</p><button id="account-logout" hidden>退出账号</button><button id="online-leave" hidden>离开房间 / 返回配装</button></section><div id="online-loadout-brief"></div><section id="online-connection"><h2>加入行动</h2><div class="loadout"><label>服务器<input id="server" value="ws://43.142.165.82:4180"></label><label>调试昵称<input id="name" value="玩家" maxlength="24"></label><label>房间码<input id="code"></label></div><div class="online-room-actions"><button id="create">创建房间</button><button id="create-growth">创建成长对战房间</button><button id="join">加入房间</button><button id="join-debug">加入公共调试房间</button><button id="reconnect">断线重连</button></div></section><div id="lobby"></div><div id="growth-session-controls" hidden><button id="growth-leave">离开成长房间</button><button id="growth-reconnect">断线重连</button></div><p id="online-hud" aria-live="off"></p><div id="online-game" hidden><section id="growth-panel" hidden aria-label="局内成长"></section></div><p class="online-keys">A/D移动 · 空格跳跃 · S蹲伏 · 鼠标射击 · Q切枪 · R换弹 · E技能 · G道具</p></div><section id="online-preflight" hidden><div class="armory-rule-tabs" aria-label="配装规则"><button id="armory-rule-growth" aria-pressed="true">成长对战</button><button id="armory-rule-classic" aria-pressed="false">经典配装 · 装备与技能</button></div><p id="growth-armory-login" hidden>登录后可配置成长职业、武器、技能与成长池。<a href="#lobby">前往大厅登录 →</a></p><div id="growth-career-section" hidden><div id="growth-career-content"></div></div><div id="preflight-armory"></div></section></main>`;
   const el = (id: string) => document.getElementById(id)!;
   installCombatMotionControl(el('growth-session-controls'));
+  const sessionCode = document.createElement('span'); sessionCode.id = 'online-session-code';
+  el('growth-session-controls').prepend(sessionCode);
   el('online-game').style.position = 'relative';
   const radar = document.createElement('div'); radar.id = 'online-radar'; radar.hidden = true;
   radar.style.cssText = 'position:absolute;right:12px;top:12px;width:230px;max-width:30%;z-index:2;pointer-events:none';
@@ -154,6 +156,10 @@ export function startOnline() {
     current.onChange = () => {
       if (network !== current) return;
       const profile = current.profile, room = current.room;
+      const codeInput = el('code') as HTMLInputElement;
+      codeInput.readOnly = !!room;
+      if (room) codeInput.value = room.debug ? '' : room.id;
+      sessionCode.textContent = room ? room.debug ? '公共调试房间' : `房间码 ${room.id}` : '';
       growthPanel.render(room ? current.state : null);
       el('online-game').hidden = !room || !current.state;
       if (room) armoryRule = room.rules === 'growth' ? 'growth' : 'classic';
@@ -205,6 +211,11 @@ export function startOnline() {
         signature = key;
         el('status').textContent = `${room.debug ? '公共调试房间 · 无时限' : `房间码 ${room.id}`} · ${room.players.length}/8`;
         el('lobby').replaceChildren();
+        if (!room.debug) {
+          const roomCode = document.createElement('p'); roomCode.id = 'online-room-code';
+          roomCode.textContent = `房间码 ${room.id} · 发给好友，在同一服务器输入此码加入`;
+          el('lobby').append(roomCode);
+        }
         for (const player of room.players) { const line = document.createElement('p'); line.textContent = `${player.team === 1 ? '蓝队' : '红队'} · ${player.name} · ${room.rules === 'growth' ? `${GROWTH_CLASSES[player.growthLoadout?.classId ?? 'assault'].name} · 成长对战` : CLASSES[player.equipment.classId ?? 'medic'].name} · ${room.debug ? '调试中' : player.spectator ? '观战（下局参战）' : player.ready ? '已准备' : '未准备'}`; el('lobby').append(line); }
         if (room.phase === 'lobby' || room.debug) {
           if (!room.debug) {
@@ -293,6 +304,7 @@ export function startOnline() {
     el('account-login').hidden = false; el('account-logout').hidden = true; el('online-leave').hidden = true;
     historyReplace('#lobby'); syncView(); el('online-profile-chip').textContent = '游客档案'; el('lobby').replaceChildren(); el('online-hud').textContent = ''; radar.hidden = true;
     el('account-status').textContent = '已退出联机账号'; el('status').textContent = '请登录或加入公共调试房间。';
+    (el('code') as HTMLInputElement).readOnly = false; sessionCode.textContent = '';
     for (const id of ['create', 'create-growth', 'join', 'join-debug', 'server', 'account-signin', 'account-register']) (el(id) as HTMLButtonElement).disabled = false;
     renderPreflight();
   };

@@ -11,7 +11,15 @@ test('illustrated upgrade cards retain keyboard focus during HUD updates and sho
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
   try {
     await page.goto('/?online'); await page.locator('#server').fill(`ws://127.0.0.1:${address.port}`);
-    await registerOnline(page, 'HUD Pilot'); await page.locator('#create-growth').click(); await page.locator('#online-start').click();
+    await registerOnline(page, 'HUD Pilot'); await page.locator('#create-growth').click();
+    await expect(page.locator('#online-room-code')).toBeVisible();
+    const roomCode = [...server.rooms.keys()][0];
+    await expect(page.locator('#online-room-code')).toContainText(roomCode);
+    await expect(page.locator('#code')).toHaveValue(roomCode);
+    await expect(page.locator('#code')).toHaveAttribute('readonly', '');
+    await page.locator('#online-start').click();
+    await expect(page.locator('#online-session-code')).toBeVisible();
+    await expect(page.locator('#online-session-code')).toHaveText(`房间码 ${roomCode}`);
     await expect(page.locator('#online-game')).toHaveAttribute('aria-busy', 'false');
     await expect(page.locator('.tactical-hud')).toBeVisible();
     const room = [...server.rooms.values()][0], battle = room.session!.battle;
@@ -27,6 +35,7 @@ test('illustrated upgrade cards retain keyboard focus during HUD updates and sho
     await page.screenshot({ path: 'artifacts/qa/battle-hud-growth-cards.png', fullPage: true });
     for (const width of [1280, 390]) {
       await page.setViewportSize({ width, height: width === 1280 ? 720 : 844 });
+      await expect(page.locator('#online-session-code')).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       if (width === 1280) await expect.poll(async () => { const box = await page.locator('.growth-choice-footer').boundingBox(); return box!.y + box!.height; }).toBeLessThanOrEqual(720);
       await page.screenshot({ path: `artifacts/qa/battle-hud-cards-${width}.png`, fullPage: true });
@@ -49,6 +58,8 @@ test('illustrated upgrade cards retain keyboard focus during HUD updates and sho
     await expect(page.locator('.tactical-hud, .combat-feedback')).toHaveCount(0);
     await expect(page.locator('#growth-panel')).toBeHidden();
     await expect(page.locator('#create-growth')).toBeVisible();
+    await expect(page.locator('#online-room-code')).toHaveCount(0);
+    await expect(page.locator('#code')).toBeEditable();
     expect(errors).toEqual([]);
   } finally { await server.close(); }
 });
