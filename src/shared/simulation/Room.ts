@@ -17,6 +17,7 @@ export class Room {
   session: MatchSession | null = null;
   hostId: string | null = null;
   round = 0;
+  fillBots = false;
   growthPreset: GrowthPresetId = 'standard';
   constructor(readonly id: string, public mapId = 'hijack', public mode: import('./ModeRules').ModeId = 'tdm', readonly debug = false, readonly rules: 'classic' | 'growth' = 'classic') {
     if (!['classic', 'growth'].includes(rules) || rules === 'growth' && (debug || !['tdm', 'dom', 'ctf'].includes(mode))) throw Error('Invalid room rules');
@@ -43,13 +44,15 @@ export class Room {
       if (equipment) this.session.reconfigureDebugPlayer(id, equipment);
     }
   }
-  configure(id: string, mapId: string, mode: import('./ModeRules').ModeId, preset: unknown = this.growthPreset) {
+  configure(id: string, mapId: string, mode: import('./ModeRules').ModeId, preset: unknown = this.growthPreset, fillBots: unknown = this.fillBots) {
     if (this.rules === 'growth' && !['tdm', 'dom', 'ctf'].includes(mode)) throw Error('成长模式支持团队交火、据点争夺和公文包争夺');
     if (id !== this.hostId || this.session) throw Error('Only lobby host can configure');
+    if (typeof fillBots !== 'boolean') throw Error('Invalid bot configuration');
     const selected = validateGrowthPreset(preset);
     if(this.rules!=='growth'&&selected!=='standard')throw Error('实验短局仅限成长模式');
     customMatch(mapId, mode); this.mapId = mapId; this.mode = mode;
     this.growthPreset = selected;
+    this.fillBots = mode !== 'coop' && fillBots;
     [...this.players.values()].forEach((player, i) => { player.ready = false; player.team = mode === 'coop' || i % 2 === 0 ? 1 : 2; });
   }
   ready(id: string, ready: boolean) {
@@ -72,21 +75,30 @@ export class Room {
     player.growthLoadout = loadout; player.ready = false;
   }
   start(id: string, seed: number) {
-    if (id !== this.hostId || this.session || this.players.size < (this.mode === 'coop' || this.rules === 'growth' ? 1 : 2) || [...this.players.values()].some(p => !p.ready || !p.connected)) throw Error('Room not ready');
+    if (id !== this.hostId || this.session || this.players.size < (this.mode === 'coop' || this.rules === 'growth' || this.fillBots ? 1 : 2) || [...this.players.values()].some(p => !p.ready || !p.connected)) throw Error('Room not ready');
     const map = customMatch(this.mapId, this.mode);
     const roster = [...this.players.values()].sort((a, b) => a.team - b.team);
     const blue = roster.filter(p => p.team === 1).length, red = roster.length - blue;
-    const soloGrowth = this.rules === 'growth' && roster.length === 1;
+    const soloGrowth = !this.fillBots && this.rules === 'growth' && roster.length === 1;
     // A lone returning spectator may be assigned red. Normalize the solo seat.
     if (soloGrowth) roster[0].team = 1;
-    if (!soloGrowth && (!blue || (this.mode !== 'coop' && !red))) throw Error('Both teams required');
-    const battle = new Battle({ ...map, ...(this.rules === 'growth' ? { growthPreset: this.growthPreset, seconds: GROWTH_V3_PRESETS[this.growthPreset].matchTicks / 30, goal: this.mode === 'ctf' ? 3 : Number.MAX_SAFE_INTEGER } : {}), allies: soloGrowth ? 0 : blue - 1, enemies: soloGrowth ? 1 : red }, 'normal', 'm4', seededRandom(seed), null, `${this.id}:${++this.round}`);
+    if (!soloGrowth && !this.fillBots && (!blue || (this.mode !== 'coop' && !red))) throw Error('Both teams required');
+    const battle = new Battle({ ...map, ...(this.rules === 'growth' ? { growthPreset: this.growthPreset, seconds: GROWTH_V3_PRESETS[this.growthPreset].matchTicks / 30, goal: this.mode === 'ctf' ? 3 : Number.MAX_SAFE_INTEGER } : {}), allies: this.fillBots ? Math.max(4, blue) - 1 : soloGrowth ? 0 : blue - 1, enemies: this.fillBots ? Math.max(4, red) : soloGrowth ? 1 : red }, 'normal', 'm4', seededRandom(seed), null, `${this.id}:${++this.round}`);
     this.session = new MatchSession(battle);
     const growthBuilds: Record<string, GrowthLoadout> = {};
-    roster.forEach((player, i) => { player.spectator = false; battle.actors[i].name = player.name;
-      if (player.growthLoadout?.title && player.growthLoadout.title !== 'none') battle.actors[i].name += ` · ${GROWTH_ACHIEVEMENTS[player.growthLoadout.title].name.split(' · ')[1]}`;
-      if (this.rules === 'growth') growthBuilds[battle.actors[i].id] = player.growthLoadout!; else battle.equipActor(battle.actors[i], player.equipment);
-      this.session!.bind(player.id, battle.actors[i].id); });
+    // Assign by team so bot-filled blue seats never receive red human controllers.
+    battle.actors.forEach(actor => { actor.human = false; });
+    roster.forEach(player => {
+      const actor = battle.actors.find(actor => actor.team === player.team && !actor.human)!;
+      player.spectator = false; actor.name = player.name;
+      if (player.growthLoadout?.title && player.growthLoadout.title !== 'none') actor.name += ` · ${GROWTH_ACHIEVEMENTS[player.growthLoadout.title].name.split(' · ')[1]}`;
+      if (this.rules === 'growth') growthBuilds[actor.id] = player.growthLoadout!; else battle.equipActor(actor, player.equipment);
+      this.session!.bind(player.id, actor.id);
+    });
+    if (this.fillBots) battle.actors.filter(actor => !actor.human).forEach((actor, i) => {
+      actor.name = `${actor.team === 1 ? '蓝队' : '红队'}机器人 ${i + 1}`;
+      if (this.rules === 'growth') growthBuilds[actor.id] = defaultGrowthLoadout((['assault', 'tank', 'sniper', 'medic'] as const)[i % 4]);
+    });
     if (soloGrowth) {
       const bot = battle.actors[1], classId = (['assault', 'tank', 'sniper', 'medic'] as const)[(this.round - 1) % 4];
       bot.name = `${classId} 训练机器人`; growthBuilds[bot.id] = defaultGrowthLoadout(classId);
@@ -119,7 +131,7 @@ export class Room {
     if (this.debug && !this.players.size) this.session = null;
     if (this.hostId === id) this.hostId = this.players.keys().next().value ?? null;
     const teams = new Set([...this.players.values()].filter(p => !p.spectator).map(p => p.team));
-    if (this.rules === 'growth' && this.session && teams.size) {
+    if ((this.rules === 'growth' || this.fillBots) && this.session && teams.size) {
       for (const actor of this.session.battle.actors) if (!actor.human) teams.add(actor.team);
     }
     if (!this.debug && this.session && this.mode !== 'coop' && teams.size < 2) this.session.battle.endMatch(teams.size ? [...teams][0] : null, '对方队伍已全部离场');
@@ -130,5 +142,5 @@ export class Room {
     for (const [key, player] of this.players) { if (!player.connected) this.players.delete(key); else { player.ready = false; player.spectator = false; } }
     this.session = null;
   }
-  lobby() { return { id: this.id, rules: this.rules, growthPreset: this.rules === 'growth' ? this.growthPreset : undefined, debug: this.debug, instanceId: this.instanceId, round: this.round, hostId: this.hostId, mapId: this.mapId, mode: this.mode, phase: this.session ? 'playing' : 'lobby', players: [...this.players.values()].map(p => ({ ...p, growthLoadout: p.growthLoadout ? { classId: p.growthLoadout.classId, primary: p.growthLoadout.primary } : undefined, equipment: { ...p.equipment } })) }; }
+  lobby() { return { id: this.id, fillBots: this.fillBots, rules: this.rules, growthPreset: this.rules === 'growth' ? this.growthPreset : undefined, debug: this.debug, instanceId: this.instanceId, round: this.round, hostId: this.hostId, mapId: this.mapId, mode: this.mode, phase: this.session ? 'playing' : 'lobby', players: [...this.players.values()].map(p => ({ ...p, growthLoadout: p.growthLoadout ? { classId: p.growthLoadout.classId, primary: p.growthLoadout.primary } : undefined, equipment: { ...p.equipment } })) }; }
 }

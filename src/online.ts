@@ -219,11 +219,16 @@ export function startOnline() {
           el('lobby').append(roomCode);
         }
         for (const player of room.players) { const line = document.createElement('p'); line.textContent = `${player.team === 1 ? '蓝队' : '红队'} · ${player.name} · ${room.rules === 'growth' ? `${GROWTH_CLASSES[player.growthLoadout?.classId ?? 'assault'].name} · 成长对战` : CLASSES[player.equipment.classId ?? 'medic'].name} · ${room.debug ? '调试中' : player.spectator ? '观战（下局参战）' : player.ready ? '已准备' : '未准备'}`; el('lobby').append(line); }
+        if (room.fillBots && room.phase === 'lobby') {
+          const note = document.createElement('p'); note.id = 'online-bot-roster';
+          note.textContent = ([1, 2] as const).map(team => `${team === 1 ? '蓝队' : '红队'}：${room.players.filter(p => p.team === team).length} 名真人 + ${Math.max(0, 4 - room.players.filter(p => p.team === team).length)} 名机器人`).join(' · ');
+          el('lobby').append(note);
+        }
         if (room.phase === 'lobby' || room.debug) {
           if (!room.debug) {
             if (room.rules === 'growth') {
               const edit = document.createElement('a'); edit.id = 'growth-room-armory'; edit.href = '#loadout'; edit.textContent = '出战配装 → 职业、武器、技能与成长池'; el('lobby').append(edit);
-              const note = document.createElement('p'); note.id = 'growth-solo-note'; note.textContent = '可单人直接点击开始试玩，自动准备并添加一名训练机器人；多人开局使用真人队伍。战斗中加入先观战，下局参战。'; note.textContent += ' 当前预设：' + GROWTH_V3_PRESETS[room.growthPreset ?? 'standard'].name; el('lobby').append(note); }
+              const note = document.createElement('p'); note.id = 'growth-solo-note'; note.textContent = '可单人直接点击开始试玩，自动准备并添加一名训练机器人；多人可由房主开启机器人补齐4v4。战斗中加入先观战，下局参战。'; note.textContent += ' 当前预设：' + GROWTH_V3_PRESETS[room.growthPreset ?? 'standard'].name; el('lobby').append(note); }
             const preview = document.createElement('div'); preview.id = 'online-map-preview';
             preview.innerHTML = mapPreviewSvg(MAPS.find(m => m.id === room.mapId)!); el('lobby').append(preview);
             const ready = document.createElement('button'); ready.textContent = '准备'; ready.id = 'online-ready'; ready.onclick = () => current.send({ type: 'ready', ready: true }); el('lobby').append(ready);
@@ -241,16 +246,20 @@ export function startOnline() {
                 option.disabled = room.rules === 'growth' && !['tdm', 'dom', 'ctf'].includes(option.value) || !MAPS.find(m => m.id === room.mapId)!.modes.includes(option.value as 'tdm' | 'dom' | 'coop');
                 option.title = option.disabled ? '此地图尚未配置该模式的目标点' : '';
               }
+              const botLabel = document.createElement('label');
+              const bots = document.createElement('input'); bots.type = 'checkbox'; bots.id = 'online-fill-bots'; bots.checked = room.fillBots; bots.disabled = room.mode === 'coop';
+              botLabel.append(bots, ' 添加机器人，补齐 4v4（好友加入自动减少；合作生存不适用）');
               const configure = () => {
                 const selected = MAPS.find(m => m.id === maps.value)!;
                 if (!selected.modes.includes(mode.value as 'tdm' | 'dom' | 'coop')) mode.value = selected.modes[0];
-                current.send({ type: 'configure', mapId: maps.value, mode: mode.value, ...(room.rules==='growth'?{growthPreset:preset.value}:{}) });
+                current.send({ type: 'configure', mapId: maps.value, mode: mode.value, fillBots: mode.value !== 'coop' && bots.checked, ...(room.rules==='growth'?{growthPreset:preset.value}:{}) });
               };
+              bots.onchange = configure; el('lobby').append(botLabel);
               maps.onchange = configure; mode.onchange = configure; el('lobby').append(maps, mode);
               if(room.rules==='growth'){preset.onchange=configure;el('lobby').append(preset);}
             }
             if (room.hostId === current.playerId) {
-              const soloGrowth = room.rules === 'growth' && room.players.length === 1;
+              const soloGrowth = !room.fillBots && room.rules === 'growth' && room.players.length === 1;
               const start = document.createElement('button'); start.textContent = soloGrowth ? '开始单人试玩（对战机器人）' : '开始对战'; start.id = 'online-start';
               start.onclick = () => {
                 if (soloGrowth) current.send({ type: 'ready', ready: true });

@@ -237,7 +237,7 @@ export function startServer(port = 4180, host = '127.0.0.1', reconnectMs = 30000
             logger.log('debug', 'room.equipment_changed', { playerId: client.id, ...roomFields(room), equipment: room.players.get(client.id)!.equipment });
           } else if (message.type === 'configure') {
             if (typeof message.mapId !== 'string' || !['tdm', 'dom', 'coop', 'ctf'].includes(message.mode)) throw Error('Invalid configuration');
-            room.configure(client.id, message.mapId, message.mode, message.growthPreset); lobby(room);
+            room.configure(client.id, message.mapId, message.mode, message.growthPreset, message.fillBots); lobby(room);
             logger.log('info', 'room.configured', { playerId: client.id, ...roomFields(room) });
           } else if (message.type === 'start') {
             room.start(client.id, randomBytes(4).readInt32LE());

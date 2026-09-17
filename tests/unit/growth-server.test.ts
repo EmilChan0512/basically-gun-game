@@ -27,9 +27,14 @@ it('authority binds choices to owner/round, isolates legacy rewards, and sends o
     send(0, { type: 'create', rules: 'growth', name: 'A', equipment: { primary: 'invalid-old-loadout' } });
     await wait(() => server.rooms.size === 1); const room = [...server.rooms.values()][0];
     send(1, { type: 'join', code: room.id, name: 'B' }); await wait(() => room.players.size === 2);
+    send(1, { type: 'configure', mapId: 'hijack', mode: 'tdm', fillBots: true });
+    await wait(() => peers[1].messages.some(m => m.type === 'error')); expect(room.fillBots).toBe(false);
+    send(0, { type: 'configure', mapId: 'hijack', mode: 'tdm', fillBots: true });
+    await wait(() => peers.every(peer => peer.messages.some(m => m.type === 'lobby' && m.room.fillBots === true)));
     send(0, { type: 'ready', ready: true }); send(1, { type: 'ready', ready: true });
     await wait(() => [...room.players.values()].every(p => p.ready)); send(0, { type: 'start' }); await wait(() => !!room.session);
     const battle = room.session!.battle, actor = battle.player;
+    expect(battle.actors).toHaveLength(8); expect(battle.actors.filter(a => a.human)).toHaveLength(2);
     const participant = battle.growthV3!.participant(actor.id), growth = participant.progression;
     awardGrowthV3(growth, participant.loadout, 200, battle.frame, seededRandom(1));
     await wait(() => peers[0].messages.some(m => m.type === 'state' && m.growthV3?.offer));
@@ -37,7 +42,8 @@ it('authority binds choices to owner/round, isolates legacy rewards, and sends o
     expect(peers[1].messages.filter(m => m.type === 'state').every(m => !m.growthV3?.offer)).toBe(true);
     expect(JSON.stringify(peers[1].messages)).not.toContain('attackers');
     const offer = growth.offer!, choice = { type: 'growthChoice', roomId: room.id, round: room.round, batch: offer.batch, upgrade: offer.cards[0] };
-    send(1, { ...choice, actorId: actor.id }); await wait(() => peers[1].messages.some(m => m.type === 'error'));
+    const guestErrors = peers[1].messages.filter(m => m.type === 'error').length;
+    send(1, { ...choice, actorId: actor.id }); await wait(() => peers[1].messages.filter(m => m.type === 'error').length > guestErrors);
     expect(growth.selected).toEqual([]);
     send(0, { ...choice, round: room.round + 1 }); await wait(() => peers[0].messages.some(m => m.type === 'error'));
     expect(growth.selected).toEqual([]);
